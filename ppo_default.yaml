@@ -5,9 +5,14 @@ device: "auto"   # "cpu" | "cuda" | "auto"
 
 # ── 环境 ──────────────────────────────────────────────────────────────────────
 env:
-  host: "localhost"
-  port: 15526
-  api_mode: "singleplayer"   # singleplayer | multiplayer
+  host: "127.0.0.1"
+  port: 18080
+  character_index: 0          # 自动开局时角色索引（0-based）
+  startup_debug: false        # 仅排障时打开，常态训练建议关闭
+  action_poll_interval: 0.8   # 轮询退避间隔（用于 reset/retry）；更大更平滑
+  action_min_interval: 1.0    # 每两个 action 的最小间隔（秒）
+  post_action_settle: 1.0     # action 发出后等待状态稳定的时间（秒）
+  action_retry_count: 1       # 单步动作失败重试次数（不宜过大，避免抖动）
   num_actions: 16
 
 # ── 模型 ──────────────────────────────────────────────────────────────────────
@@ -18,9 +23,9 @@ model:
 
 # ── 训练超参数 ─────────────────────────────────────────────────────────────────
 train:
-  total_steps: 2_000_000
-  buffer_size: 2048
-  n_epochs: 4
+  total_steps: 2048 #2_000_000
+  buffer_size: 256
+  n_epochs: 2 #4
   batch_size: 64
   lr: 3.0e-4
   clip_eps: 0.2

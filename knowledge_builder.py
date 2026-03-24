@@ -9,7 +9,7 @@ src/llm/knowledge_builder.py
 
 输出: data/knowledge_base.json
 
-卡牌条目字段名与 STS2MCP Raw API 战斗内手牌对象对齐（见 docs/STS2MCP-Raw-API-中文调用文档.md）：
+卡牌条目字段名与 STS2AIAgent 状态结构对齐（见 docs/STS2AIAgent-API-中文调用文档.md）：
 英文键名；name / description / flavor 等文本通过 Codex ?lang=zhs 采为简体中文。
 """
 
@@ -67,7 +67,7 @@ class KnowledgeBuilder:
                 "spire_codex_url": self.spire_codex_url,
                 "built_at": built_at,
                 "schema_note": (
-                    "cards[*] keys align with STS2MCP combat hand card fields "
+                    "cards[*] keys align with STS2AIAgent combat hand card fields "
                     "(id, name, type, cost, star_cost, description, target_type, keywords); "
                     "localized strings follow meta.lang."
                 ),
@@ -146,7 +146,7 @@ class KnowledgeBuilder:
         return out
 
     def _normalize_card(self, c: Dict[str, Any]) -> Dict[str, Any]:
-        """英文键名，与 STS2MCP GET 状态中手牌字段对齐（扩展字段保留）。"""
+        """英文键名，与 STS2AIAgent GET 状态中手牌字段对齐（扩展字段保留）。"""
         cid = c.get("id")
         return {
             "id": cid,

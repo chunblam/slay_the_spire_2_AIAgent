@@ -9,7 +9,7 @@
 | 强化学习算法 | PPO (Proximal Policy Optimization) |
 | 神经网络架构 | Transformer Encoder + Actor-Critic |
 | 大模型角色 | 战略顾问 + 奖励塑形 + 知识检索 |
-| 游戏接口 | STS2MCP Mod（Raw HTTP API，默认 `localhost:15526`） |
+| 游戏接口 | STS2AIAgent Mod（HTTP API，默认 `127.0.0.1:18080`） |
 | 知识数据库 | Spire Codex (576卡 / 289遗物 / 121怪物) |
 | 主语言 | Python 3.10+ / PyTorch 2.0+ |
 
@@ -29,16 +29,16 @@
 
 ### 1.2 两个仓库的角色与使用方案
 
-#### STS2MCP --- 游戏接口层（直接复用）
+#### STS2AIAgent --- 游戏接口层（直接复用）
 
 | **使用策略** |
 | :--- |
-| 复用 Mod 暴露的 **Raw HTTP API**（与 Claude / MCP 工具链无关）。RL Agent 在 **同一 URL** 上 **GET** 拉取完整状态、**POST** 提交 JSON 动作（根字段 `"action"`）。详细约定见仓库内 **`docs/STS2MCP-Raw-API-中文调用文档.md`**（与 [STS2MCP raw_api.md](https://github.com/Gennadiyev/STS2MCP/blob/main/docs/raw_api.md) 一致）。 |
+| 复用 `STS2AIAgent` 暴露的本地 HTTP API（与 MCP 工具链无关）。RL Agent 推荐走 **session 三端点**：`GET /api/v1/session/state`、`GET /api/v1/session/legal_actions`、`POST /api/v1/session/action`；保留兼容旧端点 `GET /state`、`GET /actions/available`、`POST /action`。详细约定见仓库内 **`docs/STS2AIAgent-API-中文调用文档.md`**（依据 `STS2-Agent/docs/api.md` 整理）。 |
 
 | **模式** | **HTTP** | **说明** |
 | :--- | :--- | :--- |
-| 单机 | `GET/POST http://localhost:15526/api/v1/singleplayer` | 默认；`POST` 的 body 为 `{"action": "<动作名>", ...}` |
-| 联机 | `GET/POST http://localhost:15526/api/v1/multiplayer` | 与单机 **不要混用**，否则可能 **HTTP 409** |
+| 推荐（session） | `GET http://127.0.0.1:18080/api/v1/session/state`<br>`GET http://127.0.0.1:18080/api/v1/session/legal_actions`<br>`POST http://127.0.0.1:18080/api/v1/session/action` | 生命周期友好；支持 `can_act` / `block_reason` / `legal_actions` |
+| 兼容（legacy） | `GET http://127.0.0.1:18080/state`<br>`GET http://127.0.0.1:18080/actions/available`<br>`POST http://127.0.0.1:18080/action` | 与旧脚本兼容 |
 
 | **常用 `action`（节选）** | **含义** |
 | :--- | :--- |
@@ -51,7 +51,7 @@
 | `shop_purchase` / `proceed` | 商店购买 / 离开等继续流程 |
 | `choose_event_option` | 事件选项：`index` |
 
-| **提示** | 建议请求 Host 使用 **`localhost`**（部分环境下 `127.0.0.1` 可能触发 Invalid Hostname）。若 Mod 使用非默认端口，在 **`ppo_default.yaml`** 的 `env.port` 或 **`test_connection.py --port`** 中修改。联机时在配置中设置 **`env.api_mode: "multiplayer"`**。 |
+| **提示** | `STS2AIAgent` 默认监听 **`127.0.0.1:18080`**。若使用自定义端口，可通过环境变量 **`STS2_API_PORT`** 或启动脚本参数覆盖，并在 **`ppo_default.yaml`** / **`test_connection.py --port`** 同步。 |
 
 #### Spire Codex --- 游戏知识库（离线使用）
 
@@ -71,10 +71,10 @@
 
 | **层级** | **模块** | **职责** |
 | :--- | :--- | :--- |
-| 接口层 | STS2MCP Mod | 暴露游戏状态和操作的 HTTP API |
+| 接口层 | STS2AIAgent Mod | 暴露游戏状态和操作的 HTTP API |
 | 环境层 | STS2Env | Gymnasium 标准接口封装，基础奖励计算 |
 | 编码层 | StateEncoder | JSON 状态 → 神经网络输入张量 |
-| 动作层 | STS2ActionSpace | 动作 ID → Raw API 的 `POST` JSON（含 `action`），合法动作 Mask |
+| 动作层 | STS2ActionSpace | 动作 ID → API `POST` JSON（含 `action`），合法动作 Mask |
 | 决策层 | STS2PolicyNet + PPOAgent | Actor-Critic，PPO 训练核心 |
 | 知识层 | KnowledgeBuilder | 构建攻略知识库 JSON |
 | 顾问层 | LLMAdvisor | 大模型战略建议，卡牌选择推荐 |
@@ -383,12 +383,12 @@ conda deactivate
 
 一键安装：在项目根目录执行 **`pip install -r requirements.txt`**（若已按 **6.0** 建好 Conda 环境，请在激活该环境后执行）。
 
-**Step 2：安装 STS2MCP Mod**
+**Step 2：安装 STS2AIAgent Mod**
 
-1. 从 GitHub Releases 下载：https://github.com/Gennadiyev/STS2MCP/releases
-2. 将 **STS2_MCP.dll** 和 **STS2_MCP.pck** 复制到 **\<游戏目录\>/mods/**
+1. 从 STS2-Agent Releases 下载，或从源码构建 `STS2AIAgent`
+2. 将 **STS2AIAgent.dll**、**STS2AIAgent.pck**、**mod_id.json** 复制到 **\<游戏目录\>/mods/**
 3. 启动游戏 → 设置 → 启用 Mod → 同意弹出的权限说明
-4. Mod 启动后默认在 **`http://localhost:15526`** 提供 Raw API（具体端口以 Mod / 游戏说明为准）
+4. Mod 启动后默认在 **`http://127.0.0.1:18080`** 提供 API（具体端口以 Mod / 环境变量为准）
 
 **Step 3（可选）：运行 Spire Codex（仅构建知识库时需要）**
 
@@ -410,11 +410,11 @@ conda deactivate
 
 `python test_connection.py`
 
-可选参数：`--host localhost`、`--port 15526`（或你的 Mod 端口）、`--api-mode singleplayer`（联机改为 `multiplayer`）。
+可选参数：`--host 127.0.0.1`、`--port 18080`（或你的 Mod 端口）。
 
 预期输出（游戏正在运行且 Mod 已启用时）：**连接成功**，并打印 **`state_type`**、楼层、金币等摘要。
 
-若失败，请检查游戏是否运行、Mod 是否已启用、防火墙，以及 **GET** 路径是否为 **`/api/v1/singleplayer`**（或你选择的模式）。
+若失败，请检查游戏是否运行、Mod 是否已启用、防火墙，以及 **`/health`** 是否可访问。
 
 **Step 2：构建知识库**
 
@@ -456,11 +456,11 @@ conda deactivate
 
 | **问题现象** | **可能原因** | **解决方法** |
 | :--- | :--- | :--- |
-| test_connection.py 超时或连接失败 | 游戏未运行、Mod 未启用或端口错误 | 确认 Raw API 地址为 **`http://localhost:<端口>/api/v1/singleplayer`**，与 **`ppo_default.yaml`** 中 **`env.port`** 一致 |
+| test_connection.py 超时或连接失败 | 游戏未运行、Mod 未启用或端口错误 | 确认 API 地址为 **`http://127.0.0.1:<端口>/health`** 可访问，并与 **`ppo_default.yaml`** 中 **`env.port`** 一致 |
 | HTTP 409 | 单机/联机 API 混用 | 使用与当前对局一致的 **`env.api_mode`** |
 | 训练开始后立即报错 | 游戏不在可操作屏幕 | 在游戏中进入一局，保持在战斗/地图屏幕 |
 | reward 全为 0 | 奖励函数未触发 | 检查 screen_type 是否为 COMBAT，打印 info 字典 |
-| 选牌 match 奖励始终不触发 | `action_executed` 字段与解析逻辑不一致 | 确认执行动作为 Raw API 形式：`select_card_reward`/`skip_card_reward`，并检查 `train.py` 中选牌索引解析 |
+| 选牌 match 奖励始终不触发 | `action_executed` 字段与解析逻辑不一致 | 确认执行动作与当前 API 命名一致（推荐 session/legacy 二选一），并检查 `train.py` 中选牌索引解析 |
 | pg_loss 为 nan | 学习率太大或梯度爆炸 | 将 lr 从 3e-4 降到 1e-4，检查 max_grad_norm |
 | LLM 调用报错 | Ollama 未运行 | 执行 ollama serve，确认监听 11434 端口 |
 | 训练极慢（CPU） | 矩阵运算在 CPU | 设置 device: cuda 或减小 buffer_size |

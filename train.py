@@ -1,19 +1,14 @@
 """
-scripts/train.py  (更新版)
-
-核心改动：
-1. CARD_REWARD 屏幕时，在 agent 决策前先调 llm_advisor.evaluate_card_reward()
-   把推荐缓存到 advisor 内部；
-2. step 之后从 action payload 解析 agent_card_index，
-   传给 reward_shaper.shape() 触发 match bonus；
-3. 其余逻辑不变。
+scripts/train.py
 """
 
 import argparse
+import json
 import os
 import sys
 import time
 from typing import Dict, Optional
+from datetime import datetime
 
 import torch
 import yaml
@@ -34,7 +29,7 @@ from rollout_buffer import RolloutBuffer
 # ── 配置加载 ──────────────────────────────────────────────────────────────────
 
 def load_config(path: str) -> Dict:
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return yaml.safe_load(f)
 
 
@@ -85,9 +80,9 @@ def _extract_agent_card_index(executed_action: Dict, screen_type: str) -> Option
     从已执行动作里解析 agent 选的卡牌索引（仅 CARD_REWARD 屏幕）。
     返回 None 表示不是选牌动作，不触发 match bonus。
 
-    STS2MCP Raw API（与 action_space._decode_card_reward 一致）:
-      - {"action": "select_card_reward", "card_index": k}  k 为 0-based
-      - {"action": "skip_card_reward"}
+    STS2AIAgent API:
+      - {"action": "choose_reward_card", "option_index": k}  k 为 0-based
+      - {"action": "skip_reward_cards"}
     旧式封装（若日后在 env 里包一层）:
       - {"type": "choose_reward", "payload": {"skip": bool, "card_index": int}}
     """
@@ -95,10 +90,10 @@ def _extract_agent_card_index(executed_action: Dict, screen_type: str) -> Option
         return None
 
     raw = executed_action.get("action", "")
-    if raw == "skip_card_reward":
+    if raw == "skip_reward_cards":
         return -1
-    if raw == "select_card_reward":
-        return int(executed_action.get("card_index", 0))
+    if raw == "choose_reward_card":
+        return int(executed_action.get("option_index", 0))
 
     if executed_action.get("type") == "choose_reward":
         payload = executed_action.get("payload", {})
@@ -120,6 +115,44 @@ def _get_reward_cards_from_state(state: Dict) -> list:
     return []
 
 
+class RunLogger:
+    """
+    运行期分模块日志：
+    logs/<YYYYmmdd_HHMMSS>/
+      - module_agent_decision.log
+      - module_env_step_state.log
+      - module_reward_shaping.log
+      - module_ppo_update.log
+      - module_episode_summary.log
+      - module_error_recovery.log
+      - run_config_snapshot.json
+    """
+
+    def __init__(self, cfg: Dict):
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.run_dir = os.path.join("logs", ts)
+        os.makedirs(self.run_dir, exist_ok=True)
+        self.paths = {
+            "agent_decision": os.path.join(self.run_dir, "module_agent_decision.log"),
+            "env_step_state": os.path.join(self.run_dir, "module_env_step_state.log"),
+            "reward_shaping": os.path.join(self.run_dir, "module_reward_shaping.log"),
+            "ppo_update": os.path.join(self.run_dir, "module_ppo_update.log"),
+            "episode_summary": os.path.join(self.run_dir, "module_episode_summary.log"),
+            "error_recovery": os.path.join(self.run_dir, "module_error_recovery.log"),
+        }
+        with open(os.path.join(self.run_dir, "run_config_snapshot.json"), "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+        print(f"🗂️  本次运行日志目录: {self.run_dir}")
+
+    def log(self, key: str, msg: str):
+        path = self.paths.get(key)
+        if not path:
+            return
+        stamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"[{stamp}] {msg}\n")
+
+
 # ── 主训练循环 ────────────────────────────────────────────────────────────────
 
 def train(cfg: Dict):
@@ -127,11 +160,17 @@ def train(cfg: Dict):
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"🚀 开始训练 | 设备: {device}")
+    run_logger = RunLogger(cfg)
 
     env = STS2Env(
         host=cfg["env"].get("host", "localhost"),
-        port=cfg["env"].get("port", 15526),
-        api_mode=cfg["env"].get("api_mode", "singleplayer"),
+        port=cfg["env"].get("port", 18080),
+        character_index=cfg["env"].get("character_index", 0),
+        startup_debug=cfg["env"].get("startup_debug", False),
+        action_poll_interval=cfg["env"].get("action_poll_interval", 0.5),
+        action_min_interval=cfg["env"].get("action_min_interval", 0.5),
+        post_action_settle=cfg["env"].get("post_action_settle", 0.5),
+        action_retry_count=cfg["env"].get("action_retry_count", 1),
         render_mode="human" if cfg.get("render") else None,
     )
     agent        = build_agent(cfg, device)
@@ -157,9 +196,12 @@ def train(cfg: Dict):
     total_steps          = 0
     episode              = 0
     best_episode_reward  = float("-inf")
+    consecutive_env_errors = 0
+    max_consecutive_env_errors = 10
 
-    print("⏳ 等待游戏就绪（确保 STS2 + STS2MCP Mod 已运行）...")
+    print("⏳ 等待游戏就绪（确保 STS2 + STS2AIAgent Mod 已运行）...")
     obs, info = env.reset()
+    run_logger.log("env_step_state", f"reset: screen={info.get('screen_type')} floor={info.get('floor')} hp={info.get('hp')}/{info.get('max_hp')}")
 
     while total_steps < cfg["train"]["total_steps"]:
 
@@ -171,6 +213,10 @@ def train(cfg: Dict):
         while not buffer.is_full():
             screen_type = info.get("screen_type", "")
             raw_state   = info.get("raw_state", {})
+            run_logger.log(
+                "env_step_state",
+                f"pre_step total_steps={total_steps} buffer_size={len(buffer)} screen={screen_type} floor={info.get('floor')} gold={info.get('gold')}",
+            )
 
             # ── ① CARD_REWARD 前：让 LLM 先做选牌推荐（缓存到 advisor）──
             if screen_type == "CARD_REWARD" and llm_advisor is not None:
@@ -198,10 +244,53 @@ def train(cfg: Dict):
                     obs_tensor, action_mask_tensor
                 )
             action_id = action.item()
+            run_logger.log(
+                "agent_decision",
+                f"step={total_steps} screen={screen_type} action_id={action_id} "
+                f"log_prob={log_prob.item():.4f} value={value.item():.4f} "
+                f"valid_actions={sum(1 for m in action_mask_list if m)}",
+            )
 
             # ── ⑤ 执行动作 ───────────────────────────────────────────────
-            next_obs, base_reward, done, truncated, next_info = env.step(action_id)
+            try:
+                next_obs, base_reward, done, truncated, next_info = env.step(action_id)
+                consecutive_env_errors = 0
+            except RuntimeError as e:
+                # 方案2：环境错误容错恢复，避免单次非法动作导致整轮训练崩溃
+                msg = str(e)
+                recoverable = (
+                    "No unlocked event options available" in msg
+                    or "status" in msg.lower()
+                    or "Invalid" in msg
+                )
+                if recoverable:
+                    run_logger.log("error_recovery", f"recoverable_runtime_error: {msg}")
+                    consecutive_env_errors += 1
+                    print(
+                        f"⚠️  env.step 可恢复错误({consecutive_env_errors}/{max_consecutive_env_errors}): {msg}"
+                    )
+                    if consecutive_env_errors >= max_consecutive_env_errors:
+                        raise RuntimeError(
+                            f"连续环境错误达到上限: {msg}"
+                        ) from e
+                    obs, info = env.reset()
+                    continue
+                raise
             executed_action = next_info.get("action_executed", {})
+            run_logger.log(
+                "env_step_state",
+                f"post_step action={executed_action} next_screen={next_info.get('screen_type')} floor={next_info.get('floor')}",
+            )
+            manual_intervention = bool(next_info.get("manual_intervention", False))
+            if manual_intervention:
+                reason = next_info.get("manual_intervention_reason", "unknown")
+                run_logger.log("error_recovery", f"manual_intervention: reason={reason}")
+                print(
+                    f"🧑‍🔧 检测到人工介入步骤（{reason}），本步不计入 buffer/奖励，继续后续状态。"
+                )
+                obs = next_obs
+                info = next_info
+                continue
 
             # ── ⑥ 解析 agent 是否做了选牌动作 ────────────────────────────
             agent_card_index = _extract_agent_card_index(executed_action, screen_type)
@@ -214,6 +303,11 @@ def train(cfg: Dict):
                 action=executed_action,
                 done=done,
                 agent_card_index=agent_card_index,   # ← 新增传参
+            )
+            run_logger.log(
+                "reward_shaping",
+                f"step={total_steps} action={executed_action.get('action', executed_action.get('type'))} "
+                f"base={base_reward:.4f} shaped={shaped_reward:.4f} done={done} truncated={truncated}",
             )
 
             # ── ⑧ 写入 buffer ─────────────────────────────────────────────
@@ -235,6 +329,10 @@ def train(cfg: Dict):
             if done or truncated:
                 episode += 1
                 episode_rewards.append(current_ep_reward)
+                run_logger.log(
+                    "episode_summary",
+                    f"episode={episode} reward={episode_rewards[-1]:.4f} floor={info.get('floor', 0)} hp={info.get('hp', 0)} total_steps={total_steps}",
+                )
                 current_ep_reward = 0.0
                 floor_r = info.get("floor", 0)
                 hp_r    = info.get("hp", 0)
@@ -272,6 +370,12 @@ def train(cfg: Dict):
             n_epochs=cfg["train"]["n_epochs"],
             batch_size=cfg["train"]["batch_size"],
         )
+        run_logger.log(
+            "ppo_update",
+            f"update_at_steps={total_steps} batch_size={cfg['train']['batch_size']} "
+            f"buffer_size={cfg['train']['buffer_size']} pg_loss={metrics['pg_loss']:.6f} "
+            f"vf_loss={metrics['vf_loss']:.6f} entropy={metrics['entropy']:.6f}",
+        )
 
         # ── 日志 & 存档 ───────────────────────────────────────────────────
         if episode_rewards:
@@ -292,6 +396,7 @@ def train(cfg: Dict):
             ckpt = os.path.join(checkpoint_dir, f"checkpoint_{total_steps}.pt")
             agent.save(ckpt)
             print(f"  💾 存档: {ckpt}")
+            run_logger.log("ppo_update", f"checkpoint_saved: {ckpt}")
 
     print(f"\n🎉 训练完成! 总步数: {total_steps}")
     env.close()

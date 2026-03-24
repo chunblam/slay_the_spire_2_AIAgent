@@ -3,13 +3,9 @@ __pycache__/
 .env
 
 data/
-
 checkpoints/
 runs/
-logs/
 *.pt
 *.pth
-
-STS2_MCP/
 
 docs/

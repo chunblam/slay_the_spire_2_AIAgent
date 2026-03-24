@@ -142,12 +142,12 @@ class RewardShaper:
         self, prev_state: Dict, new_state: Dict, action: Dict
     ) -> float:
         bonus = 0.0
-        # STS2MCP Raw API 使用根字段 "action"；旧式封装可能用 "type"
+        # STS2AIAgent 使用根字段 "action"；旧式封装可能用 "type"
         kind = action.get("action") or action.get("type", "")
 
         # ── 选牌本身的规则奖励（不依赖 LLM，单纯动作类型）──────────────────
-        # Raw API: select_card_reward | skip_card_reward
-        if kind == "select_card_reward":
+        # STS2AIAgent: choose_reward_card | skip_reward_cards
+        if kind == "choose_reward_card":
             bonus += 0.05
         elif kind == "choose_reward":
             payload = action.get("payload", {})
@@ -191,7 +191,7 @@ class RewardShaper:
 
         # ── 休息 / 锻造（Raw API: choose_rest_option + index）────────────────
         elif kind in ("rest", "choose_rest_option", "smith"):
-            idx = int(action.get("index", 0)) if kind == "choose_rest_option" else 0
+            idx = int(action.get("option_index", action.get("index", 0))) if kind == "choose_rest_option" else 0
             if kind == "smith" or (kind == "choose_rest_option" and idx == 1):
                 bonus += 0.3
             elif kind in ("rest", "choose_rest_option") and idx == 0:

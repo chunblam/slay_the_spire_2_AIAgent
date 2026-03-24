@@ -1,0 +1,51 @@
+{
+  "device": "auto",
+  "env": {
+    "host": "127.0.0.1",
+    "port": 18080,
+    "character_index": 0,
+    "startup_debug": false,
+    "action_poll_interval": 0.8,
+    "action_min_interval": 0.5,
+    "post_action_settle": 0.5,
+    "action_retry_count": 1,
+    "num_actions": 16
+  },
+  "model": {
+    "hidden_dim": 256,
+    "card_d_model": 64,
+    "monster_d_model": 32
+  },
+  "train": {
+    "total_steps": 2048,
+    "buffer_size": 256,
+    "n_epochs": 2,
+    "batch_size": 64,
+    "lr": 0.0003,
+    "clip_eps": 0.2,
+    "value_loss_coef": 0.5,
+    "entropy_coef": 0.01,
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "save_interval": 100000
+  },
+  "llm": {
+    "enabled": false,
+    "backend": "ollama",
+    "model": "qwen2.5:7b",
+    "api_key": "",
+    "knowledge_base_path": "data/knowledge_base.json",
+    "call_interval_steps": 10,
+    "cache_ttl": 30.0,
+    "confidence_threshold": 0.55
+  },
+  "reward": {
+    "rule_weight": 0.5,
+    "llm_weight": 0.3,
+    "card_weight": 0.4,
+    "card_match_bonus": 1.0,
+    "card_mismatch_penalty": 0.5
+  },
+  "checkpoint_dir": "checkpoints",
+  "render": false
+}

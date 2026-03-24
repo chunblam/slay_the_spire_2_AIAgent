@@ -1,0 +1,796 @@
+[23:47:39.375] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_154738_5656_1433",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:47:48.591] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 2} | session action failed: status=409, body={'action': 'play_card', 'card_index': 2}, response={
+  "ok": false,
+  "request_id": "req_20260323_154747_7837_1451",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 2,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:47:56.611] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154755_7930_1473",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:48:12.835] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154812_0288_1507",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:48:17.644] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 1} | session action failed: status=409, body={'action': 'play_card', 'card_index': 1}, response={
+  "ok": false,
+  "request_id": "req_20260323_154816_8256_1517",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 1,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:48:21.901] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 0} | session action failed: status=409, body={'action': 'play_card', 'card_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_154821_0885_1529",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 0,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:48:28.081] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154827_2690_1546",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:48:38.197] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154837_3742_1571",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:48:54.622] recoverable_runtime_error: 动作执行失败: {'action': 'choose_rest_option', 'option_index': 3} | session action failed: status=409, body={'action': 'choose_rest_option', 'option_index': 3}, response={
+  "ok": false,
+  "request_id": "req_20260323_154853_8137_1624",
+  "error": {
+    "code": "invalid_target",
+    "message": "option_index is out of range.",
+    "details": {
+      "action": "choose_rest_option",
+      "option_index": 3,
+      "option_count": 2
+    },
+    "retryable": false
+  }
+}
+[23:48:56.658] recoverable_runtime_error: 动作执行失败: {'action': 'choose_rest_option', 'option_index': 2} | session action failed: status=409, body={'action': 'choose_rest_option', 'option_index': 2}, response={
+  "ok": false,
+  "request_id": "req_20260323_154855_8505_1631",
+  "error": {
+    "code": "invalid_target",
+    "message": "option_index is out of range.",
+    "details": {
+      "action": "choose_rest_option",
+      "option_index": 2,
+      "option_count": 2
+    },
+    "retryable": false
+  }
+}
+[23:49:32.555] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154931_7296_1733",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:35.003] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154934_1973_1740",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:41.165] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154940_3527_1757",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:43.691] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154942_8688_1764",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:46.257] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154945_4426_1771",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:50.441] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154949_6352_1783",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:52.931] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154952_1190_1790",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:55.404] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154954_5889_1797",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:49:57.854] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_154957_0415_1804",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:50:01.945] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155001_1404_1816",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:50:04.412] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155003_6007_1823",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:50:06.906] recoverable_runtime_error: 动作执行失败: {'action': 'discard_potion'} | session action failed: status=400, body={'action': 'discard_potion'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155006_0856_1830",
+  "error": {
+    "code": "invalid_request",
+    "message": "discard_potion requires option_index.",
+    "details": {
+      "action": "discard_potion"
+    },
+    "retryable": false
+  }
+}
+[23:50:11.402] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155010_5924_1842",
+  "error": {
+    "code": "invalid_action",
+    "message": "The selected potion cannot be used in the current state.",
+    "details": {
+      "action": "use_potion",
+      "screen": "COMBAT",
+      "option_index": 2
+    },
+    "retryable": false
+  }
+}
+[23:50:13.817] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 1, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 1, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155013_0101_1849",
+  "error": {
+    "code": "invalid_action",
+    "message": "The selected potion cannot be used in the current state.",
+    "details": {
+      "action": "use_potion",
+      "screen": "COMBAT",
+      "option_index": 1
+    },
+    "retryable": false
+  }
+}
+[23:50:22.513] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 1, 'target_index': 0} | session action failed: status=409, body={'action': 'play_card', 'card_index': 1, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155021_7021_1871",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 1,
+      "target_index": 0,
+      "card_id": "REND",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:27.279] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 1} | session action failed: status=409, body={'action': 'play_card', 'card_index': 1}, response={
+  "ok": false,
+  "request_id": "req_20260323_155026_4716_1883",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 1,
+      "target_index": null,
+      "card_id": "DEFEND_IRONCLAD",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:29.722] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 1} | session action failed: status=409, body={'action': 'play_card', 'card_index': 1}, response={
+  "ok": false,
+  "request_id": "req_20260323_155028_9138_1890",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 1,
+      "target_index": null,
+      "card_id": "DEFEND_IRONCLAD",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:32.192] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 1} | session action failed: status=409, body={'action': 'play_card', 'card_index': 1}, response={
+  "ok": false,
+  "request_id": "req_20260323_155031_3742_1897",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 1,
+      "target_index": null,
+      "card_id": "DEFEND_IRONCLAD",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:36.753] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'play_card', 'card_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155035_9458_1909",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 0,
+      "target_index": 0,
+      "card_id": "REND",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:40.949] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155040_1400_1921",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:50:45.895] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 4} | session action failed: status=409, body={'action': 'play_card', 'card_index': 4}, response={
+  "ok": false,
+  "request_id": "req_20260323_155045_0733_1931",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 4,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:52.637] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 2} | session action failed: status=409, body={'action': 'play_card', 'card_index': 2}, response={
+  "ok": false,
+  "request_id": "req_20260323_155051_8343_1948",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 2,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:50:55.114] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 2} | session action failed: status=409, body={'action': 'play_card', 'card_index': 2}, response={
+  "ok": false,
+  "request_id": "req_20260323_155054_3089_1955",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 2,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:51:01.461] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155100_6549_1972",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:51:09.736] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155108_9256_1989",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:51:25.434] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 1, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 1, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155124_6223_2024",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:51:38.062] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 0} | session action failed: status=409, body={'action': 'play_card', 'card_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155137_2514_2050",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 0,
+      "target_index": null,
+      "card_id": "GREED",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:51:44.749] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155143_9431_2067",
+  "error": {
+    "code": "invalid_action",
+    "message": "The selected potion cannot be used in the current state.",
+    "details": {
+      "action": "use_potion",
+      "screen": "GAME_OVER",
+      "option_index": 2
+    },
+    "retryable": false
+  }
+}
+[23:52:07.813] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155207_0078_2121",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:52:17.750] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155216_9395_2146",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:52:26.204] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155225_3823_2167",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:52:34.484] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 1, 'target_index': 0} | session action failed: status=409, body={'action': 'play_card', 'card_index': 1, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155233_6759_2187",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 1,
+      "target_index": 0,
+      "card_id": "BASH",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:52:39.860] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155239_0542_2204",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:52:48.295] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155247_4895_2225",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:52:57.539] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155256_7349_2250",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:53:04.398] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155303_5772_2266",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:53:10.198] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155309_3903_2281",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:53:25.672] recoverable_runtime_error: 动作执行失败: {'action': 'play_card', 'card_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'play_card', 'card_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155324_8553_2323",
+  "error": {
+    "code": "invalid_action",
+    "message": "Card cannot be played in the current state.",
+    "details": {
+      "action": "play_card",
+      "card_index": 0,
+      "target_index": 0,
+      "card_id": "STRIKE_IRONCLAD",
+      "screen": "COMBAT"
+    },
+    "retryable": false
+  }
+}
+[23:53:29.189] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155328_3818_2335",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:53:35.178] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155334_3520_2350",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:53:50.810] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 2, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 2, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155350_0025_2387",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:54:03.375] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 0, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 0, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155402_5644_2419",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:54:15.940] recoverable_runtime_error: 动作执行失败: {'action': 'use_potion', 'option_index': 1, 'target_index': 0} | session action failed: status=409, body={'action': 'use_potion', 'option_index': 1, 'target_index': 0}, response={
+  "ok": false,
+  "request_id": "req_20260323_155415_1319_2451",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "use_potion",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:54:23.584] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155422_7741_2468",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is blocked in the current state.",
+    "details": {
+      "action": "end_turn",
+      "can_act": false,
+      "reason": "animation",
+      "legal_actions": []
+    },
+    "retryable": true
+  }
+}
+[23:54:31.191] recoverable_runtime_error: 动作执行失败: {'action': 'end_turn'} | session action failed: status=409, body={'action': 'end_turn'}, response={
+  "ok": false,
+  "request_id": "req_20260323_155430_3698_2485",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action is not available in the current state.",
+    "details": {
+      "action": "end_turn",
+      "screen": "GAME_OVER"
+    },
+    "retryable": false
+  }
+}

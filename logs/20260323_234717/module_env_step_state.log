@@ -1,0 +1,307 @@
+[23:47:19.909] reset: screen=SHOP floor=3 hp=0/1
+[23:47:19.909] pre_step total_steps=0 buffer_size=0 screen=SHOP floor=3 gold=14
+[23:47:21.706] post_step action={'action': 'open_shop_inventory'} next_screen=SHOP floor=3
+[23:47:21.707] pre_step total_steps=1 buffer_size=1 screen=SHOP floor=3 gold=14
+[23:47:22.954] post_step action={'action': 'close_shop_inventory'} next_screen=SHOP floor=3
+[23:47:22.956] pre_step total_steps=2 buffer_size=2 screen=SHOP floor=3 gold=14
+[23:47:24.176] post_step action={'action': 'proceed'} next_screen=MAP floor=3
+[23:47:24.177] pre_step total_steps=3 buffer_size=3 screen=MAP floor=3 gold=14
+[23:47:29.928] post_step action={'action': 'choose_map_node', 'option_index': 0} next_screen=COMBAT floor=4
+[23:47:29.930] pre_step total_steps=4 buffer_size=4 screen=COMBAT floor=4 gold=14
+[23:47:31.932] post_step action={'action': 'play_card', 'card_index': 4, 'target_index': 0} next_screen=COMBAT floor=4
+[23:47:31.933] pre_step total_steps=5 buffer_size=5 screen=COMBAT floor=4 gold=14
+[23:47:33.793] post_step action={'action': 'play_card', 'card_index': 2} next_screen=COMBAT floor=4
+[23:47:33.795] pre_step total_steps=6 buffer_size=6 screen=COMBAT floor=4 gold=14
+[23:47:35.758] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=4
+[23:47:35.760] pre_step total_steps=7 buffer_size=7 screen=COMBAT floor=4 gold=14
+[23:47:37.373] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=4
+[23:47:37.375] pre_step total_steps=8 buffer_size=8 screen=COMBAT floor=4 gold=14
+[23:47:44.663] pre_step total_steps=8 buffer_size=8 screen=COMBAT floor=4 gold=14
+[23:47:46.561] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=4
+[23:47:46.564] pre_step total_steps=9 buffer_size=9 screen=COMBAT floor=4 gold=14
+[23:47:48.932] pre_step total_steps=9 buffer_size=9 screen=COMBAT floor=4 gold=14
+[23:47:50.886] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=4
+[23:47:50.888] pre_step total_steps=10 buffer_size=10 screen=COMBAT floor=4 gold=14
+[23:47:52.975] post_step action={'action': 'play_card', 'card_index': 0} next_screen=COMBAT floor=4
+[23:47:52.976] pre_step total_steps=11 buffer_size=11 screen=COMBAT floor=4 gold=14
+[23:47:54.573] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=4
+[23:47:54.576] pre_step total_steps=12 buffer_size=12 screen=COMBAT floor=4 gold=14
+[23:48:02.714] pre_step total_steps=12 buffer_size=12 screen=COMBAT floor=4 gold=14
+[23:48:04.578] post_step action={'action': 'play_card', 'card_index': 1} next_screen=COMBAT floor=4
+[23:48:04.580] pre_step total_steps=13 buffer_size=13 screen=COMBAT floor=4 gold=14
+[23:48:06.479] post_step action={'action': 'play_card', 'card_index': 2} next_screen=COMBAT floor=4
+[23:48:06.481] pre_step total_steps=14 buffer_size=14 screen=COMBAT floor=4 gold=14
+[23:48:09.168] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=4
+[23:48:09.170] pre_step total_steps=15 buffer_size=15 screen=COMBAT floor=4 gold=14
+[23:48:10.797] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=4
+[23:48:10.798] pre_step total_steps=16 buffer_size=16 screen=COMBAT floor=4 gold=14
+[23:48:15.633] pre_step total_steps=16 buffer_size=16 screen=COMBAT floor=4 gold=14
+[23:48:17.969] pre_step total_steps=16 buffer_size=16 screen=COMBAT floor=4 gold=14
+[23:48:19.839] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=4
+[23:48:19.840] pre_step total_steps=17 buffer_size=17 screen=COMBAT floor=4 gold=14
+[23:48:22.260] pre_step total_steps=17 buffer_size=17 screen=COMBAT floor=4 gold=14
+[23:48:24.486] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=4
+[23:48:24.488] pre_step total_steps=18 buffer_size=18 screen=COMBAT floor=4 gold=14
+[23:48:26.032] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=4
+[23:48:26.034] pre_step total_steps=19 buffer_size=19 screen=COMBAT floor=4 gold=14
+[23:48:30.945] pre_step total_steps=19 buffer_size=19 screen=COMBAT floor=4 gold=14
+[23:48:32.893] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=4
+[23:48:32.895] pre_step total_steps=20 buffer_size=20 screen=COMBAT floor=4 gold=14
+[23:48:34.801] post_step action={'action': 'play_card', 'card_index': 1} next_screen=COMBAT floor=4
+[23:48:34.802] pre_step total_steps=21 buffer_size=21 screen=COMBAT floor=4 gold=14
+[23:48:36.250] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=4
+[23:48:36.251] pre_step total_steps=22 buffer_size=22 screen=COMBAT floor=4 gold=14
+[23:48:39.221] pre_step total_steps=22 buffer_size=22 screen=REWARD floor=4 gold=14
+[23:48:40.485] post_step action={'action': 'claim_reward', 'option_index': 2} next_screen=CARD_SELECT floor=4
+[23:48:40.486] pre_step total_steps=23 buffer_size=23 screen=CARD_SELECT floor=4 gold=14
+[23:48:41.722] post_step action={'action': 'select_deck_card', 'option_index': 2} next_screen=REWARD floor=4
+[23:48:41.724] pre_step total_steps=24 buffer_size=24 screen=REWARD floor=4 gold=14
+[23:48:42.953] post_step action={'action': 'claim_reward', 'option_index': 1} next_screen=REWARD floor=4
+[23:48:42.955] pre_step total_steps=25 buffer_size=25 screen=REWARD floor=4 gold=14
+[23:48:44.127] post_step action={'action': 'claim_reward', 'option_index': 0} next_screen=REWARD floor=4
+[23:48:44.128] pre_step total_steps=26 buffer_size=26 screen=REWARD floor=4 gold=29
+[23:48:45.283] post_step action={'action': 'collect_rewards_and_proceed'} next_screen=MAP floor=4
+[23:48:45.284] pre_step total_steps=27 buffer_size=27 screen=MAP floor=4 gold=29
+[23:48:47.815] post_step action={'action': 'choose_map_node', 'option_index': 1} next_screen=EVENT floor=5
+[23:48:47.819] pre_step total_steps=28 buffer_size=28 screen=EVENT floor=5 gold=29
+[23:48:48.979] post_step action={'action': 'choose_event_option', 'option_index': 1} next_screen=EVENT floor=5
+[23:48:48.980] pre_step total_steps=29 buffer_size=29 screen=EVENT floor=5 gold=29
+[23:48:50.179] post_step action={'action': 'choose_event_option', 'option_index': 0} next_screen=MAP floor=5
+[23:48:50.180] pre_step total_steps=30 buffer_size=30 screen=MAP floor=5 gold=29
+[23:48:52.739] post_step action={'action': 'choose_map_node', 'option_index': 0} next_screen=REST floor=6
+[23:48:52.741] pre_step total_steps=31 buffer_size=31 screen=REST floor=6 gold=29
+[23:48:54.834] pre_step total_steps=31 buffer_size=31 screen=REST floor=6 gold=29
+[23:48:56.895] pre_step total_steps=31 buffer_size=31 screen=REST floor=6 gold=29
+[23:48:58.094] post_step action={'action': 'choose_rest_option', 'option_index': 0} next_screen=REST floor=6
+[23:48:58.096] pre_step total_steps=32 buffer_size=32 screen=REST floor=6 gold=29
+[23:48:59.283] post_step action={'action': 'proceed'} next_screen=MAP floor=6
+[23:48:59.284] pre_step total_steps=33 buffer_size=33 screen=MAP floor=6 gold=29
+[23:49:01.674] post_step action={'action': 'choose_map_node', 'option_index': 0} next_screen=EVENT floor=7
+[23:49:01.675] pre_step total_steps=34 buffer_size=34 screen=EVENT floor=7 gold=29
+[23:49:03.099] post_step action={'action': 'choose_event_option', 'option_index': 1} next_screen=REWARD floor=7
+[23:49:03.101] pre_step total_steps=35 buffer_size=35 screen=REWARD floor=7 gold=29
+[23:49:04.484] post_step action={'action': 'claim_reward', 'option_index': 0} next_screen=CARD_SELECT floor=7
+[23:49:04.486] pre_step total_steps=36 buffer_size=36 screen=CARD_SELECT floor=7 gold=29
+[23:49:05.657] post_step action={'action': 'select_deck_card', 'option_index': 2} next_screen=EVENT floor=7
+[23:49:05.658] pre_step total_steps=37 buffer_size=37 screen=EVENT floor=7 gold=29
+[23:49:06.882] post_step action={'action': 'choose_event_option', 'option_index': 0} next_screen=MAP floor=7
+[23:49:06.884] pre_step total_steps=38 buffer_size=38 screen=MAP floor=7 gold=29
+[23:49:09.249] post_step action={'action': 'choose_map_node', 'option_index': 0} next_screen=EVENT floor=8
+[23:49:09.251] pre_step total_steps=39 buffer_size=39 screen=EVENT floor=8 gold=29
+[23:49:10.468] post_step action={'action': 'choose_event_option', 'option_index': 1} next_screen=EVENT floor=8
+[23:49:10.470] pre_step total_steps=40 buffer_size=40 screen=EVENT floor=8 gold=29
+[23:49:11.729] post_step action={'action': 'choose_event_option', 'option_index': 0} next_screen=MAP floor=8
+[23:49:11.731] pre_step total_steps=41 buffer_size=41 screen=MAP floor=8 gold=29
+[23:49:14.244] post_step action={'action': 'choose_map_node', 'option_index': 1} next_screen=EVENT floor=9
+[23:49:14.247] pre_step total_steps=42 buffer_size=42 screen=EVENT floor=9 gold=29
+[23:49:15.486] post_step action={'action': 'choose_event_option', 'option_index': 1} next_screen=EVENT floor=9
+[23:49:15.487] pre_step total_steps=43 buffer_size=43 screen=EVENT floor=9 gold=29
+[23:49:16.699] post_step action={'action': 'choose_event_option', 'option_index': 0} next_screen=MAP floor=9
+[23:49:16.701] pre_step total_steps=44 buffer_size=44 screen=MAP floor=9 gold=29
+[23:49:19.173] post_step action={'action': 'choose_map_node', 'option_index': 0} next_screen=CHEST floor=10
+[23:49:19.175] pre_step total_steps=45 buffer_size=45 screen=CHEST floor=10 gold=29
+[23:49:20.389] post_step action={'action': 'open_chest'} next_screen=CHEST floor=10
+[23:49:20.390] pre_step total_steps=46 buffer_size=46 screen=CHEST floor=10 gold=77
+[23:49:21.652] post_step action={'action': 'choose_treasure_relic', 'option_index': 0} next_screen=CHEST floor=10
+[23:49:21.653] pre_step total_steps=47 buffer_size=47 screen=CHEST floor=10 gold=77
+[23:49:22.960] post_step action={'action': 'proceed'} next_screen=MAP floor=10
+[23:49:22.961] pre_step total_steps=48 buffer_size=48 screen=MAP floor=10 gold=77
+[23:49:28.801] post_step action={'action': 'choose_map_node', 'option_index': 0} next_screen=COMBAT floor=11
+[23:49:28.803] pre_step total_steps=49 buffer_size=49 screen=COMBAT floor=11 gold=77
+[23:49:30.486] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:49:30.488] pre_step total_steps=50 buffer_size=50 screen=COMBAT floor=11 gold=77
+[23:49:32.958] pre_step total_steps=50 buffer_size=50 screen=COMBAT floor=11 gold=77
+[23:49:35.367] pre_step total_steps=50 buffer_size=50 screen=COMBAT floor=11 gold=77
+[23:49:37.434] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=11
+[23:49:37.436] pre_step total_steps=51 buffer_size=51 screen=COMBAT floor=11 gold=77
+[23:49:39.093] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:49:39.095] pre_step total_steps=52 buffer_size=52 screen=COMBAT floor=11 gold=77
+[23:49:41.582] pre_step total_steps=52 buffer_size=52 screen=COMBAT floor=11 gold=77
+[23:49:44.114] pre_step total_steps=52 buffer_size=52 screen=COMBAT floor=11 gold=77
+[23:49:46.649] pre_step total_steps=52 buffer_size=52 screen=COMBAT floor=11 gold=77
+[23:49:48.364] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:49:48.365] pre_step total_steps=53 buffer_size=53 screen=COMBAT floor=11 gold=77
+[23:49:50.857] pre_step total_steps=53 buffer_size=53 screen=COMBAT floor=11 gold=77
+[23:49:53.368] pre_step total_steps=53 buffer_size=53 screen=COMBAT floor=11 gold=77
+[23:49:55.776] pre_step total_steps=53 buffer_size=53 screen=COMBAT floor=11 gold=77
+[23:49:58.231] pre_step total_steps=53 buffer_size=53 screen=COMBAT floor=11 gold=77
+[23:49:59.909] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:49:59.910] pre_step total_steps=54 buffer_size=54 screen=COMBAT floor=11 gold=77
+[23:50:02.370] pre_step total_steps=54 buffer_size=54 screen=COMBAT floor=11 gold=77
+[23:50:04.807] pre_step total_steps=54 buffer_size=54 screen=COMBAT floor=11 gold=77
+[23:50:07.295] pre_step total_steps=54 buffer_size=54 screen=COMBAT floor=11 gold=77
+[23:50:09.307] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=11
+[23:50:09.309] pre_step total_steps=55 buffer_size=55 screen=COMBAT floor=11 gold=77
+[23:50:11.795] pre_step total_steps=55 buffer_size=55 screen=COMBAT floor=11 gold=77
+[23:50:14.265] pre_step total_steps=55 buffer_size=55 screen=COMBAT floor=11 gold=77
+[23:50:16.379] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=11
+[23:50:16.380] pre_step total_steps=56 buffer_size=56 screen=COMBAT floor=11 gold=77
+[23:50:18.713] post_step action={'action': 'use_potion', 'option_index': 0, 'target_index': 0} next_screen=CARD_SELECT floor=11
+[23:50:18.714] pre_step total_steps=57 buffer_size=57 screen=CARD_SELECT floor=11 gold=77
+[23:50:20.469] post_step action={'action': 'select_deck_card', 'option_index': 2} next_screen=COMBAT floor=11
+[23:50:20.471] pre_step total_steps=58 buffer_size=58 screen=COMBAT floor=11 gold=77
+[23:50:22.976] pre_step total_steps=58 buffer_size=58 screen=COMBAT floor=11 gold=77
+[23:50:25.242] post_step action={'action': 'play_card', 'card_index': 0} next_screen=COMBAT floor=11
+[23:50:25.243] pre_step total_steps=59 buffer_size=59 screen=COMBAT floor=11 gold=77
+[23:50:27.662] pre_step total_steps=59 buffer_size=59 screen=COMBAT floor=11 gold=77
+[23:50:30.098] pre_step total_steps=59 buffer_size=59 screen=COMBAT floor=11 gold=77
+[23:50:32.598] pre_step total_steps=59 buffer_size=59 screen=COMBAT floor=11 gold=77
+[23:50:34.681] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=11
+[23:50:34.683] pre_step total_steps=60 buffer_size=60 screen=COMBAT floor=11 gold=77
+[23:50:37.124] pre_step total_steps=60 buffer_size=60 screen=COMBAT floor=11 gold=77
+[23:50:38.878] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:50:38.879] pre_step total_steps=61 buffer_size=61 screen=COMBAT floor=11 gold=77
+[23:50:43.843] pre_step total_steps=61 buffer_size=61 screen=COMBAT floor=11 gold=77
+[23:50:46.314] pre_step total_steps=61 buffer_size=61 screen=COMBAT floor=11 gold=77
+[23:50:48.398] post_step action={'action': 'play_card', 'card_index': 3} next_screen=COMBAT floor=11
+[23:50:48.399] pre_step total_steps=62 buffer_size=62 screen=COMBAT floor=11 gold=77
+[23:50:50.555] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=11
+[23:50:50.556] pre_step total_steps=63 buffer_size=63 screen=COMBAT floor=11 gold=77
+[23:50:53.047] pre_step total_steps=63 buffer_size=63 screen=COMBAT floor=11 gold=77
+[23:50:55.508] pre_step total_steps=63 buffer_size=63 screen=COMBAT floor=11 gold=77
+[23:50:57.554] post_step action={'action': 'play_card', 'card_index': 1} next_screen=COMBAT floor=11
+[23:50:57.555] pre_step total_steps=64 buffer_size=64 screen=COMBAT floor=11 gold=77
+[23:50:59.324] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:50:59.325] pre_step total_steps=65 buffer_size=65 screen=COMBAT floor=11 gold=77
+[23:51:05.992] pre_step total_steps=65 buffer_size=65 screen=COMBAT floor=11 gold=77
+[23:51:07.657] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:51:07.658] pre_step total_steps=66 buffer_size=66 screen=COMBAT floor=11 gold=77
+[23:51:12.617] pre_step total_steps=66 buffer_size=66 screen=COMBAT floor=11 gold=77
+[23:51:14.678] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=11
+[23:51:14.680] pre_step total_steps=67 buffer_size=67 screen=COMBAT floor=11 gold=77
+[23:51:16.831] post_step action={'action': 'play_card', 'card_index': 0} next_screen=COMBAT floor=11
+[23:51:16.832] pre_step total_steps=68 buffer_size=68 screen=COMBAT floor=11 gold=77
+[23:51:19.121] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=11
+[23:51:19.123] pre_step total_steps=69 buffer_size=69 screen=COMBAT floor=11 gold=77
+[23:51:21.476] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=11
+[23:51:21.478] pre_step total_steps=70 buffer_size=70 screen=COMBAT floor=11 gold=77
+[23:51:23.357] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:51:23.359] pre_step total_steps=71 buffer_size=71 screen=COMBAT floor=11 gold=77
+[23:51:29.179] pre_step total_steps=71 buffer_size=71 screen=COMBAT floor=11 gold=77
+[23:51:31.489] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=11
+[23:51:31.491] pre_step total_steps=72 buffer_size=72 screen=COMBAT floor=11 gold=77
+[23:51:33.871] post_step action={'action': 'play_card', 'card_index': 3} next_screen=CARD_SELECT floor=11
+[23:51:33.872] pre_step total_steps=73 buffer_size=73 screen=CARD_SELECT floor=11 gold=77
+[23:51:35.940] post_step action={'action': 'select_deck_card', 'option_index': 3} next_screen=COMBAT floor=11
+[23:51:35.941] pre_step total_steps=74 buffer_size=74 screen=COMBAT floor=11 gold=77
+[23:51:38.538] pre_step total_steps=74 buffer_size=74 screen=COMBAT floor=11 gold=77
+[23:51:40.847] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=11
+[23:51:40.848] pre_step total_steps=75 buffer_size=75 screen=COMBAT floor=11 gold=77
+[23:51:42.671] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=11
+[23:51:42.673] pre_step total_steps=76 buffer_size=76 screen=COMBAT floor=11 gold=77
+[23:51:51.421] pre_step total_steps=76 buffer_size=76 screen=EVENT floor=1 gold=99
+[23:51:52.394] post_step action={'action': 'choose_event_option', 'option_index': 1} next_screen=EVENT floor=1
+[23:51:52.395] pre_step total_steps=77 buffer_size=77 screen=EVENT floor=1 gold=99
+[23:51:53.475] post_step action={'action': 'choose_event_option', 'option_index': 0} next_screen=MAP floor=1
+[23:51:53.477] pre_step total_steps=78 buffer_size=78 screen=MAP floor=1 gold=99
+[23:51:59.258] post_step action={'action': 'choose_map_node', 'option_index': 1} next_screen=COMBAT floor=2
+[23:51:59.260] pre_step total_steps=79 buffer_size=79 screen=COMBAT floor=2 gold=99
+[23:52:00.954] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:00.955] pre_step total_steps=80 buffer_size=80 screen=COMBAT floor=2 gold=99
+[23:52:02.686] post_step action={'action': 'play_card', 'card_index': 3} next_screen=COMBAT floor=2
+[23:52:02.688] pre_step total_steps=81 buffer_size=81 screen=COMBAT floor=2 gold=99
+[23:52:04.429] post_step action={'action': 'play_card', 'card_index': 0} next_screen=COMBAT floor=2
+[23:52:04.430] pre_step total_steps=82 buffer_size=82 screen=COMBAT floor=2 gold=99
+[23:52:05.884] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:52:05.885] pre_step total_steps=83 buffer_size=83 screen=COMBAT floor=2 gold=99
+[23:52:10.603] pre_step total_steps=83 buffer_size=83 screen=COMBAT floor=2 gold=99
+[23:52:12.353] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:12.355] pre_step total_steps=84 buffer_size=84 screen=COMBAT floor=2 gold=99
+[23:52:14.373] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:14.375] pre_step total_steps=85 buffer_size=85 screen=COMBAT floor=2 gold=99
+[23:52:15.754] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:52:15.756] pre_step total_steps=86 buffer_size=86 screen=COMBAT floor=2 gold=99
+[23:52:21.310] pre_step total_steps=86 buffer_size=86 screen=COMBAT floor=2 gold=99
+[23:52:22.974] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:22.976] pre_step total_steps=87 buffer_size=87 screen=COMBAT floor=2 gold=99
+[23:52:24.256] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:52:24.258] pre_step total_steps=88 buffer_size=88 screen=COMBAT floor=2 gold=99
+[23:52:29.045] pre_step total_steps=88 buffer_size=88 screen=COMBAT floor=2 gold=99
+[23:52:30.813] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:30.815] pre_step total_steps=89 buffer_size=89 screen=COMBAT floor=2 gold=99
+[23:52:32.495] post_step action={'action': 'play_card', 'card_index': 2} next_screen=COMBAT floor=2
+[23:52:32.497] pre_step total_steps=90 buffer_size=90 screen=COMBAT floor=2 gold=99
+[23:52:34.781] pre_step total_steps=90 buffer_size=90 screen=COMBAT floor=2 gold=99
+[23:52:36.561] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:36.562] pre_step total_steps=91 buffer_size=91 screen=COMBAT floor=2 gold=99
+[23:52:37.933] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:52:37.934] pre_step total_steps=92 buffer_size=92 screen=COMBAT floor=2 gold=99
+[23:52:43.416] pre_step total_steps=92 buffer_size=92 screen=COMBAT floor=2 gold=99
+[23:52:45.007] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:45.009] pre_step total_steps=93 buffer_size=93 screen=COMBAT floor=2 gold=99
+[23:52:46.330] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:52:46.331] pre_step total_steps=94 buffer_size=94 screen=COMBAT floor=2 gold=99
+[23:52:51.014] pre_step total_steps=94 buffer_size=94 screen=COMBAT floor=2 gold=99
+[23:52:52.620] post_step action={'action': 'play_card', 'card_index': 0} next_screen=COMBAT floor=2
+[23:52:52.622] pre_step total_steps=95 buffer_size=95 screen=COMBAT floor=2 gold=99
+[23:52:54.292] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=2
+[23:52:54.293] pre_step total_steps=96 buffer_size=96 screen=COMBAT floor=2 gold=99
+[23:52:55.643] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:52:55.644] pre_step total_steps=97 buffer_size=97 screen=COMBAT floor=2 gold=99
+[23:53:01.118] pre_step total_steps=97 buffer_size=97 screen=COMBAT floor=2 gold=99
+[23:53:02.478] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=2
+[23:53:02.479] pre_step total_steps=98 buffer_size=98 screen=COMBAT floor=2 gold=99
+[23:53:07.127] pre_step total_steps=98 buffer_size=98 screen=COMBAT floor=2 gold=99
+[23:53:08.391] post_step action={'action': 'play_card', 'card_index': 1, 'target_index': 0} next_screen=COMBAT floor=2
+[23:53:08.393] pre_step total_steps=99 buffer_size=99 screen=COMBAT floor=2 gold=99
+[23:53:10.384] pre_step total_steps=99 buffer_size=99 screen=REWARD floor=2 gold=99
+[23:53:11.501] post_step action={'action': 'claim_reward', 'option_index': 1} next_screen=CARD_SELECT floor=2
+[23:53:11.502] pre_step total_steps=100 buffer_size=100 screen=CARD_SELECT floor=2 gold=99
+[23:53:12.602] post_step action={'action': 'select_deck_card', 'option_index': 2} next_screen=REWARD floor=2
+[23:53:12.603] pre_step total_steps=101 buffer_size=101 screen=REWARD floor=2 gold=99
+[23:53:13.603] post_step action={'action': 'claim_reward', 'option_index': 0} next_screen=REWARD floor=2
+[23:53:13.604] pre_step total_steps=102 buffer_size=102 screen=REWARD floor=2 gold=118
+[23:53:14.628] post_step action={'action': 'collect_rewards_and_proceed'} next_screen=MAP floor=2
+[23:53:14.630] pre_step total_steps=103 buffer_size=103 screen=MAP floor=2 gold=118
+[23:53:20.127] post_step action={'action': 'choose_map_node', 'option_index': 1} next_screen=COMBAT floor=3
+[23:53:20.129] pre_step total_steps=104 buffer_size=104 screen=COMBAT floor=3 gold=118
+[23:53:21.752] post_step action={'action': 'play_card', 'card_index': 2} next_screen=COMBAT floor=3
+[23:53:21.754] pre_step total_steps=105 buffer_size=105 screen=COMBAT floor=3 gold=118
+[23:53:23.728] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=3
+[23:53:23.729] pre_step total_steps=106 buffer_size=106 screen=COMBAT floor=3 gold=118
+[23:53:25.993] pre_step total_steps=106 buffer_size=106 screen=COMBAT floor=3 gold=118
+[23:53:27.296] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:53:27.297] pre_step total_steps=107 buffer_size=107 screen=COMBAT floor=3 gold=118
+[23:53:31.906] pre_step total_steps=107 buffer_size=107 screen=COMBAT floor=3 gold=118
+[23:53:33.246] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:53:33.248] pre_step total_steps=108 buffer_size=108 screen=COMBAT floor=3 gold=118
+[23:53:39.569] pre_step total_steps=108 buffer_size=108 screen=COMBAT floor=3 gold=118
+[23:53:41.265] post_step action={'action': 'play_card', 'card_index': 4, 'target_index': 0} next_screen=COMBAT floor=3
+[23:53:41.267] pre_step total_steps=109 buffer_size=109 screen=COMBAT floor=3 gold=118
+[23:53:44.221] post_step action={'action': 'play_card', 'card_index': 1} next_screen=COMBAT floor=3
+[23:53:44.223] pre_step total_steps=110 buffer_size=110 screen=COMBAT floor=3 gold=118
+[23:53:45.867] post_step action={'action': 'play_card', 'card_index': 3, 'target_index': 0} next_screen=COMBAT floor=3
+[23:53:45.869] pre_step total_steps=111 buffer_size=111 screen=COMBAT floor=3 gold=118
+[23:53:47.491] post_step action={'action': 'play_card', 'card_index': 3} next_screen=COMBAT floor=3
+[23:53:47.492] pre_step total_steps=112 buffer_size=112 screen=COMBAT floor=3 gold=118
+[23:53:48.857] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:53:48.859] pre_step total_steps=113 buffer_size=113 screen=COMBAT floor=3 gold=118
+[23:53:55.149] pre_step total_steps=113 buffer_size=113 screen=COMBAT floor=3 gold=118
+[23:53:56.788] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=3
+[23:53:56.789] pre_step total_steps=114 buffer_size=114 screen=COMBAT floor=3 gold=118
+[23:53:58.457] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=3
+[23:53:58.458] pre_step total_steps=115 buffer_size=115 screen=COMBAT floor=3 gold=118
+[23:54:00.089] post_step action={'action': 'play_card', 'card_index': 0, 'target_index': 0} next_screen=COMBAT floor=3
+[23:54:00.091] pre_step total_steps=116 buffer_size=116 screen=COMBAT floor=3 gold=118
+[23:54:01.430] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:54:01.432] pre_step total_steps=117 buffer_size=117 screen=COMBAT floor=3 gold=118
+[23:54:07.694] pre_step total_steps=117 buffer_size=117 screen=COMBAT floor=3 gold=118
+[23:54:09.303] post_step action={'action': 'play_card', 'card_index': 0} next_screen=COMBAT floor=3
+[23:54:09.304] pre_step total_steps=118 buffer_size=118 screen=COMBAT floor=3 gold=118
+[23:54:11.023] post_step action={'action': 'play_card', 'card_index': 1} next_screen=COMBAT floor=3
+[23:54:11.025] pre_step total_steps=119 buffer_size=119 screen=COMBAT floor=3 gold=118
+[23:54:12.678] post_step action={'action': 'play_card', 'card_index': 2, 'target_index': 0} next_screen=COMBAT floor=3
+[23:54:12.680] pre_step total_steps=120 buffer_size=120 screen=COMBAT floor=3 gold=118
+[23:54:14.032] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:54:14.033] pre_step total_steps=121 buffer_size=121 screen=COMBAT floor=3 gold=118
+[23:54:20.306] pre_step total_steps=121 buffer_size=121 screen=COMBAT floor=3 gold=118
+[23:54:21.642] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:54:21.644] pre_step total_steps=122 buffer_size=122 screen=COMBAT floor=3 gold=118
+[23:54:27.948] pre_step total_steps=122 buffer_size=122 screen=COMBAT floor=3 gold=118
+[23:54:29.230] post_step action={'action': 'end_turn'} next_screen=COMBAT floor=3
+[23:54:29.232] pre_step total_steps=123 buffer_size=123 screen=COMBAT floor=3 gold=118
+[23:54:38.566] pre_step total_steps=123 buffer_size=123 screen=EVENT floor=1 gold=99
+[23:54:39.596] post_step action={'action': 'choose_event_option', 'option_index': 2} next_screen=EVENT floor=1
+[23:54:39.598] pre_step total_steps=124 buffer_size=124 screen=EVENT floor=1 gold=99
+[23:54:40.700] post_step action={'action': 'choose_event_option', 'option_index': 0} next_screen=MAP floor=1
+[23:54:40.702] pre_step total_steps=125 buffer_size=125 screen=MAP floor=1 gold=99

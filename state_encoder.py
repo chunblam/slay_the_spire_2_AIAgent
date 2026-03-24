@@ -1,7 +1,7 @@
 """
 src/env/state_encoder.py
 
-将 STS2MCP 返回的 JSON 游戏状态编码为神经网络可用的张量
+将 STS2AIAgent 返回的 JSON 游戏状态编码为神经网络可用的张量
 """
 
 from typing import Dict, List, Optional
