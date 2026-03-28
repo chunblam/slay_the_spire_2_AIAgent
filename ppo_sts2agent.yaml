@@ -1,0 +1,86 @@
+# configs/ppo_sts2agent.yaml
+# STS2AIAgent Mod 适配版本训练配置
+# 此配置专用于STS2-Agent Mod（端口18080），而非STS2MCP（端口15526）
+
+device: "auto"   # "cpu" | "cuda" | "auto"
+
+# ── 环境 ──────────────────────────────────────────────────────────────────────
+env:
+  host: "127.0.0.1"
+  port: 18080               # STS2AIAgent Mod 端口
+  character_index: 0          # 自动开局时角色索引（0-based）
+  startup_debug: false        # 仅排障时打开，常态训练建议关闭
+  action_poll_interval: 0.8   # 轮询退避间隔（用于 reset/retry）；更大更平滑
+  action_min_interval: 0.8    # 每两个 action 的最小间隔（秒）
+  post_action_settle: 0.8     # action 发出后等待状态稳定的时间（秒）
+  action_retry_count: 1       # 单步动作失败重试次数（不宜过大，避免抖动）
+  num_actions: 16
+
+# ── 模型 ──────────────────────────────────────────────────────────────────────
+model:
+  hidden_dim: 256
+  card_d_model: 64
+  monster_d_model: 32
+
+# ── 训练超参数 ─────────────────────────────────────────────────────────────────
+train:
+  total_steps: 30000 #2_000_000
+  buffer_size: 256
+  n_epochs: 3 #4
+  batch_size: 64
+  lr: 3.0e-4
+  clip_eps: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  gamma: 0.99
+  gae_lambda: 0.95
+  save_interval: 5000 
+  resume_on_restart: true      # 中断后自动读取 checkpoints/training_state.json 续训
+  save_latest_per_update: true # 每次 PPO update 保存 latest_model.pt，降低中断损失
+  continue_logs_on_resume: true      # 续训时复用上次 latest_run_dir，日志继续追加
+  manual_intervention_max_wait: 180.0 # 未知状态人工介入等待上限（秒）
+  manual_intervention_poll: 0.5       # 人工介入后状态轮询间隔（秒）
+
+# ── LLM Advisor ───────────────────────────────────────────────────────────────
+llm:
+  enabled: false             # 总开关：false=纯RL，true=启用全部LLM综合评估（card/relic/map/combat_opening）
+
+  # ── 后端选择（取消注释其中一组）──────────────────────────────────────────
+  # 选项 A: 本地 Ollama（推荐，免费）
+  backend: "ollama"
+  model: "qwen2.5:7b"        # 替代: "llama3.2:3b"（更快但效果弱）
+  base_url: "http://127.0.0.1:11434"
+
+  # 选项 B: OpenAI API（需KEY）
+  # backend: "openai"
+  # model: "gpt-4-turbo-preview"
+  # api_key: "sk-xxx"         # 建议以环境变量 OPENAI_API_KEY 提供
+
+  # 选项 C: 离线模式（无需任何LLM服务）
+  # backend: "offline"
+  # mode: "demo"              # demo | none
+
+  # ── 综合评估开关 ──────────────────────────────────────────────────────────
+  strategy: "balanced"      # aggressive | balanced | conservative
+
+  use_map_advisor: false
+  use_combat_advisor: false
+  use_relic_advisor: false
+  use_card_advisor: false
+  use_rest_advisor: false
+  use_event_advisor: false
+
+  top_k: 3
+  temperature: 0.2
+  match_bonus_coef: 0.8
+
+logging:
+  level: "INFO"             # DEBUG | INFO | WARNING | ERROR
+  tensorboard: true         # 启用TensorBoard日志
+  checkpoint_verbose: false # 保存时详细打印
+
+# ── 性能优化（可选）────────────────────────────────────────────────────────────
+perf:
+  num_workers: 0             # 并行采样；0=禁用（当前推荐）
+  pin_memory: false
+  prefetch_size: 2

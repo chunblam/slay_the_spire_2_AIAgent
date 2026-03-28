@@ -128,9 +128,9 @@ def _extract_agent_card_index(executed_action: Dict, screen_type: str) -> Option
     从已执行动作里解析 agent 选的卡牌索引（仅 CARD_REWARD 屏幕）。
     返回 None 表示不是选牌动作，不触发 match bonus。
 
-    STS2AIAgent API:
-      - {"action": "choose_reward_card", "option_index": k}  k 为 0-based
-      - {"action": "skip_reward_cards"}
+        STS2AIAgent API:
+            - {"action": "choose_reward_card", "option_index": k}  k 为 0-based
+            - {"action": "skip_reward_cards"}
     旧式封装（若日后在 env 里包一层）:
       - {"type": "choose_reward", "payload": {"skip": bool, "card_index": int}}
     """
@@ -138,10 +138,10 @@ def _extract_agent_card_index(executed_action: Dict, screen_type: str) -> Option
         return None
 
     raw = executed_action.get("action", "")
-    if raw == "skip_card_reward":
+    if raw == "skip_reward_cards":
         return -1
-    if raw == "select_card_reward":
-        return int(executed_action.get("card_index", 0))
+    if raw == "choose_reward_card":
+        return int(executed_action.get("option_index", 0))
 
     if executed_action.get("type") == "choose_reward":
         payload = executed_action.get("payload", {})
@@ -193,7 +193,7 @@ def _get_relic_options_from_state(state: Dict) -> list:
 
 def _extract_agent_relic_index(executed_action: Dict) -> Optional[int]:
     action = str(executed_action.get("action", ""))
-    if action in ("claim_treasure_relic", "select_relic"):
+    if action == "choose_treasure_relic":
         return int(executed_action.get("index", executed_action.get("option_index", 0)))
     return None
 
@@ -294,7 +294,7 @@ def train(cfg: Dict):
 
     env = STS2Env(
         host=cfg["env"].get("host", "localhost"),
-        port=cfg["env"].get("port", 15526),
+        port=cfg["env"].get("port", 18080),
         character_index=cfg["env"].get("character_index", 0),
         startup_debug=cfg["env"].get("startup_debug", False),
         action_poll_interval=cfg["env"].get("action_poll_interval", 0.5),
@@ -326,6 +326,7 @@ def train(cfg: Dict):
         kill_reward_per_enemy=_r.get("kill_reward_per_enemy", 2.0),
         block_coverage_reward=_r.get("block_coverage_reward", 1.0),
         excess_block_penalty_cap=_r.get("excess_block_penalty_cap", 0.2),
+        overflow_block_penalty_coef=_r.get("overflow_block_penalty_coef", 0.03),
         energy_waste_penalty=_r.get("energy_waste_penalty", 0.5),
         hp_loss_penalty=_r.get("hp_loss_penalty", 1.5),
         hp_loss_urgency_max_mul=_r.get("hp_loss_urgency_max_mul", 2.0),
@@ -559,6 +560,10 @@ def train(cfg: Dict):
                     f"step={total_steps} action=manual_intervention env_reward={env_reward:.4f} "
                     f"A={reward_shaper.last_breakdown.get('A_action', 0.0):.4f} "
                     f"B={reward_shaper.last_breakdown.get('B_turn', 0.0):.4f} "
+                    f"B_energy={reward_shaper.last_breakdown.get('B_energy_waste', 0.0):.4f} "
+                    f"B_block={reward_shaper.last_breakdown.get('B_overflow_block', 0.0):.4f} "
+                    f"B_hp={reward_shaper.last_breakdown.get('B_hp_loss', 0.0):.4f} "
+                    f"B_trig={reward_shaper.last_breakdown.get('B_trigger', 0.0):.0f} "
                     f"C={reward_shaper.last_breakdown.get('C_combat', 0.0):.4f} "
                     f"D={reward_shaper.last_breakdown.get('D_meta', 0.0):.4f} "
                     f"E={reward_shaper.last_breakdown.get('E_terminal', 0.0):.4f} "
@@ -622,11 +627,20 @@ def train(cfg: Dict):
                     obs_tensor, action_mask_tensor
                 )
             action_id = action.item()
+            legal_actions = [str(a) for a in (raw_state.get("legal_actions") or [])]
+            combat_block = raw_state.get("combat") or {}
+            hand_cards = combat_block.get("hand") or []
+            playable_count = 0
+            for c in hand_cards:
+                if isinstance(c, dict) and bool(c.get("playable", True)):
+                    playable_count += 1
+            player_energy = int((combat_block.get("player") or {}).get("energy", combat_block.get("energy", 0)) or 0)
             run_logger.log(
                 "agent_decision",
                 f"step={total_steps} screen={screen_type} action_id={action_id} "
                 f"log_prob={log_prob.item():.4f} value={value.item():.4f} "
-                f"valid_actions={sum(1 for m in action_mask_list if m)}",
+                f"valid_actions={sum(1 for m in action_mask_list if m)} "
+                f"legal={legal_actions} hand={len(hand_cards)} playable={playable_count} energy={player_energy}",
             )
 
             # ── ⑤ 执行动作 ───────────────────────────────────────────────
@@ -693,6 +707,10 @@ def train(cfg: Dict):
                 f"env_reward={env_reward:.4f} "
                 f"A={reward_shaper.last_breakdown.get('A_action', 0.0):.4f} "
                 f"B={reward_shaper.last_breakdown.get('B_turn', 0.0):.4f} "
+                f"B_energy={reward_shaper.last_breakdown.get('B_energy_waste', 0.0):.4f} "
+                f"B_block={reward_shaper.last_breakdown.get('B_overflow_block', 0.0):.4f} "
+                f"B_hp={reward_shaper.last_breakdown.get('B_hp_loss', 0.0):.4f} "
+                f"B_trig={reward_shaper.last_breakdown.get('B_trigger', 0.0):.0f} "
                 f"C={reward_shaper.last_breakdown.get('C_combat', 0.0):.4f} "
                 f"D={reward_shaper.last_breakdown.get('D_meta', 0.0):.4f} "
                 f"E={reward_shaper.last_breakdown.get('E_terminal', 0.0):.4f} "

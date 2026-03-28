@@ -45,13 +45,61 @@ def _sum_enemy_intent_damage(state: Dict) -> float:
     for m in monsters:
         if (m.get("hp", 0) or 0) <= 0:
             continue
-        intent = m.get("intent") or {}
-        intent_type = str(intent.get("type", "")).upper()
-        if intent_type in ("ATTACK", "ATTACK_BUFF", "ATTACK_DEBUFF"):
-            base_dmg = float(intent.get("damage", 0) or 0)
-            times = int(intent.get("times", 1) or 1)
-            dmg += base_dmg * times
+        intents = m.get("intents")
+        if not isinstance(intents, list):
+            intents = []
+        for intent in intents:
+            if not isinstance(intent, dict):
+                continue
+            intent_type = str(intent.get("type", "")).upper()
+            if intent_type not in ("Attack", "Attack_buff", "Attack_debuff"):
+                continue
+            total_damage = intent.get("total_damage")
+            if total_damage is not None:
+                dmg += float(total_damage or 0)
+            else:
+                base_dmg = float(intent.get("damage", 0) or 0)
+                times = int(intent.get("times", 1) or 1)
+                dmg += base_dmg * times
     return dmg
+
+
+def _enemy_total_damage(state: Dict) -> float:
+    """
+    Sum enemy intents total_damage from intents[]; fallback to damage * times.
+    """
+    total = 0.0
+    monsters = ((state.get("combat") or {}).get("monsters") or [])
+    for m in monsters:
+        if (m.get("hp", 0) or 0) <= 0:
+            continue
+        intents = m.get("intents")
+        if not isinstance(intents, list):
+            intents = []
+        for intent in intents:
+            if not isinstance(intent, dict):
+                continue
+            total_damage = intent.get("total_damage")
+            if total_damage is not None:
+                total += float(total_damage or 0)
+            else:
+                total += float(intent.get("damage", 0) or 0) * int(intent.get("times", 1) or 1)
+    return total
+
+
+def _state_phase(state: Dict) -> str:
+    return str(state.get("phase", "") or "").lower()
+
+
+def _state_turn(state: Dict) -> int:
+    return int(((state.get("combat") or {}).get("round", 0)) or 0)
+
+
+def _is_in_combat(state: Dict) -> bool:
+    in_combat = state.get("in_combat")
+    if in_combat is not None:
+        return bool(in_combat)
+    return str(state.get("screen_type", "")).upper() == "COMBAT"
 
 
 @dataclass
@@ -118,6 +166,17 @@ class CombatTracker:
         return "NORMAL"
 
 
+@dataclass
+class PendingTurnPenalty:
+    armed: bool = False
+    energy_before_end: float = 0.0
+    play_card_legal: bool = False
+    block_before_end: float = 0.0
+    enemy_total_damage_before_end: float = 0.0
+    turn_at_end: int = 0
+    phase_at_end: str = ""
+
+
 class RewardShaper:
     def __init__(
         self,
@@ -136,6 +195,7 @@ class RewardShaper:
         kill_reward_per_enemy: float = 2.0,
         block_coverage_reward: float = 1.0,
         excess_block_penalty_cap: float = 0.2,
+        overflow_block_penalty_coef: float = 0.03,
         energy_waste_penalty: float = 0.5,
         hp_loss_penalty: float = 1.5,
         hp_loss_urgency_max_mul: float = 2.0,
@@ -188,6 +248,7 @@ class RewardShaper:
         self.kill_reward_per_enemy = kill_reward_per_enemy
         self.block_coverage_reward = block_coverage_reward
         self.excess_block_penalty_cap = excess_block_penalty_cap
+        self.overflow_block_penalty_coef = overflow_block_penalty_coef
         self.energy_waste_penalty = energy_waste_penalty
         self.hp_loss_penalty = hp_loss_penalty
         self.hp_loss_urgency_max_mul = hp_loss_urgency_max_mul
@@ -228,6 +289,11 @@ class RewardShaper:
 
         self.turn_tracker = TurnTracker()
         self.combat_tracker = CombatTracker()
+        self.pending_turn_penalty = PendingTurnPenalty()
+        self._b_energy_waste = 0.0
+        self._b_overflow_block = 0.0
+        self._b_hp_loss = 0.0
+        self._b_trigger = 0.0
         self.last_breakdown: Dict[str, float] = {}
 
     def shape(
@@ -245,35 +311,55 @@ class RewardShaper:
     ) -> float:
         _ = base_reward
         kind = str(action.get("action") or action.get("type") or "")
+        prev_in_combat = _is_in_combat(prev_state)
+        new_in_combat = _is_in_combat(new_state)
         prev_screen = str(prev_state.get("screen_type", ""))
         new_screen = str(new_state.get("screen_type", ""))
         new_state_type = str(new_state.get("state_type", "")).lower()
 
-        combat_start = (prev_screen != "COMBAT" and new_screen == "COMBAT")
-        combat_end = (prev_screen == "COMBAT" and new_screen != "COMBAT")
+        combat_start = (not prev_in_combat and new_in_combat)
+        combat_end = (prev_in_combat and not new_in_combat)
 
         if combat_start:
             self.combat_tracker.on_combat_start(new_state)
             self.turn_tracker.on_combat_start(new_state)
 
-        if self.turn_tracker.in_combat and new_screen == "COMBAT":
+        if self.turn_tracker.in_combat and new_in_combat:
             self.turn_tracker.accumulate_kills(prev_state, new_state)
 
         a = self.layer_a_action_reward(prev_state, new_state, kind)
 
+        self._b_energy_waste = 0.0
+        self._b_overflow_block = 0.0
+        self._b_hp_loss = 0.0
+        self._b_trigger = 0.0
+
         b = 0.0
-        if self.turn_tracker.in_combat and prev_screen == "COMBAT" and new_screen == "COMBAT":
-            prev_round = int((prev_state.get("combat") or {}).get("round", 0) or 0)
-            new_round = int((new_state.get("combat") or {}).get("round", 0) or 0)
+        if kind == "end_turn" and prev_in_combat:
+            self._arm_pending_end_turn(prev_state)
+
+        if self.turn_tracker.in_combat and prev_in_combat and new_in_combat:
+            prev_round = _state_turn(prev_state)
+            new_round = _state_turn(new_state)
             if new_round >= prev_round + 1:
-                b = self._layer_b_partial(prev_state)
-                b += self._layer_b4_hp_loss_from_round_transition(prev_state, new_state)
+                b += self._layer_b_progress(prev_state)
+                self._b_hp_loss = self._layer_b4_hp_loss_from_round_transition(prev_state, new_state)
+                b += self._b_hp_loss
                 self.combat_tracker.combat_turns += 1
                 self.turn_tracker.on_turn_start(new_state)
 
+        resolved = self._resolve_pending_end_turn_penalty(new_state)
+        self._b_energy_waste = resolved["energy"]
+        self._b_overflow_block = resolved["overflow"]
+        self._b_trigger = resolved["trigger"]
+        b += resolved["total"]
+
         c = 0.0
         if combat_end:
-            is_victory = (new_state_type == "combat_rewards")
+            is_victory = new_state_type in (
+                "combat_rewards", "card_reward", "map", "rest_site",
+                "event", "shop", "treasure", "relic_select", "card_bundle"
+            )
             c = self.layer_c_combat_reward(new_state, is_victory)
             self.turn_tracker.in_combat = False
             self.combat_tracker.in_combat = False
@@ -320,6 +406,10 @@ class RewardShaper:
         self.last_breakdown = {
             "A_action": float(a),
             "B_turn": float(b),
+            "B_energy_waste": float(self._b_energy_waste),
+            "B_overflow_block": float(self._b_overflow_block),
+            "B_hp_loss": float(self._b_hp_loss),
+            "B_trigger": float(self._b_trigger),
             "C_combat": float(c),
             "D_meta": float(d),
             "E_terminal": float(e),
@@ -342,11 +432,11 @@ class RewardShaper:
             reward += max(new_blk - prev_blk, 0.0) * self.action_block_coef
         elif action_kind == "use_potion":
             reward += self.action_potion_bonus
-        elif action_kind == "select_card_reward":
+        elif action_kind == "choose_reward_card":
             reward += self.action_card_pick_bonus
         return reward
 
-    def _layer_b_partial(self, end_state: Dict) -> float:
+    def _layer_b_progress(self, end_state: Dict) -> float:
         reward = 0.0
         snap = self.turn_tracker.turn_start_snapshot or end_state
         snap_combat = snap.get("combat") or {}
@@ -364,27 +454,56 @@ class RewardShaper:
 
         reward += self.turn_tracker.acc_kills * self.kill_reward_per_enemy
 
-        expected_dmg = self.turn_tracker.expected_enemy_damage
+        expected_dmg = _sum_enemy_intent_damage(end_state)
         block_at_end_turn = float(end_player.get("block", 0) or 0)
         if expected_dmg > 0:
             effective_block = min(block_at_end_turn, expected_dmg)
             block_coverage = effective_block / expected_dmg
             reward += block_coverage * self.block_coverage_reward
-            excess_block = max(block_at_end_turn - expected_dmg, 0.0)
-            reward -= min(excess_block / 30.0, self.excess_block_penalty_cap)
-
-        wasted_energy = float(end_combat.get("energy", 0) or 0)
-        max_energy = max(float(end_combat.get("max_energy", 3) or 3), 1.0)
-        hand_at_end = end_combat.get("hand") or []
-        playable = [
-            c for c in hand_at_end
-            if isinstance(c.get("cost"), int) and (c.get("cost", 0) or 0) <= wasted_energy
-        ]
-        if playable and wasted_energy > 0:
-            waste_ratio = wasted_energy / max_energy
-            reward -= waste_ratio * self.energy_waste_penalty
 
         return reward
+
+    def _arm_pending_end_turn(self, state: Dict) -> None:
+        combat = state.get("combat") or {}
+        player = combat.get("player") or {}
+        legal = [str(a) for a in (state.get("legal_actions") or [])]
+        self.pending_turn_penalty.armed = True
+        self.pending_turn_penalty.energy_before_end = float(combat.get("energy", 0) or 0)
+        self.pending_turn_penalty.play_card_legal = "play_card" in legal
+        self.pending_turn_penalty.block_before_end = float(player.get("block", 0) or 0)
+        self.pending_turn_penalty.enemy_total_damage_before_end = float(_enemy_total_damage(state))
+        self.pending_turn_penalty.turn_at_end = _state_turn(state)
+        self.pending_turn_penalty.phase_at_end = _state_phase(state)
+
+    def _resolve_pending_end_turn_penalty(self, state: Dict) -> Dict[str, float]:
+        if not self.pending_turn_penalty.armed:
+            return {"total": 0.0, "energy": 0.0, "overflow": 0.0, "trigger": 0.0}
+
+        phase = _state_phase(state)
+        now_turn = _state_turn(state)
+        hit_transition = phase == "transition"
+        hit_turn_increment = now_turn >= (self.pending_turn_penalty.turn_at_end + 1)
+        if not hit_transition and not hit_turn_increment:
+            return {"total": 0.0, "energy": 0.0, "overflow": 0.0, "trigger": 0.0}
+
+        energy_penalty = 0.0
+        if self.pending_turn_penalty.energy_before_end > 0 and self.pending_turn_penalty.play_card_legal:
+            energy_penalty = -self.energy_waste_penalty * self.pending_turn_penalty.energy_before_end
+
+        overflow = max(
+            self.pending_turn_penalty.block_before_end - self.pending_turn_penalty.enemy_total_damage_before_end,
+            0.0,
+        )
+        overflow_penalty = -min(overflow * self.overflow_block_penalty_coef, self.excess_block_penalty_cap)
+
+        self.pending_turn_penalty.armed = False
+        trigger_code = 1.0 if hit_transition else 2.0
+        return {
+            "total": energy_penalty + overflow_penalty,
+            "energy": energy_penalty,
+            "overflow": overflow_penalty,
+            "trigger": trigger_code,
+        }
 
     def _layer_b4_hp_loss_from_round_transition(self, prev_state: Dict, new_state: Dict) -> float:
         prev_hp = _player_hp(prev_state)
@@ -407,7 +526,7 @@ class RewardShaper:
         new_round = int((new_state.get("combat") or {}).get("round", 0) or 0)
         if new_round < prev_round + 1:
             return 0.0
-        return self._layer_b_partial(prev_state) + self._layer_b4_hp_loss_from_round_transition(prev_state, new_state)
+        return self._layer_b_progress(prev_state) + self._layer_b4_hp_loss_from_round_transition(prev_state, new_state)
 
     def layer_c_combat_reward(self, new_state: Dict, is_victory: bool) -> float:
         if not is_victory:
@@ -440,9 +559,9 @@ class RewardShaper:
         action_kind = str(action.get("action") or action.get("type") or "")
         reward = 0.0
 
-        if action_kind == "select_card_reward":
+        if action_kind == "choose_reward_card":
             reward += self.choose_card_meta_bonus
-        elif action_kind == "skip_card_reward":
+        elif action_kind == "skip_reward_cards":
             reward += 0.0
         elif action_kind == "choose_rest_option":
             idx = int(action.get("index", action.get("option_index", 0)) or 0)
@@ -456,18 +575,18 @@ class RewardShaper:
                     reward += self.rest_mid_hp_bonus
                 elif prev_hp_ratio > self.rest_high_threshold:
                     reward -= self.rest_high_hp_penalty
-        elif action_kind == "shop_purchase":
+        elif action_kind in ("buy_card", "buy_relic", "buy_potion"):
             reward += self.buy_bonus
         elif action_kind == "choose_map_node":
             reward += 0.0
         elif action_kind == "choose_event_option":
             reward += 0.0
-        elif action_kind in ("remove_card", "scrap"):
+        elif action_kind in ("remove_card", "remove_card_at_shop", "scrap"):
             reward += self.remove_card_bonus
 
         prev_deck = len(prev_state.get("deck") or [])
         new_deck = len(new_state.get("deck") or [])
-        if action_kind == "shop_purchase" and new_deck < prev_deck:
+        if action_kind in ("buy_card", "remove_card_at_shop") and new_deck < prev_deck:
             reward += self.remove_card_bonus
 
         return reward

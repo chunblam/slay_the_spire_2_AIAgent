@@ -45,6 +45,15 @@ class StateEncoder:
     CARD_TYPE_MAP = {"ATTACK": 0, "SKILL": 1, "POWER": 2, "STATUS": 3, "CURSE": 4}
     CARD_COST_SPECIAL = {"X": -1, "UNPLAYABLE": -2}
 
+    @staticmethod
+    def _norm_token(value: Optional[str]) -> str:
+        if value is None:
+            return ""
+        s = str(value).strip()
+        if not s:
+            return ""
+        return s.replace("-", "_").replace(" ", "_").upper()
+
     def get_observation_space(self) -> gym.spaces.Dict:
         """返回 Gymnasium 观测空间定义"""
         return gym.spaces.Dict({
@@ -90,7 +99,7 @@ class StateEncoder:
         player_data = combat.get("player", {})
 
         player_vec = self._encode_player(state, player_data, combat)
-        hand_mat, hand_mask = self._encode_hand(combat.get("hand", []), player_data)
+        hand_mat, hand_mask = self._encode_hand(combat.get("hand", []), player_data, combat)
         monsters_mat = self._encode_monsters(combat.get("monsters", []))
         relics_vec = self._encode_relics(state.get("relics", []))
         deck_stats = self._encode_deck(state.get("deck", []))
@@ -130,71 +139,110 @@ class StateEncoder:
             floor_ / MAX_FLOOR,                   # 楼层比例
             min(len(relics) / MAX_RELICS, 1.0),   # 遗物数量比例
             min(len(deck) / MAX_DECK, 1.0),       # 牌组大小比例
-            float(bool(combat)),                  # 是否在战斗中
+            float(bool(state.get("in_combat", False))),  # 是否在战斗中
             min(len(pos_buffs) / 10.0, 1.0),      # 正面 buff 数量
             min(len(debuffs) / 10.0, 1.0),        # 负面 debuff 数量
         ])
 
-    def _encode_hand(self, hand: List[Dict], player: Dict) -> tuple:
-        """编码手牌矩阵及可出牌 mask"""
+    def _encode_hand(self, hand: List[Dict], player: Dict, combat: Optional[Dict] = None) -> tuple:
+        """编码手牌矩阵及可出牌 mask。
+
+        注意：`hand_mask` 是模型输入特征，不是动作采样掩码。
+        真实动作掩码由 action_space.get_valid_action_mask() 构建。
+        """
         mat = np.zeros((MAX_HAND, CARD_FEATURE_DIM), dtype=np.float32)
         mask = np.zeros(MAX_HAND, dtype=np.float32)
-        energy = player.get("energy", 0) if player else 0  # 注意: energy 在 combat 层级
+        combat = combat or {}
+        energy = 0
+        if isinstance(combat, dict):
+            energy = int(combat.get("energy", 0) or 0)
+        if energy <= 0 and player:
+            energy = int(player.get("energy", 0) or 0)
 
         for i, card in enumerate(hand[:MAX_HAND]):
-            cost = card.get("cost", 0)
-            cost_val = cost if isinstance(cost, int) else 0
-            damage = card.get("damage", 0) or 0
-            block = card.get("block", 0) or 0
-            card_type = card.get("type", "ATTACK")
+            if not isinstance(card, dict):
+                continue
+            
+            # API 标准字段: energy_cost（不再用 cost 别名）
+            cost_val = int(card.get("energy_cost", 0) or 0)
+            costs_x = bool(card.get("costs_x", False))
+            damage = int(card.get("damage", 0) or 0)
+            block = int(card.get("block", 0) or 0)
 
-            # 基础特征
-            type_idx = self.CARD_TYPE_MAP.get(card_type, 0)
-            type_oh = np.zeros(5)
-            type_oh[type_idx] = 1.0
-
+            # 手牌中通常没有 card_type，但如果有就用；encoder 不负责补充 card_type
             mat[i] = [
-                cost_val / 3.0,                   # 费用归一化
-                min(damage / MAX_DAMAGE, 1.0),    # 伤害归一化
-                min(block / MAX_BLOCK, 1.0),      # 格挡归一化
-                float(card.get("is_ethereal", False)),
-                float(card.get("exhaust", False)),
-                float(card.get("innate", False)),
-                0.0,  # 保留维度
-                0.0,  # 保留维度
+                cost_val / 3.0,                      # 费用归一化 (energy_cost / 3)
+                min(damage / MAX_DAMAGE, 1.0),       # 伤害归一化
+                min(block / MAX_BLOCK, 1.0),         # 格挡归一化
+                float(card.get("upgraded", False)),  # 是否已升级
+                float(costs_x),                      # 是否为X费
+                float(card.get("star_costs_x", False)),  # 是否为星星X费
+                float(card.get("requires_target", False)),  # 是否需要目标
+                float(card.get("playable", False)),  # 是否可打出
             ]
 
-            # 是否可出: 费用 <= 当前能量 或 特殊费用
-            playable = cost_val <= energy or cost == "X"
+            # 优先使用 API 的 playable 字段；不存在时才回退使用能量规则
+            playable_raw = card.get("playable")
+            if playable_raw is None:
+                playable = (cost_val <= energy) or costs_x
+            else:
+                playable = bool(playable_raw)
             mask[i] = float(playable)
 
         return mat, mask
 
     def _encode_monsters(self, monsters: List[Dict]) -> np.ndarray:
-        """编码敌人矩阵"""
+        """编码敌人矩阵。API 使用 intents[] 中的 intent_type, hits, damage, total_damage 等字段。"""
         mat = np.zeros((MAX_MONSTERS, MONSTER_FEATURE_DIM), dtype=np.float32)
 
-        alive_monsters = [m for m in monsters if m.get("hp", 0) > 0]
+        # API 字段: is_alive（不再推导）
+        alive_monsters = [m for m in monsters if m.get("is_alive", False)]
         for i, monster in enumerate(alive_monsters[:MAX_MONSTERS]):
-            hp = monster.get("hp", 0)
-            max_hp = max(monster.get("max_hp", 1), 1)
-            block = monster.get("block", 0)
-            intent = monster.get("intent", {})
-            intent_type = intent.get("type", "NONE")
-            intent_dmg = intent.get("damage", 0) or 0
+            # API 字段: current_hp（不是 hp）
+            current_hp = int(monster.get("current_hp", 0) or 0)
+            max_hp = max(int(monster.get("max_hp", 1) or 1), 1)
+            block = int(monster.get("block", 0) or 0)
+            
+            # 从 intents[] 提取主意图
+            intents = monster.get("intents")
+            if not isinstance(intents, list):
+                intents = []
+            primary_intent = intents[0] if intents and isinstance(intents[0], dict) else {}
 
-            # Intent type 简单编码
-            intent_map = {"ATTACK": 0, "DEFEND": 1, "BUFF": 2, "DEBUFF": 3,
-                          "SLEEP": 4, "ESCAPE": 5, "NONE": 6, "UNKNOWN": 7}
-            intent_idx = intent_map.get(intent_type, 7)
+            # API 字段: intent_type（不是 type）、hits（不是 times）
+            intent_type = primary_intent.get("intent_type", "UNKNOWN")
+            intent_type_norm = self._norm_token(intent_type)
+            
+            total_damage = primary_intent.get("total_damage")
+            if total_damage is not None:
+                intent_dmg = float(total_damage or 0)
+            else:
+                hits = int(primary_intent.get("hits", 1) or 1)
+                damage = float(primary_intent.get("damage", 0) or 0)
+                intent_dmg = damage * hits
+
+            # Intent type 映射
+            intent_map = {
+                "ATTACK": 0,
+                "ATTACK_BUFF": 0,
+                "ATTACK_DEBUFF": 0,
+                "DEFEND": 1,
+                "BUFF": 2,
+                "DEBUFF": 3,
+                "SLEEP": 4,
+                "ESCAPE": 5,
+                "STATUS_CARD": 6,
+                "UNKNOWN": 7,
+            }
+            intent_idx = intent_map.get(intent_type_norm, 7)
             intent_oh = np.zeros(4)
             intent_oh[min(intent_idx, 3)] = 1.0
 
             mat[i] = [
-                hp / max_hp,                         # HP 比例
-                min(block / MAX_BLOCK, 1.0),          # 格挡比例
-                min(intent_dmg / MAX_DAMAGE, 1.0),    # 意图伤害
-                1.0,                                  # alive
+                current_hp / max_hp,                 # HP 比例
+                min(block / MAX_BLOCK, 1.0),         # 格挡比例
+                min(intent_dmg / MAX_DAMAGE, 1.0),   # 意图伤害
+                1.0,                                 # 是否存活
                 intent_oh[0],
                 intent_oh[1],
                 intent_oh[2],
@@ -204,29 +252,51 @@ class StateEncoder:
         return mat
 
     def _encode_relics(self, relics: List[Dict]) -> np.ndarray:
-        """遗物 one-hot 编码（基于哈希，固定维度）"""
+        """遗物 one-hot 编码（基于 relic_id 哈希）。API 字段: relic_id, name, description, stack, is_melted。"""
         vec = np.zeros(MAX_RELICS, dtype=np.float32)
         for relic in relics[:MAX_RELICS]:
-            name = relic.get("id", relic.get("name", ""))
-            # 简单哈希到槽位
-            slot = hash(name) % MAX_RELICS
+            if not isinstance(relic, dict):
+                continue
+            # API 字段: relic_id（优先）或 name（备选）
+            relic_id = relic.get("relic_id") or relic.get("name", "")
+            if not relic_id:
+                continue
+            # 基于 relic_id 的哈希编码到固定槽位
+            slot = hash(relic_id) % MAX_RELICS
             vec[slot] = 1.0
         return vec
 
     def _encode_deck(self, deck: List[Dict]) -> np.ndarray:
-        """牌组统计特征"""
+        """牌组统计特征。API 字段: card_type（不是 type）、energy_cost（不是 cost）、rarity、star_costs_x 等。"""
         if not deck:
             return np.zeros(8, dtype=np.float32)
 
         total = len(deck)
-        attacks = sum(1 for c in deck if c.get("type") == "ATTACK")
-        skills = sum(1 for c in deck if c.get("type") == "SKILL")
-        powers = sum(1 for c in deck if c.get("type") == "POWER")
-        curses = sum(1 for c in deck if c.get("type") in ("CURSE", "STATUS"))
-        status = sum(1 for c in deck if c.get("type") == "STATUS")
-        upgraded = sum(1 for c in deck if c.get("upgraded", False))
+        
+        # API 字段：card_type（这是 deck 中的标准字段）
+        norm_types = []
+        for c in deck:
+            if not isinstance(c, dict):
+                continue
+            card_type = c.get("card_type", "")
+            if card_type:
+                norm_types.append(self._norm_token(card_type))
+        
+        attacks = sum(1 for t in norm_types if t == "ATTACK")
+        skills = sum(1 for t in norm_types if t == "SKILL")
+        powers = sum(1 for t in norm_types if t == "POWER")
+        curses = sum(1 for t in norm_types if t in ("CURSE", "STATUS"))
+        status = sum(1 for t in norm_types if t == "STATUS")
+        upgraded = sum(1 for c in deck if isinstance(c, dict) and c.get("upgraded", False))
 
-        costs = [c.get("cost", 0) for c in deck if isinstance(c.get("cost"), int)]
+        # API 字段: energy_cost（不再用 cost 别名）
+        costs = []
+        for c in deck:
+            if not isinstance(c, dict):
+                continue
+            cost = c.get("energy_cost", 0)
+            if isinstance(cost, (int, float)):
+                costs.append(int(cost))
         avg_cost = np.mean(costs) / 3.0 if costs else 0.0
 
         return np.array([
@@ -241,11 +311,22 @@ class StateEncoder:
         ], dtype=np.float32)
 
     def _encode_screen_type(self, screen_type: str) -> int:
+        st = self._norm_token(screen_type)
         screen_map = {
             "NONE": 0, "COMBAT": 1, "MAP": 2, "CARD_REWARD": 3,
             "REST": 4, "SHOP": 5, "EVENT": 6, "CHEST": 7,
             "CARD_SELECT": 8, "GRID": 9, "BOSS_REWARD": 10,
             "COMPLETE": 11, "GAME_OVER": 12, "DEATH": 13,
             "LOADING": 14, "OTHER": 15,
+            # STS2AIAgent screen names / env-normalized variants
+            "REWARD": 3,
+            "CARD_SELECTION": 8,
+            "CHOOSE_CARD_BUNDLE": 8,
+            "CARDS_VIEW": 9,
+            "CHARACTER_SELECT": 15,
+            "MAIN_MENU": 0,
+            "MODAL": 15,
+            "UNKNOWN": 15,
+            "MULTIPLAYER_LOBBY": 15,
         }
-        return screen_map.get(screen_type, 15)
+        return screen_map.get(st, 15)

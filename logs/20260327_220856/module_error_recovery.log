@@ -1,0 +1,1 @@
+[22:10:16.940] menu_bootstrap_skip: screen=OTHER phase=game_over legal=['return_to_main_menu', 'menu_return']

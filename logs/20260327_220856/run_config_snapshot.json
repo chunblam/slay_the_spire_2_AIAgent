@@ -1,0 +1,63 @@
+{
+  "device": "auto",
+  "env": {
+    "host": "127.0.0.1",
+    "port": 18080,
+    "character_index": 0,
+    "startup_debug": false,
+    "action_poll_interval": 0.8,
+    "action_min_interval": 0.8,
+    "post_action_settle": 0.8,
+    "action_retry_count": 1,
+    "num_actions": 16
+  },
+  "model": {
+    "hidden_dim": 256,
+    "card_d_model": 64,
+    "monster_d_model": 32
+  },
+  "train": {
+    "total_steps": 30000,
+    "buffer_size": 256,
+    "n_epochs": 3,
+    "batch_size": 64,
+    "lr": 0.0003,
+    "clip_eps": 0.2,
+    "value_loss_coef": 0.5,
+    "entropy_coef": 0.01,
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "save_interval": 5000,
+    "resume_on_restart": true,
+    "save_latest_per_update": true,
+    "continue_logs_on_resume": true,
+    "manual_intervention_max_wait": 180.0,
+    "manual_intervention_poll": 0.5
+  },
+  "llm": {
+    "enabled": false,
+    "backend": "ollama",
+    "model": "qwen2.5:7b",
+    "base_url": "http://127.0.0.1:11434",
+    "strategy": "balanced",
+    "use_map_advisor": false,
+    "use_combat_advisor": false,
+    "use_relic_advisor": false,
+    "use_card_advisor": false,
+    "use_rest_advisor": false,
+    "use_event_advisor": false,
+    "top_k": 3,
+    "temperature": 0.2,
+    "match_bonus_coef": 0.8
+  },
+  "logging": {
+    "level": "INFO",
+    "tensorboard": true,
+    "checkpoint_verbose": false
+  },
+  "perf": {
+    "num_workers": 0,
+    "pin_memory": false,
+    "prefetch_size": 2
+  }
+}
