@@ -100,7 +100,7 @@ class StateEncoder:
 
         player_vec = self._encode_player(state, player_data, combat)
         hand_mat, hand_mask = self._encode_hand(combat.get("hand", []), player_data, combat)
-        monsters_mat = self._encode_monsters(combat.get("monsters", []))
+        monsters_mat = self._encode_monsters(combat.get("enemies", combat.get("monsters", [])))
         relics_vec = self._encode_relics(state.get("relics", []))
         deck_stats = self._encode_deck(state.get("deck", []))
 
@@ -119,7 +119,7 @@ class StateEncoder:
     # ──────────────────────────────────────────────────────────────────────────
 
     def _encode_player(self, state: Dict, player: Dict, combat: Dict) -> np.ndarray:
-        hp = player.get("hp", 0)
+        hp = player.get("current_hp", player.get("hp", 0))
         max_hp = max(player.get("max_hp", 1), 1)
         block = player.get("block", 0)
         energy = combat.get("energy", 0)

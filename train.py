@@ -121,9 +121,100 @@ def build_llm_advisor(cfg: Dict) -> Optional[LLMAdvisor]:
     return advisor
 
 
+# ── 阶段性权重调整 ────────────────────────────────────────────────────────────────
+
+def get_phase_adjusted_weights(total_steps: int, total_steps_limit: int, reward_cfg: Dict) -> Dict[str, float]:
+    """
+    根据训练进度计算阶段性权重调整。
+    
+    分为三个阶段（按 total_steps 比例切分，而不是固定步数）：
+    - 前期: [0, total_steps * early_end_ratio)
+    - 中期: [total_steps * early_end_ratio, total_steps * mid_end_ratio)
+    - 后期: [total_steps * mid_end_ratio, total_steps]
+    
+    返回字典包含 5 个 layer 权重值。
+    """
+    schedule = reward_cfg.get("phase_schedule") or {}
+    enabled = bool(schedule.get("enabled", True))
+
+    base = {
+        "layer_a": float(reward_cfg.get("layer_a_weight", 1.0)),
+        "layer_b": float(reward_cfg.get("layer_b_weight", 1.0)),
+        "layer_c": float(reward_cfg.get("layer_c_weight", 1.0)),
+        "layer_d": float(reward_cfg.get("layer_d_weight", 0.3)),
+        "layer_e": float(reward_cfg.get("layer_e_weight", 1.0)),
+    }
+    if not enabled or total_steps_limit <= 0:
+        return base
+
+    early_end_ratio = float(schedule.get("early_end_ratio", 0.2))
+    mid_end_ratio = float(schedule.get("mid_end_ratio", 0.7))
+    early_end_ratio = min(max(early_end_ratio, 0.05), 0.9)
+    mid_end_ratio = min(max(mid_end_ratio, early_end_ratio + 0.05), 0.98)
+
+    early_weights = schedule.get("early_weights") or {
+        "layer_a": 0.8,
+        "layer_b": 0.8,
+        "layer_c": 1.2,
+        "layer_d": 0.5,
+        "layer_e": 0.3,
+    }
+    mid_start_weights = schedule.get("mid_start_weights") or dict(early_weights)
+    mid_end_weights = schedule.get("mid_end_weights") or {
+        "layer_a": 0.82,
+        "layer_b": 0.82,
+        "layer_c": 1.15,
+        "layer_d": 0.5,
+        "layer_e": 0.7,
+    }
+    late_weights = schedule.get("late_weights") or {
+        "layer_a": 0.85,
+        "layer_b": 0.85,
+        "layer_c": 1.1,
+        "layer_d": 0.5,
+        "layer_e": 0.8,
+    }
+
+    phase_1_steps = max(1, int(total_steps_limit * early_end_ratio))
+    phase_2_steps = max(phase_1_steps + 1, int(total_steps_limit * mid_end_ratio))
+
+    if total_steps < phase_1_steps:
+        return {
+            "layer_a": float(early_weights.get("layer_a", base["layer_a"])),
+            "layer_b": float(early_weights.get("layer_b", base["layer_b"])),
+            "layer_c": float(early_weights.get("layer_c", base["layer_c"])),
+            "layer_d": float(early_weights.get("layer_d", base["layer_d"])),
+            "layer_e": float(early_weights.get("layer_e", base["layer_e"])),
+        }
+
+    if total_steps < phase_2_steps:
+        denom = max(1, phase_2_steps - phase_1_steps)
+        progress = (total_steps - phase_1_steps) / denom
+        return {
+            "layer_a": float(mid_start_weights.get("layer_a", base["layer_a"])) +
+                (float(mid_end_weights.get("layer_a", base["layer_a"])) - float(mid_start_weights.get("layer_a", base["layer_a"]))) * progress,
+            "layer_b": float(mid_start_weights.get("layer_b", base["layer_b"])) +
+                (float(mid_end_weights.get("layer_b", base["layer_b"])) - float(mid_start_weights.get("layer_b", base["layer_b"]))) * progress,
+            "layer_c": float(mid_start_weights.get("layer_c", base["layer_c"])) +
+                (float(mid_end_weights.get("layer_c", base["layer_c"])) - float(mid_start_weights.get("layer_c", base["layer_c"]))) * progress,
+            "layer_d": float(mid_start_weights.get("layer_d", base["layer_d"])) +
+                (float(mid_end_weights.get("layer_d", base["layer_d"])) - float(mid_start_weights.get("layer_d", base["layer_d"]))) * progress,
+            "layer_e": float(mid_start_weights.get("layer_e", base["layer_e"])) +
+                (float(mid_end_weights.get("layer_e", base["layer_e"])) - float(mid_start_weights.get("layer_e", base["layer_e"]))) * progress,
+        }
+
+    return {
+        "layer_a": float(late_weights.get("layer_a", base["layer_a"])),
+        "layer_b": float(late_weights.get("layer_b", base["layer_b"])),
+        "layer_c": float(late_weights.get("layer_c", base["layer_c"])),
+        "layer_d": float(late_weights.get("layer_d", base["layer_d"])),
+        "layer_e": float(late_weights.get("layer_e", base["layer_e"])),
+    }
+
+
 # ── 工具函数 ──────────────────────────────────────────────────────────────────
 
-def _extract_agent_card_index(executed_action: Dict, screen_type: str) -> Optional[int]:
+def _extract_agent_card_index(executed_action: Dict, screen: str) -> Optional[int]:
     """
     从已执行动作里解析 agent 选的卡牌索引（仅 CARD_REWARD 屏幕）。
     返回 None 表示不是选牌动作，不触发 match bonus。
@@ -134,7 +225,7 @@ def _extract_agent_card_index(executed_action: Dict, screen_type: str) -> Option
     旧式封装（若日后在 env 里包一层）:
       - {"type": "choose_reward", "payload": {"skip": bool, "card_index": int}}
     """
-    if screen_type != "CARD_REWARD":
+    if str(screen or "").upper() != "CARD_REWARD":
         return None
 
     raw = executed_action.get("action", "")
@@ -214,13 +305,13 @@ def _extract_combat_card_played(executed_action: Dict) -> Optional[int]:
 
 def _should_manual_intervention(raw_state: Dict, action_mask_list: list) -> bool:
     _ = action_mask_list
-    return str(raw_state.get("raw_screen", "")).upper() == "UNKNOWN"
+    return str(raw_state.get("screen", "")).upper() == "UNKNOWN"
 
 
 def _is_menu_bootstrap_state(raw_state: Dict) -> bool:
-    screen = str(raw_state.get("screen_type", "")).upper()
+    screen = str(raw_state.get("screen", "")).upper()
     phase = str(raw_state.get("phase", "")).lower()
-    return screen in ("NONE", "OTHER") and phase != "run"
+    return screen in ("MAIN_MENU", "CHARACTER_SELECT", "MODAL", "UNKNOWN") and phase != "run"
 
 
 class RunLogger:
@@ -348,6 +439,14 @@ def train(cfg: Dict):
         smith_bonus=_r.get("smith_bonus", 0.5),
         remove_card_bonus=_r.get("remove_card_bonus", 0.4),
         choose_card_meta_bonus=_r.get("choose_card_meta_bonus", 0.3),
+        claim_gold_bonus=_r.get("claim_gold_bonus", 0.12),
+        claim_card_bonus=_r.get("claim_card_bonus", 0.18),
+        claim_potion_bonus=_r.get("claim_potion_bonus", 0.15),
+        claim_relic_bonus=_r.get("claim_relic_bonus", 0.25),
+        claim_remove_card_bonus=_r.get("claim_remove_card_bonus", 0.2),
+        claim_special_card_bonus=_r.get("claim_special_card_bonus", 0.2),
+        claim_linked_set_bonus=_r.get("claim_linked_set_bonus", 0.18),
+        claim_unknown_bonus=_r.get("claim_unknown_bonus", 0.1),
         buy_bonus=_r.get("buy_bonus", 0.2),
         # Layer E
         terminal_victory_bonus=_r.get("terminal_victory_bonus", 100.0),
@@ -409,7 +508,7 @@ def train(cfg: Dict):
 
     print("⏳ 等待游戏就绪（确保 STS2 + STS2AIAgent Mod 已运行）...")
     obs, info = env.reset()
-    run_logger.log("env_step_state", f"reset: screen={info.get('screen_type')} floor={info.get('floor')} hp={info.get('hp')}/{info.get('max_hp')}")
+    run_logger.log("env_step_state", f"reset: screen={info.get('screen')} floor={info.get('floor')} hp={info.get('hp')}/{info.get('max_hp')}")
     prev_screen = ""
     combat_step_counter = 0
     llm_card_triggered = False
@@ -428,19 +527,19 @@ def train(cfg: Dict):
         episode_max_floor = int(info.get("floor", 0) or 0)
 
         while not buffer.is_full():
-            screen_type = info.get("screen_type", "")
+            screen = str(info.get("screen", "") or "").upper()
             raw_state   = info.get("raw_state", {})
             episode_max_floor = max(episode_max_floor, int(info.get("floor", 0) or 0))
             run_logger.log(
                 "env_step_state",
-                f"pre_step total_steps={total_steps} buffer_size={len(buffer)} screen={screen_type} floor={info.get('floor')} gold={info.get('gold')}",
+                f"pre_step total_steps={total_steps} buffer_size={len(buffer)} screen={screen} floor={info.get('floor')} gold={info.get('gold')}",
             )
 
             # 菜单/选角流程只用于自动开局，不计入样本与奖励，避免污染训练数据。
             if _is_menu_bootstrap_state(raw_state):
                 run_logger.log(
                     "error_recovery",
-                    f"menu_bootstrap_skip: screen={screen_type} phase={raw_state.get('phase')} legal={raw_state.get('legal_actions')}",
+                    f"menu_bootstrap_skip: screen={screen} phase={raw_state.get('phase')} legal={raw_state.get('legal_actions')}",
                 )
                 obs, info = env.reset()
                 prev_screen = ""
@@ -449,25 +548,25 @@ def train(cfg: Dict):
                 continue
 
             # ── ① LLM战略触发节点（仅 llm.enabled=true 时生效）──────────────
-            if screen_type == "CARD_REWARD" and not llm_card_triggered and llm_advisor is not None:
+            if screen == "CARD_REWARD" and not llm_card_triggered and llm_advisor is not None:
                 reward_cards = _get_reward_cards_from_state(raw_state)
                 if reward_cards:
                     llm_advisor.evaluate_card_reward(raw_state, reward_cards)
                 llm_card_triggered = True
-            elif screen_type != "CARD_REWARD":
+            elif screen != "CARD_REWARD":
                 llm_card_triggered = False
 
-            if screen_type == "MAP" and prev_screen != "MAP" and llm_advisor is not None:
+            if screen == "MAP" and prev_screen != "MAP" and llm_advisor is not None:
                 route_options = _get_map_options_from_state(raw_state)
                 if route_options:
                     llm_advisor.evaluate_map_route(raw_state, route_options)
 
-            if screen_type in ("CHEST", "REWARD") and prev_screen not in ("CHEST", "REWARD") and llm_advisor is not None:
+            if screen in ("CHEST", "REWARD") and prev_screen not in ("CHEST", "REWARD") and llm_advisor is not None:
                 relic_options = _get_relic_options_from_state(raw_state)
                 if relic_options:
                     llm_advisor.evaluate_relic_choice(raw_state, relic_options)
 
-            if screen_type == "COMBAT" and prev_screen != "COMBAT":
+            if screen == "COMBAT" and prev_screen != "COMBAT":
                 combat_step_counter = 0
                 if llm_advisor is not None:
                     llm_advisor.evaluate_combat_opening(raw_state)
@@ -490,7 +589,7 @@ def train(cfg: Dict):
                 pre_manual_record = {
                     "total_steps": total_steps,
                     "episode": episode,
-                    "screen_type": screen_type,
+                    "screen": screen,
                     "phase": raw_state.get("phase"),
                     "can_act": raw_state.get("can_act"),
                     "block_reason": raw_state.get("block_reason"),
@@ -507,7 +606,7 @@ def train(cfg: Dict):
                 )
                 run_logger.log(
                     "error_recovery",
-                    f"manual_intervention_wait_start: screen={screen_type} phase={raw_state.get('phase')} can_act={raw_state.get('can_act')} legal={raw_state.get('legal_actions')}",
+                    f"manual_intervention_wait_start: screen={screen} phase={raw_state.get('phase')} can_act={raw_state.get('can_act')} legal={raw_state.get('legal_actions')}",
                 )
                 print("🧑‍🔧 检测到 UNKNOWN 状态，需人工介入，等待人工操作后自动继续...")
                 next_obs, env_reward, done, truncated, next_info = env.step_manual_intervention(
@@ -526,7 +625,7 @@ def train(cfg: Dict):
                     "total_steps": total_steps,
                     "episode": episode,
                     "changed": bool(next_info.get("manual_intervention_changed", False)),
-                    "next_screen_type": next_info.get("screen_type"),
+                    "next_screen": next_info.get("screen"),
                     "next_floor": next_info.get("floor"),
                     "next_gold": next_info.get("gold"),
                     "next_hp": next_info.get("hp"),
@@ -540,7 +639,7 @@ def train(cfg: Dict):
                 executed_action = next_info.get("action_executed", {})
                 run_logger.log(
                     "env_step_state",
-                    f"post_step action={executed_action} next_screen={next_info.get('screen_type')} floor={next_info.get('floor')}",
+                    f"post_step action={executed_action} next_screen={next_info.get('screen')} floor={next_info.get('floor')}",
                 )
 
                 shaped_reward = reward_shaper.shape(
@@ -552,7 +651,7 @@ def train(cfg: Dict):
                     agent_card_index=None,
                     agent_relic_index=None,
                     agent_map_index=None,
-                    combat_step=combat_step_counter if screen_type == "COMBAT" else None,
+                    combat_step=combat_step_counter if screen == "COMBAT" else None,
                     agent_card_played=None,
                 )
                 run_logger.log(
@@ -592,8 +691,8 @@ def train(cfg: Dict):
                 obs = next_obs
                 info = next_info
                 episode_max_floor = max(episode_max_floor, int(next_info.get("floor", 0) or 0))
-                prev_screen = screen_type
-                if screen_type == "COMBAT":
+                prev_screen = screen
+                if screen == "COMBAT":
                     combat_step_counter += 1
                 if resume_on_restart:
                     snapshot = _extract_progress_snapshot(
@@ -637,7 +736,7 @@ def train(cfg: Dict):
             player_energy = int((combat_block.get("player") or {}).get("energy", combat_block.get("energy", 0)) or 0)
             run_logger.log(
                 "agent_decision",
-                f"step={total_steps} screen={screen_type} action_id={action_id} "
+                f"step={total_steps} screen={screen} action_id={action_id} "
                 f"log_prob={log_prob.item():.4f} value={value.item():.4f} "
                 f"valid_actions={sum(1 for m in action_mask_list if m)} "
                 f"legal={legal_actions} hand={len(hand_cards)} playable={playable_count} energy={player_energy}",
@@ -669,7 +768,7 @@ def train(cfg: Dict):
             executed_action = next_info.get("action_executed", {})
             run_logger.log(
                 "env_step_state",
-                f"post_step action={executed_action} next_screen={next_info.get('screen_type')} floor={next_info.get('floor')}",
+                f"post_step action={executed_action} next_screen={next_info.get('screen')} floor={next_info.get('floor')}",
             )
             manual_intervention = bool(next_info.get("manual_intervention", False))
             if manual_intervention:
@@ -683,7 +782,7 @@ def train(cfg: Dict):
                 continue
 
             # ── ⑥ 解析 agent 是否做了选牌动作 ────────────────────────────
-            agent_card_index = _extract_agent_card_index(executed_action, screen_type)
+            agent_card_index = _extract_agent_card_index(executed_action, screen)
             agent_relic_index = _extract_agent_relic_index(executed_action)
             agent_map_index = _extract_agent_map_index(executed_action)
             combat_card_played = _extract_combat_card_played(executed_action)
@@ -698,7 +797,7 @@ def train(cfg: Dict):
                 agent_card_index=agent_card_index,   # ← 新增传参
                 agent_relic_index=agent_relic_index,
                 agent_map_index=agent_map_index,
-                combat_step=combat_step_counter if screen_type == "COMBAT" else None,
+                combat_step=combat_step_counter if screen == "COMBAT" else None,
                 agent_card_played=combat_card_played,
             )
             run_logger.log(
@@ -738,9 +837,9 @@ def train(cfg: Dict):
             obs                = next_obs
             info               = next_info
             episode_max_floor = max(episode_max_floor, int(next_info.get("floor", 0) or 0))
-            if screen_type == "COMBAT":
+            if screen == "COMBAT":
                 combat_step_counter += 1
-            prev_screen = screen_type
+            prev_screen = screen
 
             if resume_on_restart:
                 snapshot = _extract_progress_snapshot(
@@ -802,11 +901,24 @@ def train(cfg: Dict):
             n_epochs=cfg["train"]["n_epochs"],
             batch_size=cfg["train"]["batch_size"],
         )
+        
+        # ── 动态权重调整（根据训练阶段）────────────────────────────────────────
+        adjusted_weights = get_phase_adjusted_weights(total_steps, cfg["train"]["total_steps"], _r)
+        reward_shaper.update_layer_weights(
+            layer_a=adjusted_weights["layer_a"],
+            layer_b=adjusted_weights["layer_b"],
+            layer_c=adjusted_weights["layer_c"],
+            layer_d=adjusted_weights["layer_d"],
+            layer_e=adjusted_weights["layer_e"],
+        )
+        
         run_logger.log(
             "ppo_update",
             f"update_at_steps={total_steps} batch_size={cfg['train']['batch_size']} "
             f"buffer_size={cfg['train']['buffer_size']} pg_loss={metrics['pg_loss']:.6f} "
-            f"vf_loss={metrics['vf_loss']:.6f} entropy={metrics['entropy']:.6f}",
+            f"vf_loss={metrics['vf_loss']:.6f} entropy={metrics['entropy']:.6f} "
+            f"|| layer_weights: A={adjusted_weights['layer_a']:.2f} B={adjusted_weights['layer_b']:.2f} "
+            f"C={adjusted_weights['layer_c']:.2f} D={adjusted_weights['layer_d']:.2f} E={adjusted_weights['layer_e']:.2f}"
         )
         if save_latest_per_update:
             agent.save(latest_ckpt_path)

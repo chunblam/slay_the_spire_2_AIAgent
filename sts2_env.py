@@ -7,23 +7,6 @@ import requests
 from state_encoder import StateEncoder
 from action_space import STS2ActionSpace
 
-# Screen type mapping: STS2AIAgent screen enum -> normalized state_type
-SCREEN_ENUM_MAP = {
-    "COMBAT": "combat",
-    "MAP": "map",
-    "REWARD": "reward_screen",
-    "SHOP": "shop",
-    "REST": "rest",
-    "EVENT": "event",
-    "CARD_SELECTION": "card_selection",
-    "CHEST": "chest",
-    "GAME_OVER": "game_over",
-    "CHARACTER_SELECT": "character_select_menu",
-    "MODAL": "modal",
-    "UNKNOWN": "unknown",
-    "MAIN_MENU": "main_menu",
-}
-
 class STS2Env(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
 
@@ -97,7 +80,7 @@ class STS2Env(gym.Env):
             refreshed = self._get_state()
             if not self._can_act_now(refreshed) and not self._is_terminal_state(refreshed):
                 raise RuntimeError(
-                    f"step() called but state not actionable: state_type={refreshed.get('state_type')} can_act={refreshed.get('can_act')}"
+                    f"step() called but state not actionable: screen={refreshed.get('screen')} can_act={refreshed.get('can_act')}"
                 )
             prev_state = refreshed
             self._current_state = prev_state
@@ -169,35 +152,6 @@ class STS2Env(gym.Env):
         return payload
 
     @staticmethod
-    def _to_screen_type(state_type: str) -> str:
-        st = str(state_type or "").lower()
-        if st in ("monster", "elite", "boss", "combat"):
-            return "COMBAT"
-        if st == "map":
-            return "MAP"
-        if st in ("card_reward", "card_selection"):
-            return "CARD_REWARD"
-        if st in ("combat_rewards", "reward_screen"):
-            return "REWARD"
-        if st in ("rest_site", "rest"):
-            return "REST"
-        if st == "shop":
-            return "SHOP"
-        if st == "event":
-            return "EVENT"
-        if st in ("treasure", "relic_select", "chest"):
-            return "CHEST"
-        if st in ("card_select", "hand_select"):
-            return "CARD_SELECT"
-        if st == "card_bundle":
-            return "CHOOSE_CARD_BUNDLE"
-        if st == "main_menu":
-            return "NONE"
-        if st in ("character_select_menu", "menu", "overlay", "unknown"):
-            return "OTHER"
-        return "OTHER"
-
-    @staticmethod
     def _normalize_state(raw_state: Dict, fallback_state: Optional[Dict] = None) -> Dict:
         out: Dict[str, Any] = {}
         fallback_state = fallback_state or {}
@@ -214,9 +168,9 @@ class STS2Env(gym.Env):
             fb_val = fallback_state.get(key) if isinstance(fallback_state.get(key), dict) else {}
             return {**fb_val, **raw_val}
 
-        # STS2AIAgent: screen is an enum (COMBAT, MAP, etc.); normalize to state_type
-        screen_raw = _pick("screen", "") or ""
-        state_type = SCREEN_ENUM_MAP.get(screen_raw, str(screen_raw or "").lower())
+        # Preserve raw GET /api/v1/session/state screen keyword for downstream reward logic.
+        screen_raw = str(_pick("screen", "UNKNOWN") or "UNKNOWN").upper()
+        state_type = str(screen_raw).lower()
 
         legal_actions = [str(a) for a in (_pick("legal_actions") or [])]
         if not legal_actions:
@@ -232,13 +186,14 @@ class STS2Env(gym.Env):
         player = {**player_fb, **player_raw}
 
         out["state_type"] = state_type
-        out["raw_screen"] = screen_raw.upper() if isinstance(screen_raw, str) else screen_raw
-        out["screen_type"] = STS2Env._to_screen_type(state_type)
+        out["screen"] = screen_raw
+        out["raw_screen"] = screen_raw
+        out["screen_type"] = screen_raw
         session_phase = str(_pick("phase") or "").strip().lower()
         if session_phase:
             out["phase"] = session_phase
         else:
-            out["phase"] = "run" if state_type not in ("", "main_menu", "character_select_menu", "menu", "overlay", "unknown") else "menu"
+            out["phase"] = "run" if screen_raw not in ("", "MAIN_MENU", "CHARACTER_SELECT", "MODAL", "UNKNOWN") else "menu"
 
         can_act_raw = _pick("can_act")
         out["can_act"] = bool(can_act_raw) if can_act_raw is not None else bool(legal_actions)
@@ -269,7 +224,8 @@ class STS2Env(gym.Env):
         combat_payload["turn"] = str(combat.get("turn", ""))
         combat_payload["combat_type"] = state_type if state_type in ("monster", "elite", "boss", "combat") else ""
         combat_payload["player"] = {
-            "hp": int(player.get("hp", player.get("current_hp", 0)) or 0),
+            "current_hp": int(player.get("current_hp", player.get("hp", 0)) or 0),
+            "hp": int(player.get("current_hp", player.get("hp", 0)) or 0),
             "max_hp": int(player.get("max_hp", 1) or 1),
             "block": int(player.get("block", 0) or 0),
             "energy": int(player.get("energy", 0) or 0),
@@ -373,6 +329,8 @@ class STS2Env(gym.Env):
                     "total_damage": int(primary_intent.get("total_damage", 0) or 0),
                 },
             })
+        combat_payload["enemies"] = monsters_payload
+        # Temporary compatibility alias for modules not migrated yet.
         combat_payload["monsters"] = monsters_payload
         out["combat"] = combat_payload
 
@@ -463,13 +421,28 @@ class STS2Env(gym.Env):
             "can_proceed": bool(chest.get("can_proceed", treasure.get("can_proceed", relic_select.get("can_skip", False)))),
         }
 
+        selection_payload = _pick_dict("selection")
         card_select = _pick_dict("card_select")
         hand_select = _pick_dict("hand_select")
-        select_cards = card_select.get("cards") if isinstance(card_select.get("cards"), list) else hand_select.get("cards", [])
+        select_cards = selection_payload.get("cards") if isinstance(selection_payload.get("cards"), list) else None
+        if select_cards is None:
+            select_cards = card_select.get("cards") if isinstance(card_select.get("cards"), list) else hand_select.get("cards", [])
+
+        min_select = int(selection_payload.get("min_select", card_select.get("min_select", hand_select.get("min_select", 1))) or 1)
+        max_select = int(selection_payload.get("max_select", card_select.get("max_select", hand_select.get("max_select", min_select))) or min_select)
+        selected_count = int(selection_payload.get("selected_count", card_select.get("selected_count", hand_select.get("selected_count", 0))) or 0)
+        requires_confirmation = bool(selection_payload.get("requires_confirmation", card_select.get("requires_confirmation", hand_select.get("requires_confirmation", False))))
+        can_confirm = bool(selection_payload.get("can_confirm", card_select.get("can_confirm", hand_select.get("can_confirm", False))))
+
         out["selection"] = {
+            "kind": selection_payload.get("kind", card_select.get("kind", hand_select.get("kind", ""))),
             "cards": select_cards if isinstance(select_cards, list) else [],
-            "prompt": card_select.get("prompt", hand_select.get("prompt", "")),
-            "can_confirm": bool(card_select.get("can_confirm", hand_select.get("can_confirm", False))),
+            "prompt": selection_payload.get("prompt", card_select.get("prompt", hand_select.get("prompt", ""))),
+            "min_select": max(0, min_select),
+            "max_select": max(max(0, min_select), max_select),
+            "selected_count": max(0, selected_count),
+            "requires_confirmation": requires_confirmation,
+            "can_confirm": can_confirm,
             "can_cancel": bool(card_select.get("can_cancel", hand_select.get("can_cancel", False))),
         }
 
@@ -606,17 +579,16 @@ class STS2Env(gym.Env):
         deadline = time.time() + timeout_sec
         while time.time() < deadline:
             st = self._get_state()
-            state_type = str(st.get("state_type", "")).lower()
+            screen = str(st.get("screen", "")).upper()
             legal = [str(a) for a in (st.get("legal_actions") or [])]
 
             if self.startup_debug:
-                print(f"[startup] state_type={state_type} legal={legal}")
+                print(f"[startup] screen={screen} legal={legal}")
 
             # Already in a playable run-state
-            if state_type in (
-                "combat", "monster", "elite", "boss", "map", "event", "shop", "rest", "rest_site",
-                "card_reward", "card_selection", "combat_rewards", "reward_screen", "card_select", "hand_select",
-                "card_bundle", "treasure", "relic_select", "chest",
+            if screen in (
+                "COMBAT", "MAP", "EVENT", "SHOP", "REST", "REWARD",
+                "CARD_REWARD", "CARD_SELECTION", "CARD_BUNDLE", "CHEST",
             ):
                 self._startup_character_selected = False
                 return st
@@ -636,7 +608,7 @@ class STS2Env(gym.Env):
                 self._execute_action_with_recovery({"action": "embark"})
                 continue
 
-            if "return_to_main_menu" in legal and state_type != "main_menu":
+            if "return_to_main_menu" in legal and screen != "MAIN_MENU":
                 self._execute_action_with_recovery({"action": "return_to_main_menu"})
                 self._startup_character_selected = False
                 continue
@@ -647,7 +619,8 @@ class STS2Env(gym.Env):
 
     @staticmethod
     def _state_is_actionable(state: Dict) -> bool:
-        return bool(state.get("screen_type", "")) and state.get("screen_type") != "NONE"
+        screen = str(state.get("screen", "") or "").upper()
+        return bool(screen) and screen != "MAIN_MENU"
 
     @staticmethod
     def _can_act_now(state: Dict) -> bool:
@@ -729,7 +702,7 @@ class STS2Env(gym.Env):
     def _state_signature(state: Dict) -> Tuple:
         combat_player = (state.get("combat") or {}).get("player") or {}
         return (
-            state.get("screen_type", ""),
+            state.get("screen", ""),
             state.get("state_type", ""),
             bool(state.get("can_act", False)),
             tuple(state.get("legal_actions") or []),
@@ -743,11 +716,10 @@ class STS2Env(gym.Env):
 
     @staticmethod
     def _is_terminal_state(state: Dict) -> bool:
-        screen = str(state.get("screen_type", "")).upper()
+        screen = str(state.get("screen", "")).upper()
         if screen == "GAME_OVER":
             return True
-        state_type = str(state.get("state_type", "")).lower()
-        if state_type in ("main_menu", "character_select_menu", "menu"):
+        if screen in ("MAIN_MENU", "CHARACTER_SELECT"):
             return True
         game_over = state.get("game_over") or {}
         return bool(game_over.get("victory", False) or game_over.get("defeat", False))
@@ -757,7 +729,7 @@ class STS2Env(gym.Env):
         prev_player = (prev_state.get("combat") or {}).get("player") or {}
         new_player = (new_state.get("combat") or {}).get("player") or {}
         return {
-            "screen_type": [prev_state.get("screen_type", ""), new_state.get("screen_type", "")],
+            "screen": [prev_state.get("screen", ""), new_state.get("screen", "")],
             "state_type": [prev_state.get("state_type", ""), new_state.get("state_type", "")],
             "can_act": [bool(prev_state.get("can_act", False)), bool(new_state.get("can_act", False))],
             "legal_actions_count": [len(prev_state.get("legal_actions") or []), len(new_state.get("legal_actions") or [])],
@@ -780,18 +752,18 @@ class STS2Env(gym.Env):
         reward = 0.0
         done = False
 
-        if prev_state.get("screen_type") == "GAME_OVER":
+        if str(prev_state.get("screen", "")).upper() == "GAME_OVER":
             done = True
             return reward, done
 
-        if new_state.get("screen_type") == "GAME_OVER":
+        if str(new_state.get("screen", "")).upper() == "GAME_OVER":
             done = True
             return reward, done
 
         # Terminal transitions may return to menu-like states directly.
-        prev_state_type = str(prev_state.get("state_type", "")).lower()
-        new_state_type = str(new_state.get("state_type", "")).lower()
-        if prev_state_type not in ("main_menu", "character_select_menu") and new_state_type in ("main_menu", "character_select_menu"):
+        prev_screen = str(prev_state.get("screen", "")).upper()
+        new_screen = str(new_state.get("screen", "")).upper()
+        if prev_screen not in ("MAIN_MENU", "CHARACTER_SELECT") and new_screen in ("MAIN_MENU", "CHARACTER_SELECT"):
             done = True
             return reward, done
 
@@ -804,7 +776,7 @@ class STS2Env(gym.Env):
 
     def _build_info(self, state: Dict) -> Dict:
         return {
-            "screen_type": state.get("screen_type", ""),
+            "screen": state.get("screen", ""),
             "state_type": state.get("state_type", ""),
             "floor": state.get("floor", 0),
             "hp": state.get("combat", {}).get("player", {}).get("hp", 0),
@@ -818,7 +790,7 @@ class STS2Env(gym.Env):
         }
 
     def _print_state(self, state: Dict):
-        screen = state.get("screen_type", "?")
+        screen = state.get("screen", "?")
         floor = state.get("floor", 0)
         combat = state.get("combat", {})
         player = combat.get("player", {})

@@ -1,0 +1,544 @@
+[21:25:54.848] step=0 screen=CARD_SELECTION action_id=1 log_prob=-2.0828 value=0.5282 valid_actions=8 legal=['select_deck_card'] hand=0 playable=0 energy=0
+[21:26:05.713] step=1 screen=CARD_SELECTION action_id=6 log_prob=-2.0172 value=0.5315 valid_actions=8 legal=['select_deck_card'] hand=0 playable=0 energy=0
+[21:26:06.702] step=2 screen=EVENT action_id=7 log_prob=-2.1344 value=0.5263 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:26:07.563] step=3 screen=EVENT action_id=5 log_prob=-2.0315 value=0.5115 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:26:08.514] step=4 screen=MAP action_id=7 log_prob=-2.0305 value=0.5230 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:26:14.424] step=5 screen=COMBAT action_id=0 log_prob=-1.8611 value=0.3306 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:26:15.695] step=6 screen=COMBAT action_id=2 log_prob=-1.7588 value=0.2903 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:26:16.929] step=7 screen=COMBAT action_id=15 log_prob=-0.9749 value=0.3553 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:26:22.743] step=8 screen=COMBAT action_id=4 log_prob=-1.9581 value=0.3420 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:26:23.912] step=9 screen=COMBAT action_id=15 log_prob=-1.0652 value=0.2877 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:26:30.524] step=10 screen=COMBAT action_id=15 log_prob=-1.2381 value=0.2924 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:26:36.364] step=11 screen=COMBAT action_id=3 log_prob=-1.8283 value=0.3169 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:26:37.525] step=12 screen=COMBAT action_id=1 log_prob=-1.6292 value=0.3326 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:26:38.692] step=13 screen=COMBAT action_id=15 log_prob=-0.6749 value=0.2983 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:26:45.396] step=14 screen=COMBAT action_id=3 log_prob=-1.7794 value=0.3916 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:26:46.552] step=15 screen=COMBAT action_id=2 log_prob=-1.6793 value=0.2965 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:26:47.735] step=16 screen=COMBAT action_id=15 log_prob=-0.8606 value=0.3263 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:26:53.649] step=17 screen=COMBAT action_id=15 log_prob=-1.2524 value=0.3033 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:00.254] step=18 screen=COMBAT action_id=3 log_prob=-1.9093 value=0.3646 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:01.474] step=19 screen=COMBAT action_id=15 log_prob=-1.1275 value=0.3440 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:27:07.248] step=20 screen=COMBAT action_id=0 log_prob=-1.9368 value=0.4005 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:08.417] step=21 screen=COMBAT action_id=15 log_prob=-1.1286 value=0.2947 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:27:14.217] step=22 screen=COMBAT action_id=0 log_prob=-2.0457 value=0.3760 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:15.447] step=23 screen=COMBAT action_id=2 log_prob=-1.9129 value=0.3212 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:27:16.684] step=24 screen=COMBAT action_id=1 log_prob=-1.6375 value=0.3966 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:27:17.877] step=25 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4810 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:27:23.658] step=26 screen=COMBAT action_id=1 log_prob=-1.9619 value=0.3998 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:24.828] step=27 screen=COMBAT action_id=15 log_prob=-1.1203 value=0.3755 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:27:31.475] step=28 screen=COMBAT action_id=4 log_prob=-1.9971 value=0.3476 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:32.707] step=29 screen=COMBAT action_id=1 log_prob=-1.9484 value=0.3682 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:27:33.943] step=30 screen=COMBAT action_id=0 log_prob=-1.5988 value=0.4126 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:27:37.524] step=31 screen=REWARD action_id=2 log_prob=-2.1377 value=0.5202 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:27:38.504] step=32 screen=CARD_SELECTION action_id=1 log_prob=-2.1011 value=0.5048 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[21:27:39.378] step=33 screen=REWARD action_id=3 log_prob=-2.0485 value=0.5147 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:27:40.226] step=34 screen=REWARD action_id=5 log_prob=-2.1142 value=0.4980 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward', 'discard_potion'] hand=0 playable=0 energy=0
+[21:27:41.103] step=35 screen=REWARD action_id=3 log_prob=-2.0771 value=0.5063 valid_actions=8 legal=['collect_rewards_and_proceed', 'discard_potion'] hand=0 playable=0 energy=0
+[21:27:42.038] step=36 screen=MAP action_id=0 log_prob=-2.0755 value=0.5034 valid_actions=8 legal=['choose_map_node', 'discard_potion'] hand=0 playable=0 energy=0
+[21:27:42.977] step=37 screen=MAP action_id=6 log_prob=-2.1394 value=0.5029 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:27:48.112] step=38 screen=COMBAT action_id=1 log_prob=-1.9856 value=0.3199 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:49.262] step=39 screen=COMBAT action_id=3 log_prob=-1.8191 value=0.2464 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:27:50.493] step=40 screen=COMBAT action_id=0 log_prob=-1.3757 value=0.3192 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:27:51.729] step=41 screen=COMBAT action_id=15 log_prob=0.0000 value=0.3623 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:27:58.354] step=42 screen=COMBAT action_id=0 log_prob=-1.8380 value=0.4566 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:27:59.797] step=43 screen=COMBAT action_id=15 log_prob=-1.1756 value=0.4375 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=2
+[21:28:08.189] step=44 screen=COMBAT action_id=2 log_prob=-2.0054 value=0.3831 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:28:09.511] step=45 screen=COMBAT action_id=2 log_prob=-1.8068 value=0.3635 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:28:10.844] step=46 screen=COMBAT action_id=15 log_prob=-0.8176 value=0.3646 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:28:24.197] step=47 screen=EVENT action_id=7 log_prob=-2.0154 value=0.4998 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:28:25.308] step=48 screen=EVENT action_id=7 log_prob=-2.0010 value=0.5672 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:28:26.214] step=49 screen=MAP action_id=4 log_prob=-2.0767 value=0.5645 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:28:31.517] step=50 screen=COMBAT action_id=2 log_prob=-1.7598 value=0.3761 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:28:32.949] step=51 screen=COMBAT action_id=1 log_prob=-1.6525 value=0.3242 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=5
+[21:28:34.192] step=52 screen=COMBAT action_id=15 log_prob=-0.9786 value=0.2937 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=4
+[21:28:40.111] step=53 screen=COMBAT action_id=15 log_prob=-1.2702 value=0.2608 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:28:46.815] step=54 screen=COMBAT action_id=1 log_prob=-2.0060 value=0.3131 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:28:48.130] step=55 screen=COMBAT action_id=15 log_prob=-1.1318 value=0.3122 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:28:54.043] step=56 screen=COMBAT action_id=15 log_prob=-1.2874 value=0.3885 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:29:00.773] step=57 screen=COMBAT action_id=3 log_prob=-1.9176 value=0.2909 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:29:02.837] step=58 screen=COMBAT action_id=2 log_prob=-1.7956 value=0.2855 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:29:04.137] step=59 screen=COMBAT action_id=2 log_prob=-1.3168 value=0.2849 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:29:05.375] step=60 screen=COMBAT action_id=15 log_prob=0.0000 value=0.2989 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:29:10.420] step=61 screen=COMBAT action_id=15 log_prob=-1.2901 value=0.4126 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:29:17.123] step=62 screen=COMBAT action_id=4 log_prob=-1.8852 value=0.3658 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:29:18.333] step=63 screen=COMBAT action_id=1 log_prob=-1.8144 value=0.3691 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:29:19.576] step=64 screen=COMBAT action_id=1 log_prob=-1.2929 value=0.3952 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:29:20.890] step=65 screen=COMBAT action_id=15 log_prob=-0.7558 value=0.2332 valid_actions=3 legal=['end_turn', 'play_card'] hand=2 playable=2 energy=3
+[21:29:27.520] step=66 screen=COMBAT action_id=15 log_prob=-1.2967 value=0.3045 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:29:33.309] step=67 screen=COMBAT action_id=3 log_prob=-1.8132 value=0.3366 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:29:34.496] step=68 screen=COMBAT action_id=3 log_prob=-1.9111 value=0.3650 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:29:35.732] step=69 screen=COMBAT action_id=15 log_prob=-0.7909 value=0.3363 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:29:47.474] step=70 screen=EVENT action_id=7 log_prob=-2.0964 value=0.4949 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:29:48.432] step=71 screen=EVENT action_id=7 log_prob=-2.0961 value=0.6270 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:29:49.367] step=72 screen=MAP action_id=4 log_prob=-2.0702 value=0.6633 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:29:54.646] step=73 screen=COMBAT action_id=1 log_prob=-1.7934 value=0.3638 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:29:55.862] step=74 screen=COMBAT action_id=0 log_prob=-1.5079 value=0.4451 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:29:57.091] step=75 screen=COMBAT action_id=15 log_prob=-0.7734 value=0.3795 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:30:02.949] step=76 screen=COMBAT action_id=1 log_prob=-1.9523 value=0.2202 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:30:04.236] step=77 screen=COMBAT action_id=1 log_prob=-1.9609 value=0.2922 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:30:05.783] step=78 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4164 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[21:30:12.455] step=79 screen=COMBAT action_id=2 log_prob=-2.0243 value=0.3312 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:30:13.673] step=80 screen=COMBAT action_id=15 log_prob=-1.0486 value=0.3415 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:30:19.480] step=81 screen=COMBAT action_id=3 log_prob=-1.8488 value=0.3952 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:30:20.705] step=82 screen=COMBAT action_id=2 log_prob=-1.5531 value=0.4048 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:30:21.904] step=83 screen=COMBAT action_id=0 log_prob=-1.3281 value=0.4265 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:30:23.110] step=84 screen=COMBAT action_id=15 log_prob=0.0000 value=0.5588 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:30:29.715] step=85 screen=COMBAT action_id=1 log_prob=-1.6584 value=0.3163 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:30:30.915] step=86 screen=COMBAT action_id=15 log_prob=-0.9020 value=0.2898 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:30:35.929] step=87 screen=COMBAT action_id=15 log_prob=-1.1899 value=0.3506 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:30:43.364] step=88 screen=COMBAT action_id=2 log_prob=-1.7298 value=0.4222 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:30:44.538] step=89 screen=COMBAT action_id=0 log_prob=-1.6461 value=0.4630 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:30:45.761] step=90 screen=COMBAT action_id=2 log_prob=-1.2165 value=0.3803 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:30:46.908] step=91 screen=COMBAT action_id=15 log_prob=0.0000 value=0.5865 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:30:52.713] step=92 screen=COMBAT action_id=4 log_prob=-2.0493 value=0.2596 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:30:53.963] step=93 screen=COMBAT action_id=1 log_prob=-1.8624 value=0.2897 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:30:55.161] step=94 screen=COMBAT action_id=1 log_prob=-1.2653 value=0.3735 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:30:56.369] step=95 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4663 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:31:03.033] step=96 screen=COMBAT action_id=2 log_prob=-1.9065 value=0.4252 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:31:04.277] step=97 screen=COMBAT action_id=3 log_prob=-1.7823 value=0.4040 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:31:07.913] step=98 screen=REWARD action_id=0 log_prob=-2.0531 value=0.5677 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=1
+[21:31:08.858] step=99 screen=REWARD action_id=3 log_prob=-2.0874 value=0.5869 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=1
+[21:31:09.827] step=100 screen=CARD_SELECTION action_id=2 log_prob=-2.1119 value=0.5731 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=1
+[21:31:10.697] step=101 screen=REWARD action_id=5 log_prob=-2.0415 value=0.5902 valid_actions=8 legal=['collect_rewards_and_proceed'] hand=0 playable=0 energy=1
+[21:31:11.597] step=102 screen=MAP action_id=7 log_prob=-2.1313 value=0.5772 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=1
+[21:31:16.807] step=103 screen=COMBAT action_id=2 log_prob=-2.0050 value=0.4387 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:31:18.057] step=104 screen=COMBAT action_id=15 log_prob=-1.1158 value=0.4316 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:31:23.100] step=105 screen=COMBAT action_id=4 log_prob=-1.9828 value=0.4009 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:31:24.299] step=106 screen=CARD_SELECTION action_id=1 log_prob=-2.3713 value=0.3238 valid_actions=8 legal=['select_deck_card'] hand=4 playable=4 energy=2
+[21:31:25.253] step=107 screen=COMBAT action_id=0 log_prob=-1.8686 value=0.3090 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:31:26.874] step=108 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4273 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[21:31:32.884] step=109 screen=COMBAT action_id=0 log_prob=-1.8007 value=0.4311 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:31:34.067] step=110 screen=COMBAT action_id=1 log_prob=-1.6477 value=0.4461 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:31:35.314] step=111 screen=COMBAT action_id=15 log_prob=-0.7527 value=0.3945 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:31:41.133] step=112 screen=COMBAT action_id=0 log_prob=-1.9359 value=0.3385 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:31:42.394] step=113 screen=COMBAT action_id=15 log_prob=-1.0564 value=0.3722 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:31:48.212] step=114 screen=COMBAT action_id=3 log_prob=-1.9745 value=0.3037 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:31:49.435] step=115 screen=COMBAT action_id=2 log_prob=-1.7214 value=0.3645 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:31:50.671] step=116 screen=COMBAT action_id=1 log_prob=-1.4784 value=0.4521 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:31:51.874] step=117 screen=COMBAT action_id=15 log_prob=0.0000 value=0.5295 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:31:56.897] step=118 screen=COMBAT action_id=2 log_prob=-1.7428 value=0.5147 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:31:58.119] step=119 screen=COMBAT action_id=2 log_prob=-1.4747 value=0.4646 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:31:59.295] step=120 screen=COMBAT action_id=15 log_prob=-0.7170 value=0.4184 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:32:05.069] step=121 screen=COMBAT action_id=1 log_prob=-1.9708 value=0.4250 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:32:06.300] step=122 screen=COMBAT action_id=1 log_prob=-1.7599 value=0.4537 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:32:07.477] step=123 screen=COMBAT action_id=15 log_prob=-0.7203 value=0.4381 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:32:12.452] step=124 screen=COMBAT action_id=15 log_prob=-1.0977 value=0.4485 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:32:18.245] step=125 screen=COMBAT action_id=2 log_prob=-2.1340 value=0.4468 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:32:19.494] step=126 screen=COMBAT action_id=2 log_prob=-1.7284 value=0.4602 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:32:20.601] step=127 screen=CARD_SELECTION action_id=7 log_prob=-1.9302 value=0.4073 valid_actions=8 legal=['select_deck_card'] hand=3 playable=3 energy=1
+[21:32:21.481] step=128 screen=COMBAT action_id=1 log_prob=-1.4884 value=0.3627 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:32:24.183] step=129 screen=REWARD action_id=5 log_prob=-2.0334 value=0.6180 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:32:25.105] step=130 screen=CARD_SELECTION action_id=1 log_prob=-2.0247 value=0.6054 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[21:32:25.976] step=131 screen=REWARD action_id=7 log_prob=-2.0647 value=0.6209 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:32:26.837] step=132 screen=REWARD action_id=7 log_prob=-2.0930 value=0.6089 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward', 'discard_potion'] hand=0 playable=0 energy=0
+[21:32:27.716] step=133 screen=REWARD action_id=3 log_prob=-2.0316 value=0.6584 valid_actions=8 legal=['collect_rewards_and_proceed', 'discard_potion'] hand=0 playable=0 energy=0
+[21:32:28.618] step=134 screen=MAP action_id=4 log_prob=-2.1411 value=0.6269 valid_actions=8 legal=['choose_map_node', 'discard_potion'] hand=0 playable=0 energy=0
+[21:32:29.529] step=135 screen=MAP action_id=1 log_prob=-2.0842 value=0.6178 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:32:34.880] step=136 screen=COMBAT action_id=1 log_prob=-1.8787 value=0.4803 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:32:36.250] step=137 screen=COMBAT action_id=1 log_prob=-1.5574 value=0.4353 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:32:37.412] step=138 screen=COMBAT action_id=0 log_prob=-1.3225 value=0.3874 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:32:38.661] step=139 screen=COMBAT action_id=15 log_prob=0.0000 value=0.5521 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:32:43.690] step=140 screen=COMBAT action_id=0 log_prob=-1.8757 value=0.4247 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:32:44.900] step=141 screen=COMBAT action_id=3 log_prob=-1.8715 value=0.4441 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:32:46.234] step=142 screen=COMBAT action_id=0 log_prob=-1.5445 value=0.4089 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:32:47.438] step=143 screen=CARD_SELECTION action_id=1 log_prob=-2.2212 value=0.5273 valid_actions=8 legal=['select_deck_card'] hand=2 playable=0 energy=0
+[21:32:48.380] step=144 screen=COMBAT action_id=15 log_prob=0.0000 value=0.5226 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:32:54.311] step=145 screen=COMBAT action_id=2 log_prob=-1.6758 value=0.4109 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[21:32:55.496] step=146 screen=COMBAT action_id=3 log_prob=-1.5029 value=0.3895 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:32:56.677] step=147 screen=COMBAT action_id=0 log_prob=-1.1618 value=0.3583 valid_actions=2 legal=['end_turn', 'play_card'] hand=3 playable=1 energy=1
+[21:32:57.914] step=148 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4998 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:33:02.903] step=149 screen=COMBAT action_id=15 log_prob=-1.1586 value=0.4020 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:33:13.168] step=150 screen=EVENT action_id=0 log_prob=-2.1076 value=0.5172 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:33:14.070] step=151 screen=EVENT action_id=1 log_prob=-2.0824 value=0.4801 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:33:14.948] step=152 screen=MAP action_id=2 log_prob=-2.1050 value=0.4561 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:33:20.127] step=153 screen=COMBAT action_id=2 log_prob=-1.9698 value=0.2276 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:33:21.360] step=154 screen=COMBAT action_id=15 log_prob=-1.1314 value=0.2159 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:33:26.422] step=155 screen=COMBAT action_id=1 log_prob=-1.9252 value=0.2712 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:33:27.674] step=156 screen=COMBAT action_id=15 log_prob=-1.2148 value=0.2842 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:33:34.457] step=157 screen=COMBAT action_id=15 log_prob=-1.1683 value=0.1815 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:33:40.392] step=158 screen=COMBAT action_id=15 log_prob=-1.3051 value=0.2431 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:33:46.303] step=159 screen=COMBAT action_id=4 log_prob=-2.0037 value=0.3046 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:33:47.613] step=160 screen=COMBAT action_id=2 log_prob=-1.8197 value=0.3197 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:33:48.851] step=161 screen=COMBAT action_id=15 log_prob=-1.0093 value=0.2992 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:33:54.777] step=162 screen=COMBAT action_id=15 log_prob=-1.2456 value=0.1574 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:34:01.557] step=163 screen=COMBAT action_id=15 log_prob=-1.2989 value=0.3429 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:34:06.709] step=164 screen=COMBAT action_id=2 log_prob=-1.9456 value=0.2713 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:34:08.044] step=165 screen=COMBAT action_id=3 log_prob=-1.8737 value=0.2725 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:34:09.356] step=166 screen=COMBAT action_id=0 log_prob=-1.2768 value=0.2788 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:34:10.587] step=167 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4046 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:34:17.423] step=168 screen=COMBAT action_id=2 log_prob=-1.9334 value=0.2007 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:34:18.731] step=169 screen=COMBAT action_id=2 log_prob=-1.6840 value=0.1967 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:34:19.974] step=170 screen=COMBAT action_id=2 log_prob=-1.5015 value=0.1876 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:34:21.260] step=171 screen=COMBAT action_id=15 log_prob=0.0000 value=0.3300 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:34:27.176] step=172 screen=COMBAT action_id=0 log_prob=-1.9515 value=0.3112 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:34:28.493] step=173 screen=COMBAT action_id=15 log_prob=-1.1076 value=0.3382 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:34:34.343] step=174 screen=COMBAT action_id=3 log_prob=-1.8724 value=0.3485 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:34:35.546] step=175 screen=COMBAT action_id=15 log_prob=-1.0716 value=0.3182 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:34:46.560] step=176 screen=EVENT action_id=6 log_prob=-2.1528 value=0.5265 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:34:47.673] step=177 screen=EVENT action_id=4 log_prob=-2.0879 value=0.5609 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:34:48.602] step=178 screen=MAP action_id=6 log_prob=-2.0962 value=0.5476 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:34:53.824] step=179 screen=COMBAT action_id=15 log_prob=-1.2366 value=0.2406 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:01.302] step=180 screen=COMBAT action_id=15 log_prob=-1.2182 value=0.2620 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:09.614] step=181 screen=COMBAT action_id=15 log_prob=-1.2640 value=0.3470 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:16.296] step=182 screen=COMBAT action_id=3 log_prob=-1.8636 value=0.2936 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:17.481] step=183 screen=COMBAT action_id=1 log_prob=-1.9051 value=0.3042 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=3
+[21:35:18.787] step=184 screen=COMBAT action_id=1 log_prob=-1.4674 value=0.3282 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=2
+[21:35:20.045] step=185 screen=COMBAT action_id=1 log_prob=-1.2629 value=0.3373 valid_actions=3 legal=['end_turn', 'play_card'] hand=2 playable=2 energy=1
+[21:35:21.240] step=186 screen=COMBAT action_id=15 log_prob=0.0000 value=0.3638 valid_actions=1 legal=['end_turn'] hand=1 playable=0 energy=0
+[21:35:29.513] step=187 screen=COMBAT action_id=15 log_prob=-1.2321 value=0.2894 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:36.995] step=188 screen=COMBAT action_id=2 log_prob=-1.8982 value=0.4370 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:38.245] step=189 screen=COMBAT action_id=1 log_prob=-1.4501 value=0.4778 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:35:39.489] step=190 screen=COMBAT action_id=0 log_prob=-0.8539 value=0.4701 valid_actions=2 legal=['end_turn', 'play_card'] hand=3 playable=1 energy=1
+[21:35:40.688] step=191 screen=COMBAT action_id=15 log_prob=0.0000 value=0.5964 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:35:48.132] step=192 screen=COMBAT action_id=3 log_prob=-1.9790 value=0.3109 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:49.336] step=193 screen=COMBAT action_id=15 log_prob=-1.0865 value=0.2950 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:35:56.807] step=194 screen=COMBAT action_id=3 log_prob=-2.0315 value=0.3433 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:35:58.080] step=195 screen=COMBAT action_id=1 log_prob=-1.5143 value=0.3117 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[21:35:59.288] step=196 screen=COMBAT action_id=0 log_prob=-1.1290 value=0.2730 valid_actions=2 legal=['end_turn', 'play_card'] hand=3 playable=1 energy=1
+[21:36:00.555] step=197 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4589 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:36:08.867] step=198 screen=COMBAT action_id=15 log_prob=-1.3101 value=0.3927 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:36:15.508] step=199 screen=COMBAT action_id=1 log_prob=-1.8000 value=0.3353 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:36:16.671] step=200 screen=COMBAT action_id=15 log_prob=-1.0982 value=0.2896 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:36:25.002] step=201 screen=COMBAT action_id=15 log_prob=-1.2698 value=0.3542 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:36:36.557] step=202 screen=EVENT action_id=4 log_prob=-2.0584 value=0.5525 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:36:37.555] step=203 screen=CHOOSE_CARD_BUNDLE action_id=1 log_prob=-2.1340 value=0.5332 valid_actions=8 legal=['choose_bundle'] hand=0 playable=0 energy=0
+[21:36:38.427] step=204 screen=CHOOSE_CARD_BUNDLE action_id=3 log_prob=-2.0565 value=0.4912 valid_actions=8 legal=['proceed'] hand=0 playable=0 energy=0
+[21:36:39.380] step=205 screen=EVENT action_id=3 log_prob=-2.0950 value=0.4902 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:36:40.288] step=206 screen=MAP action_id=2 log_prob=-2.1273 value=0.5003 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:36:45.707] step=207 screen=COMBAT action_id=15 log_prob=-1.1314 value=0.2373 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:36:51.615] step=208 screen=COMBAT action_id=2 log_prob=-1.8689 value=0.2853 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:36:52.886] step=209 screen=COMBAT action_id=15 log_prob=-1.0842 value=0.2731 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:36:59.663] step=210 screen=COMBAT action_id=15 log_prob=-1.1994 value=0.3916 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:05.634] step=211 screen=COMBAT action_id=1 log_prob=-1.8318 value=0.3336 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:06.899] step=212 screen=COMBAT action_id=3 log_prob=-1.8516 value=0.3263 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:37:08.195] step=213 screen=COMBAT action_id=2 log_prob=-1.4977 value=0.2968 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:37:09.484] step=214 screen=COMBAT action_id=15 log_prob=0.0000 value=0.3408 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:37:16.207] step=215 screen=COMBAT action_id=15 log_prob=-1.1390 value=0.2763 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:21.189] step=216 screen=COMBAT action_id=0 log_prob=-2.0051 value=0.3798 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:22.357] step=217 screen=COMBAT action_id=15 log_prob=-1.1386 value=0.3538 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:37:28.220] step=218 screen=COMBAT action_id=1 log_prob=-1.9340 value=0.3339 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:29.480] step=219 screen=COMBAT action_id=2 log_prob=-1.8712 value=0.3767 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:37:30.782] step=220 screen=COMBAT action_id=15 log_prob=-0.7608 value=0.3619 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:37:35.780] step=221 screen=COMBAT action_id=15 log_prob=-1.2095 value=0.3629 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:42.416] step=222 screen=COMBAT action_id=15 log_prob=-1.1420 value=0.3959 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:37:48.252] step=223 screen=COMBAT action_id=15 log_prob=-1.1160 value=0.3108 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:00.307] step=224 screen=EVENT action_id=3 log_prob=-2.0921 value=0.5307 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:38:01.246] step=225 screen=EVENT action_id=6 log_prob=-2.0359 value=0.5496 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:38:02.238] step=226 screen=MAP action_id=7 log_prob=-2.0145 value=0.5177 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:38:07.662] step=227 screen=COMBAT action_id=15 log_prob=-1.1620 value=0.3013 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:12.704] step=228 screen=COMBAT action_id=3 log_prob=-2.0184 value=0.2681 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:13.968] step=229 screen=COMBAT action_id=15 log_prob=-1.0169 value=0.3016 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:38:20.643] step=230 screen=COMBAT action_id=3 log_prob=-1.8320 value=0.2931 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:21.868] step=231 screen=COMBAT action_id=0 log_prob=-1.8653 value=0.2923 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:38:23.121] step=232 screen=COMBAT action_id=15 log_prob=-0.8454 value=0.2712 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:38:28.897] step=233 screen=COMBAT action_id=15 log_prob=-1.1406 value=0.3234 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:34.726] step=234 screen=COMBAT action_id=15 log_prob=-1.1162 value=0.2684 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:39.771] step=235 screen=COMBAT action_id=1 log_prob=-2.0370 value=0.3234 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:41.030] step=236 screen=COMBAT action_id=0 log_prob=-1.8047 value=0.3406 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:38:42.275] step=237 screen=COMBAT action_id=15 log_prob=-0.9835 value=0.3992 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:38:48.931] step=238 screen=COMBAT action_id=15 log_prob=-1.1795 value=0.3843 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:53.961] step=239 screen=COMBAT action_id=0 log_prob=-1.9535 value=0.2946 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:38:55.207] step=240 screen=COMBAT action_id=3 log_prob=-1.9996 value=0.3210 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:38:56.464] step=241 screen=COMBAT action_id=1 log_prob=-1.5595 value=0.2792 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[21:38:57.693] step=242 screen=COMBAT action_id=15 log_prob=0.0000 value=0.4295 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:39:04.379] step=243 screen=COMBAT action_id=1 log_prob=-2.0475 value=0.2656 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:39:05.886] step=244 screen=COMBAT action_id=1 log_prob=-1.8685 value=0.2597 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[21:39:10.191] step=245 screen=REWARD action_id=5 log_prob=-2.1707 value=0.5268 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:39:11.120] step=246 screen=CARD_SELECTION action_id=5 log_prob=-2.0915 value=0.5312 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[21:39:11.995] step=247 screen=REWARD action_id=0 log_prob=-2.0723 value=0.5092 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:39:12.892] step=248 screen=REWARD action_id=1 log_prob=-2.0212 value=0.5110 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[21:39:13.771] step=249 screen=REWARD action_id=6 log_prob=-2.0943 value=0.5238 valid_actions=8 legal=['collect_rewards_and_proceed', 'discard_potion'] hand=0 playable=0 energy=0
+[21:39:14.735] step=250 screen=MAP action_id=2 log_prob=-2.0360 value=0.5405 valid_actions=8 legal=['choose_map_node', 'discard_potion'] hand=0 playable=0 energy=0
+[21:39:15.678] step=251 screen=MAP action_id=0 log_prob=-2.0939 value=0.5318 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[21:39:21.075] step=252 screen=COMBAT action_id=15 log_prob=-1.1348 value=0.3785 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:39:27.861] step=253 screen=COMBAT action_id=15 log_prob=-1.1772 value=0.3991 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:39:36.261] step=254 screen=COMBAT action_id=2 log_prob=-1.8877 value=0.3359 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[21:39:37.576] step=255 screen=COMBAT action_id=2 log_prob=-1.7638 value=0.2896 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[21:39:39.967] step=256 screen=COMBAT action_id=1 log_prob=-1.2583 value=-4.3893 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[21:39:41.186] step=257 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2826 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[21:39:55.671] step=258 screen=EVENT action_id=6 log_prob=-2.0596 value=-4.3325 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:39:56.548] step=259 screen=CARD_SELECTION action_id=0 log_prob=-2.0434 value=-4.3130 valid_actions=8 legal=['select_deck_card'] hand=0 playable=0 energy=0
+[21:40:07.427] step=260 screen=CARD_SELECTION action_id=3 log_prob=-2.0885 value=-4.3210 valid_actions=8 legal=['select_deck_card'] hand=0 playable=0 energy=0
+[21:40:08.373] step=261 screen=EVENT action_id=0 log_prob=-2.0819 value=-4.3071 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[21:40:09.251] step=262 screen=MAP action_id=3 log_prob=-2.1015 value=-4.3144 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:04:25.396] step=262 screen=COMBAT action_id=2 log_prob=-1.7753 value=-4.4159 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:04:26.627] step=263 screen=COMBAT action_id=2 log_prob=-1.7435 value=-4.3940 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:04:27.933] step=264 screen=COMBAT action_id=15 log_prob=-0.8423 value=-4.3947 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:04:34.675] step=265 screen=COMBAT action_id=15 log_prob=-1.4194 value=-4.4077 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:04:40.564] step=266 screen=COMBAT action_id=3 log_prob=-1.9461 value=-4.4023 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:04:41.855] step=267 screen=COMBAT action_id=1 log_prob=-1.6061 value=-4.3991 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:04:43.129] step=268 screen=COMBAT action_id=15 log_prob=-1.0791 value=-4.3824 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:04:49.835] step=269 screen=COMBAT action_id=4 log_prob=-1.8170 value=-4.4042 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:04:51.098] step=270 screen=COMBAT action_id=15 log_prob=-1.2650 value=-4.4081 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:04:57.038] step=271 screen=COMBAT action_id=15 log_prob=-1.3363 value=-4.3801 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:02.969] step=272 screen=COMBAT action_id=3 log_prob=-1.9292 value=-4.4056 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:04.215] step=273 screen=COMBAT action_id=2 log_prob=-1.5646 value=-4.3942 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:05:05.453] step=274 screen=COMBAT action_id=1 log_prob=-1.5599 value=-4.3852 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:05:06.700] step=275 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2858 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:05:13.433] step=276 screen=COMBAT action_id=3 log_prob=-1.7833 value=-4.3917 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:14.718] step=277 screen=COMBAT action_id=1 log_prob=-1.7446 value=-4.3877 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:05:16.025] step=278 screen=COMBAT action_id=1 log_prob=-1.1978 value=-4.3971 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:05:17.349] step=279 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2955 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:05:24.123] step=280 screen=COMBAT action_id=3 log_prob=-2.0002 value=-4.3943 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:25.439] step=281 screen=COMBAT action_id=2 log_prob=-1.6662 value=-4.4029 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:05:26.638] step=282 screen=COMBAT action_id=2 log_prob=-1.5279 value=-4.3944 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:05:30.274] step=283 screen=REWARD action_id=5 log_prob=-2.1099 value=-4.2823 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:05:31.189] step=284 screen=CARD_SELECTION action_id=2 log_prob=-2.0855 value=-4.2782 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[22:05:32.092] step=285 screen=REWARD action_id=5 log_prob=-2.0168 value=-4.2832 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:05:33.014] step=286 screen=REWARD action_id=6 log_prob=-2.1398 value=-4.2814 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward', 'discard_potion'] hand=0 playable=0 energy=0
+[22:05:33.949] step=287 screen=REWARD action_id=1 log_prob=-2.0858 value=-4.2802 valid_actions=8 legal=['collect_rewards_and_proceed', 'discard_potion'] hand=0 playable=0 energy=0
+[22:05:34.921] step=288 screen=MAP action_id=5 log_prob=-2.0866 value=-4.2788 valid_actions=8 legal=['choose_map_node', 'discard_potion'] hand=0 playable=0 energy=0
+[22:05:35.849] step=289 screen=MAP action_id=6 log_prob=-2.0223 value=-4.2806 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:05:41.213] step=290 screen=COMBAT action_id=1 log_prob=-1.9672 value=-4.4019 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:42.761] step=291 screen=COMBAT action_id=15 log_prob=-1.2548 value=-4.3893 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:05:48.715] step=292 screen=COMBAT action_id=3 log_prob=-1.8645 value=-4.4025 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:49.973] step=293 screen=COMBAT action_id=15 log_prob=-1.3150 value=-4.3984 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:05:56.717] step=294 screen=COMBAT action_id=0 log_prob=-1.8860 value=-4.4205 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:05:58.216] step=295 screen=COMBAT action_id=1 log_prob=-1.8275 value=-4.4221 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:05:59.486] step=296 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3075 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:06:06.148] step=297 screen=COMBAT action_id=3 log_prob=-1.9708 value=-4.4049 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:06:07.368] step=298 screen=COMBAT action_id=0 log_prob=-1.5907 value=-4.3968 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:06:08.693] step=299 screen=COMBAT action_id=0 log_prob=-1.4247 value=-4.3885 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=4
+[22:06:09.863] step=300 screen=COMBAT action_id=15 log_prob=-0.8173 value=-4.3892 valid_actions=3 legal=['end_turn', 'play_card'] hand=2 playable=2 energy=3
+[22:06:15.619] step=301 screen=COMBAT action_id=15 log_prob=-1.4033 value=-4.3886 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:06:21.388] step=302 screen=COMBAT action_id=1 log_prob=-1.9138 value=-4.4205 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:06:22.885] step=303 screen=COMBAT action_id=1 log_prob=-1.6946 value=-4.4184 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:06:24.055] step=304 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3065 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:06:30.673] step=305 screen=COMBAT action_id=2 log_prob=-1.7731 value=-4.3880 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:06:32.012] step=306 screen=COMBAT action_id=3 log_prob=-1.7116 value=-4.3859 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=5
+[22:06:33.200] step=307 screen=COMBAT action_id=15 log_prob=-1.0547 value=-4.3897 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=4
+[22:06:44.393] step=308 screen=EVENT action_id=0 log_prob=-2.0935 value=-4.3111 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:06:45.314] step=309 screen=EVENT action_id=1 log_prob=-2.1380 value=-4.2853 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:06:46.271] step=310 screen=MAP action_id=2 log_prob=-2.0850 value=-4.2701 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:06:51.902] step=311 screen=COMBAT action_id=1 log_prob=-1.8820 value=-4.3992 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:06:53.166] step=312 screen=COMBAT action_id=0 log_prob=-1.7481 value=-4.3906 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:06:54.491] step=313 screen=COMBAT action_id=2 log_prob=-1.5123 value=-4.3955 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:06:55.724] step=314 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2650 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:07:00.808] step=315 screen=COMBAT action_id=2 log_prob=-1.9279 value=-4.3942 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:07:02.102] step=316 screen=COMBAT action_id=0 log_prob=-1.7959 value=-4.3948 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:07:03.647] step=317 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2850 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:07:10.382] step=318 screen=COMBAT action_id=2 log_prob=-1.9205 value=-4.4287 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:07:11.652] step=319 screen=COMBAT action_id=1 log_prob=-1.7618 value=-4.4320 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:07:13.689] step=320 screen=COMBAT action_id=2 log_prob=-1.6486 value=-4.4212 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:07:14.901] step=321 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3065 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:07:20.818] step=322 screen=COMBAT action_id=2 log_prob=-1.9400 value=-4.4107 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:07:23.584] step=323 screen=REWARD action_id=1 log_prob=-2.0970 value=-4.2825 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=2
+[22:07:24.520] step=324 screen=CARD_SELECTION action_id=0 log_prob=-2.0378 value=-4.3036 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=2
+[22:07:25.446] step=325 screen=REWARD action_id=6 log_prob=-2.1073 value=-4.2828 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=2
+[22:07:26.354] step=326 screen=REWARD action_id=5 log_prob=-2.0467 value=-4.2825 valid_actions=8 legal=['collect_rewards_and_proceed'] hand=0 playable=0 energy=2
+[22:07:27.319] step=327 screen=MAP action_id=7 log_prob=-2.1526 value=-4.2898 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=2
+[22:07:30.051] step=328 screen=EVENT action_id=1 log_prob=-2.1181 value=-4.2722 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:07:32.559] step=329 screen=EVENT action_id=1 log_prob=-2.0078 value=-4.2741 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:07:37.381] step=330 screen=COMBAT action_id=1 log_prob=-1.8635 value=-4.2940 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:07:38.945] step=331 screen=COMBAT action_id=2 log_prob=-1.6459 value=-4.3014 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:07:40.171] step=332 screen=COMBAT action_id=0 log_prob=-1.4093 value=-4.2894 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:07:41.486] step=333 screen=COMBAT action_id=0 log_prob=-0.8783 value=-4.2548 valid_actions=2 legal=['end_turn', 'play_card'] hand=2 playable=1 energy=0
+[22:07:42.873] step=334 screen=COMBAT action_id=15 log_prob=-0.4208 value=-4.2778 valid_actions=2 legal=['end_turn', 'play_card'] hand=1 playable=1 energy=2
+[22:07:54.614] step=335 screen=COMBAT action_id=0 log_prob=-1.8147 value=-4.3548 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:07:55.871] step=336 screen=COMBAT action_id=1 log_prob=-1.7486 value=-4.3527 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:07:57.093] step=337 screen=COMBAT action_id=2 log_prob=-1.7045 value=-4.3461 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:07:58.417] step=338 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2140 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:08:08.619] step=339 screen=COMBAT action_id=2 log_prob=-1.7470 value=-4.3638 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:08:10.043] step=340 screen=COMBAT action_id=15 log_prob=-1.2712 value=-4.3553 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=5
+[22:08:20.107] step=341 screen=COMBAT action_id=4 log_prob=-1.4772 value=-4.3289 valid_actions=4 legal=['end_turn', 'play_card'] hand=5 playable=3 energy=3
+[22:08:21.317] step=342 screen=COMBAT action_id=2 log_prob=-1.1300 value=-4.3231 valid_actions=3 legal=['end_turn', 'play_card'] hand=4 playable=2 energy=2
+[22:08:22.535] step=343 screen=COMBAT action_id=15 log_prob=-0.4120 value=-4.3064 valid_actions=2 legal=['end_turn', 'play_card'] hand=3 playable=1 energy=1
+[22:08:35.251] step=344 screen=COMBAT action_id=0 log_prob=-1.5597 value=-4.3568 valid_actions=4 legal=['end_turn', 'play_card'] hand=5 playable=3 energy=3
+[22:08:36.745] step=345 screen=COMBAT action_id=15 log_prob=-0.8735 value=-4.3407 valid_actions=3 legal=['end_turn', 'play_card'] hand=4 playable=2 energy=1
+[22:08:48.437] step=346 screen=COMBAT action_id=2 log_prob=-1.5766 value=-4.3421 valid_actions=4 legal=['end_turn', 'play_card'] hand=5 playable=3 energy=3
+[22:08:49.618] step=347 screen=COMBAT action_id=15 log_prob=-0.8005 value=-4.3352 valid_actions=3 legal=['end_turn', 'play_card'] hand=4 playable=2 energy=2
+[22:09:07.198] step=348 screen=EVENT action_id=5 log_prob=-2.1050 value=-4.3075 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:09:08.121] step=349 screen=EVENT action_id=3 log_prob=-2.0281 value=-4.3053 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:09:09.045] step=350 screen=MAP action_id=6 log_prob=-2.0355 value=-4.3117 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:09:14.228] step=351 screen=COMBAT action_id=3 log_prob=-1.9427 value=-4.4171 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:09:15.451] step=352 screen=COMBAT action_id=1 log_prob=-1.7372 value=-4.4167 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:09:16.635] step=353 screen=COMBAT action_id=0 log_prob=-1.2282 value=-4.4051 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:09:17.797] step=354 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3051 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:09:22.866] step=355 screen=COMBAT action_id=4 log_prob=-1.8536 value=-4.3982 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:09:24.173] step=356 screen=COMBAT action_id=2 log_prob=-1.6041 value=-4.4067 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:09:25.470] step=357 screen=COMBAT action_id=15 log_prob=-0.8167 value=-4.3993 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:09:31.318] step=358 screen=COMBAT action_id=3 log_prob=-1.9516 value=-4.4463 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:09:32.577] step=359 screen=COMBAT action_id=1 log_prob=-1.6372 value=-4.4407 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:09:33.747] step=360 screen=COMBAT action_id=1 log_prob=-1.4382 value=-4.4357 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:09:34.930] step=361 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3441 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:09:39.911] step=362 screen=COMBAT action_id=3 log_prob=-1.6499 value=-4.3925 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:09:41.176] step=363 screen=COMBAT action_id=2 log_prob=-1.4632 value=-4.3792 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:09:42.407] step=364 screen=COMBAT action_id=0 log_prob=-1.0535 value=-4.3814 valid_actions=2 legal=['end_turn', 'play_card'] hand=3 playable=1 energy=1
+[22:09:43.613] step=365 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3267 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:09:49.430] step=366 screen=COMBAT action_id=1 log_prob=-1.8472 value=-4.4033 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:09:50.684] step=367 screen=COMBAT action_id=3 log_prob=-1.6604 value=-4.4088 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:09:51.873] step=368 screen=COMBAT action_id=1 log_prob=-1.5918 value=-4.3958 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:09:54.605] step=369 screen=REWARD action_id=3 log_prob=-2.0598 value=-4.3191 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:09:55.481] step=370 screen=CARD_SELECTION action_id=4 log_prob=-2.1988 value=-4.3193 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[22:09:56.407] step=371 screen=REWARD action_id=2 log_prob=-2.1686 value=-4.3115 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:09:57.373] step=372 screen=REWARD action_id=0 log_prob=-2.0547 value=-4.3117 valid_actions=8 legal=['collect_rewards_and_proceed'] hand=0 playable=0 energy=0
+[22:09:58.309] step=373 screen=MAP action_id=6 log_prob=-2.0476 value=-4.3111 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:10:03.620] step=374 screen=COMBAT action_id=1 log_prob=-1.9473 value=-4.4458 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:10:04.957] step=375 screen=COMBAT action_id=0 log_prob=-1.7410 value=-4.4389 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:10:06.213] step=376 screen=COMBAT action_id=15 log_prob=-1.0498 value=-4.4306 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:10:11.295] step=377 screen=COMBAT action_id=0 log_prob=-1.9022 value=-4.4135 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:10:12.854] step=378 screen=COMBAT action_id=0 log_prob=-1.8004 value=-4.3972 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:10:14.100] step=379 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3220 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:10:20.029] step=380 screen=COMBAT action_id=15 log_prob=-1.2066 value=-4.4001 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:10:25.890] step=381 screen=COMBAT action_id=0 log_prob=-2.0504 value=-4.4228 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:10:27.232] step=382 screen=COMBAT action_id=15 log_prob=-1.2774 value=-4.4151 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:10:33.193] step=383 screen=COMBAT action_id=2 log_prob=-1.8264 value=-4.4013 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:10:34.430] step=384 screen=COMBAT action_id=2 log_prob=-1.6202 value=-4.4024 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:10:35.701] step=385 screen=COMBAT action_id=15 log_prob=-0.7517 value=-4.3568 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:10:40.836] step=386 screen=COMBAT action_id=2 log_prob=-1.7546 value=-4.4086 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:10:42.098] step=387 screen=COMBAT action_id=1 log_prob=-1.3741 value=-4.3881 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:10:43.355] step=388 screen=COMBAT action_id=1 log_prob=-1.3755 value=-4.3670 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:10:44.668] step=389 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3043 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:10:50.550] step=390 screen=COMBAT action_id=1 log_prob=-1.7222 value=-4.3773 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:10:51.863] step=391 screen=COMBAT action_id=0 log_prob=-1.4652 value=-4.3702 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:10:53.168] step=392 screen=COMBAT action_id=1 log_prob=-1.2351 value=-4.3847 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:10:54.472] step=393 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3138 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:10:59.575] step=394 screen=COMBAT action_id=4 log_prob=-1.9470 value=-4.4190 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:11:01.061] step=395 screen=COMBAT action_id=15 log_prob=-1.3282 value=-4.4095 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:11:07.063] step=396 screen=COMBAT action_id=15 log_prob=-1.4237 value=-4.3876 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:11:12.987] step=397 screen=COMBAT action_id=1 log_prob=-1.7031 value=-4.4033 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:11:14.313] step=398 screen=COMBAT action_id=2 log_prob=-1.6612 value=-4.3849 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:11:17.095] step=399 screen=REWARD action_id=0 log_prob=-2.0931 value=-4.3015 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=1
+[22:11:17.995] step=400 screen=REWARD action_id=7 log_prob=-2.1038 value=-4.3140 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=1
+[22:11:18.908] step=401 screen=CARD_SELECTION action_id=6 log_prob=-2.0665 value=-4.3114 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=1
+[22:11:19.822] step=402 screen=REWARD action_id=1 log_prob=-2.1306 value=-4.3169 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=1
+[22:11:20.739] step=403 screen=REWARD action_id=7 log_prob=-2.0986 value=-4.3110 valid_actions=8 legal=['collect_rewards_and_proceed', 'discard_potion'] hand=0 playable=0 energy=1
+[22:11:21.719] step=404 screen=MAP action_id=3 log_prob=-2.0046 value=-4.3126 valid_actions=8 legal=['choose_map_node', 'discard_potion'] hand=0 playable=0 energy=1
+[22:11:22.654] step=405 screen=MAP action_id=0 log_prob=-2.0821 value=-4.3218 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=1
+[22:11:27.982] step=406 screen=COMBAT action_id=2 log_prob=-1.9314 value=-4.4031 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:11:29.344] step=407 screen=COMBAT action_id=1 log_prob=-1.8165 value=-4.4083 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:11:30.818] step=408 screen=COMBAT action_id=0 log_prob=-1.5412 value=-4.4168 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:11:32.415] step=409 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3022 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:11:38.330] step=410 screen=COMBAT action_id=1 log_prob=-1.7254 value=-4.4391 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:11:39.621] step=411 screen=COMBAT action_id=15 log_prob=-1.1504 value=-4.4401 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:11:47.248] step=412 screen=COMBAT action_id=3 log_prob=-1.7854 value=-4.3976 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:11:48.504] step=413 screen=COMBAT action_id=0 log_prob=-1.7300 value=-4.4034 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:11:50.100] step=414 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3244 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:12:02.727] step=415 screen=EVENT action_id=4 log_prob=-2.0750 value=-4.3052 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:12:03.894] step=416 screen=EVENT action_id=3 log_prob=-2.0437 value=-4.3028 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:12:04.872] step=417 screen=MAP action_id=1 log_prob=-2.1226 value=-4.3116 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:12:10.226] step=418 screen=COMBAT action_id=15 log_prob=-1.4330 value=-4.4143 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:12:16.103] step=419 screen=COMBAT action_id=4 log_prob=-1.8846 value=-4.4236 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:12:17.387] step=420 screen=COMBAT action_id=2 log_prob=-1.6998 value=-4.4191 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:12:18.626] step=421 screen=COMBAT action_id=1 log_prob=-1.4331 value=-4.4099 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:12:19.940] step=422 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3131 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:12:26.677] step=423 screen=COMBAT action_id=1 log_prob=-1.6820 value=-4.4027 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:12:28.808] step=424 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3171 valid_actions=1 legal=['end_turn'] hand=4 playable=0 energy=0
+[22:12:34.722] step=425 screen=COMBAT action_id=3 log_prob=-1.8528 value=-4.4185 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:12:35.992] step=426 screen=COMBAT action_id=3 log_prob=-1.7537 value=-4.4109 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:12:37.570] step=427 screen=COMBAT action_id=2 log_prob=-1.4324 value=-4.4123 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:12:38.856] step=428 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3297 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:12:45.652] step=429 screen=COMBAT action_id=0 log_prob=-1.7649 value=-4.4187 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:12:49.705] step=430 screen=REWARD action_id=5 log_prob=-2.1087 value=-4.3147 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:12:50.654] step=431 screen=CARD_SELECTION action_id=1 log_prob=-2.0979 value=-4.3181 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[22:12:51.588] step=432 screen=REWARD action_id=4 log_prob=-2.1026 value=-4.3117 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:12:52.528] step=433 screen=REWARD action_id=7 log_prob=-2.0497 value=-4.3106 valid_actions=8 legal=['collect_rewards_and_proceed'] hand=0 playable=0 energy=0
+[22:12:53.479] step=434 screen=MAP action_id=7 log_prob=-2.0744 value=-4.3124 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:12:58.912] step=435 screen=COMBAT action_id=1 log_prob=-1.8145 value=-4.4042 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:13:00.231] step=436 screen=COMBAT action_id=1 log_prob=-1.6823 value=-4.3994 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:13:01.528] step=437 screen=COMBAT action_id=15 log_prob=-0.9971 value=-4.3942 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:13:08.278] step=438 screen=COMBAT action_id=2 log_prob=-1.8992 value=-4.3788 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:13:09.847] step=439 screen=COMBAT action_id=3 log_prob=-1.6944 value=-4.3858 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:13:11.080] step=440 screen=COMBAT action_id=15 log_prob=-1.2418 value=-4.3769 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:13:19.522] step=441 screen=COMBAT action_id=15 log_prob=-1.4560 value=-4.3746 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:13:27.156] step=442 screen=COMBAT action_id=1 log_prob=-1.7474 value=-4.4003 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:13:29.261] step=443 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3240 valid_actions=1 legal=['end_turn'] hand=4 playable=0 energy=0
+[22:13:35.193] step=444 screen=COMBAT action_id=1 log_prob=-1.9130 value=-4.4318 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:13:39.136] step=445 screen=REWARD action_id=1 log_prob=-2.1605 value=-4.3081 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=2
+[22:13:40.085] step=446 screen=CARD_SELECTION action_id=2 log_prob=-2.0659 value=-4.3165 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=2
+[22:13:41.010] step=447 screen=REWARD action_id=7 log_prob=-2.1665 value=-4.3209 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=2
+[22:13:41.933] step=448 screen=REWARD action_id=7 log_prob=-2.0148 value=-4.3143 valid_actions=8 legal=['collect_rewards_and_proceed'] hand=0 playable=0 energy=2
+[22:13:42.926] step=449 screen=MAP action_id=6 log_prob=-2.0627 value=-4.3154 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=2
+[22:13:45.327] step=450 screen=EVENT action_id=7 log_prob=-2.1167 value=-4.3108 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:13:46.483] step=451 screen=REWARD action_id=7 log_prob=-2.0689 value=-4.3015 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=0
+[22:13:47.452] step=452 screen=CARD_SELECTION action_id=1 log_prob=-2.0526 value=-4.3150 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=0
+[22:13:48.398] step=453 screen=EVENT action_id=4 log_prob=-2.0123 value=-4.3142 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:13:49.376] step=454 screen=MAP action_id=4 log_prob=-2.1020 value=-4.3203 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:13:54.927] step=455 screen=COMBAT action_id=3 log_prob=-1.9436 value=-4.4096 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:13:56.232] step=456 screen=COMBAT action_id=2 log_prob=-1.6010 value=-4.4058 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:13:58.757] step=457 screen=COMBAT action_id=15 log_prob=-0.9637 value=-4.4092 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:14:06.394] step=458 screen=COMBAT action_id=3 log_prob=-1.9163 value=-4.3906 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:14:07.707] step=459 screen=COMBAT action_id=0 log_prob=-1.6660 value=-4.3863 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:14:10.076] step=460 screen=COMBAT action_id=1 log_prob=-1.4366 value=-4.4202 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:14:11.313] step=461 screen=COMBAT action_id=0 log_prob=-0.5944 value=-4.2647 valid_actions=2 legal=['end_turn', 'play_card'] hand=2 playable=1 energy=0
+[22:14:12.620] step=462 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3178 valid_actions=1 legal=['end_turn'] hand=1 playable=0 energy=0
+[22:14:18.610] step=463 screen=COMBAT action_id=2 log_prob=-1.8721 value=-4.4112 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:14:19.949] step=464 screen=COMBAT action_id=15 log_prob=-1.3080 value=-4.4105 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:14:31.270] step=465 screen=EVENT action_id=6 log_prob=-2.1149 value=-4.3172 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:14:32.198] step=466 screen=EVENT action_id=5 log_prob=-2.0968 value=-4.3114 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:14:33.157] step=467 screen=MAP action_id=0 log_prob=-2.0722 value=-4.3143 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:14:38.755] step=468 screen=COMBAT action_id=15 log_prob=-1.3247 value=-4.3950 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:14:49.943] step=469 screen=COMBAT action_id=0 log_prob=-1.6689 value=-4.3656 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:14:51.236] step=470 screen=COMBAT action_id=15 log_prob=-0.9914 value=-4.3502 valid_actions=4 legal=['end_turn', 'play_card'] hand=4 playable=3 energy=2
+[22:15:00.486] step=471 screen=COMBAT action_id=3 log_prob=-1.9138 value=-4.3842 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:15:01.827] step=472 screen=COMBAT action_id=15 log_prob=-1.2081 value=-4.3877 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:15:11.928] step=473 screen=COMBAT action_id=15 log_prob=-1.2340 value=-4.3785 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:15:21.232] step=474 screen=COMBAT action_id=0 log_prob=-1.8600 value=-4.3915 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:15:22.490] step=475 screen=COMBAT action_id=1 log_prob=-1.6645 value=-4.3825 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:15:24.075] step=476 screen=COMBAT action_id=0 log_prob=-1.6122 value=-4.3782 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:15:25.630] step=477 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2774 valid_actions=1 legal=['end_turn'] hand=4 playable=0 energy=0
+[22:15:35.757] step=478 screen=COMBAT action_id=15 log_prob=-1.3776 value=-4.3754 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:15:44.950] step=479 screen=COMBAT action_id=4 log_prob=-1.9123 value=-4.3796 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:15:46.321] step=480 screen=COMBAT action_id=1 log_prob=-1.8166 value=-4.3747 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=1
+[22:15:47.656] step=481 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.2672 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:15:54.454] step=482 screen=COMBAT action_id=3 log_prob=-1.8083 value=-4.4258 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:15:55.751] step=483 screen=COMBAT action_id=0 log_prob=-1.6103 value=-4.4142 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:15:57.014] step=484 screen=COMBAT action_id=15 log_prob=-1.1807 value=-4.4161 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:16:04.561] step=485 screen=COMBAT action_id=15 log_prob=-1.3663 value=-4.3853 valid_actions=5 legal=['end_turn', 'play_card'] hand=5 playable=4 energy=3
+[22:16:15.815] step=486 screen=EVENT action_id=1 log_prob=-2.0866 value=-4.3203 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:16:16.745] step=487 screen=CARD_SELECTION action_id=7 log_prob=-2.1027 value=-4.2994 valid_actions=8 legal=['select_deck_card'] hand=0 playable=0 energy=0
+[22:16:17.775] step=488 screen=EVENT action_id=3 log_prob=-2.1052 value=-4.3063 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:16:18.729] step=489 screen=MAP action_id=0 log_prob=-2.0821 value=-4.3144 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:16:24.098] step=490 screen=COMBAT action_id=0 log_prob=-1.9743 value=-4.4207 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:16:25.450] step=491 screen=COMBAT action_id=15 log_prob=-1.2786 value=-4.4205 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:16:32.147] step=492 screen=COMBAT action_id=15 log_prob=-1.4591 value=-4.4492 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:16:38.130] step=493 screen=COMBAT action_id=3 log_prob=-1.9756 value=-4.4153 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:16:39.448] step=494 screen=COMBAT action_id=15 log_prob=-1.2453 value=-4.4125 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:16:46.207] step=495 screen=COMBAT action_id=0 log_prob=-2.0976 value=-4.4319 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:16:47.545] step=496 screen=COMBAT action_id=3 log_prob=-1.7333 value=-4.4254 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:16:49.147] step=497 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3217 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:16:55.919] step=498 screen=COMBAT action_id=2 log_prob=-1.9379 value=-4.4497 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:16:57.258] step=499 screen=COMBAT action_id=2 log_prob=-1.7350 value=-4.4567 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:16:58.485] step=500 screen=COMBAT action_id=1 log_prob=-1.4315 value=-4.4413 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:16:59.719] step=501 screen=COMBAT action_id=15 log_prob=0.0000 value=-4.3269 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:17:06.301] step=502 screen=COMBAT action_id=15 log_prob=-1.4157 value=-4.4184 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:17:12.924] step=503 screen=COMBAT action_id=4 log_prob=-1.8413 value=-4.4186 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:17:16.426] step=504 screen=REWARD action_id=5 log_prob=-2.0860 value=-4.3141 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=2
+[22:17:17.336] step=505 screen=CARD_SELECTION action_id=0 log_prob=-2.0863 value=-4.3128 valid_actions=8 legal=['collect_rewards_and_proceed', 'choose_reward_card', 'skip_reward_cards', 'select_deck_card'] hand=0 playable=0 energy=2
+[22:17:18.252] step=506 screen=REWARD action_id=2 log_prob=-2.0642 value=-4.3183 valid_actions=8 legal=['collect_rewards_and_proceed', 'claim_reward'] hand=0 playable=0 energy=2
+[22:17:19.117] step=507 screen=REWARD action_id=5 log_prob=-2.1037 value=-4.3140 valid_actions=8 legal=['collect_rewards_and_proceed'] hand=0 playable=0 energy=2
+[22:17:20.003] step=508 screen=MAP action_id=3 log_prob=-2.0054 value=-4.3225 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=2
+[22:17:22.130] step=509 screen=EVENT action_id=3 log_prob=-2.0914 value=-4.3192 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:17:23.403] step=510 screen=EVENT action_id=5 log_prob=-2.1328 value=-4.3088 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:17:24.300] step=511 screen=MAP action_id=3 log_prob=-2.0914 value=-4.3093 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:17:30.043] step=512 screen=COMBAT action_id=2 log_prob=-1.7523 value=-5.4844 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:17:31.570] step=513 screen=COMBAT action_id=2 log_prob=-1.6597 value=-5.4893 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:17:32.789] step=514 screen=COMBAT action_id=1 log_prob=-1.3162 value=-5.4981 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:17:33.952] step=515 screen=COMBAT action_id=15 log_prob=0.0000 value=-5.4786 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:17:39.760] step=516 screen=COMBAT action_id=3 log_prob=-1.6593 value=-5.4754 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:17:40.924] step=517 screen=COMBAT action_id=15 log_prob=-1.4750 value=-5.4692 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:17:46.734] step=518 screen=COMBAT action_id=4 log_prob=-1.9050 value=-5.4781 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:17:47.958] step=519 screen=COMBAT action_id=0 log_prob=-1.6262 value=-5.4780 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:17:49.430] step=520 screen=COMBAT action_id=15 log_prob=0.0000 value=-5.4740 valid_actions=1 legal=['end_turn'] hand=3 playable=0 energy=0
+[22:17:54.382] step=521 screen=COMBAT action_id=4 log_prob=-1.8585 value=-5.4749 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:17:55.626] step=522 screen=COMBAT action_id=15 log_prob=-1.6254 value=-5.4814 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:18:02.216] step=523 screen=COMBAT action_id=2 log_prob=-1.7505 value=-5.4808 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:18:03.412] step=524 screen=COMBAT action_id=15 log_prob=-1.6033 value=-5.4764 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:18:08.374] step=525 screen=COMBAT action_id=0 log_prob=-1.8027 value=-5.4782 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:18:09.586] step=526 screen=COMBAT action_id=3 log_prob=-1.4778 value=-5.4794 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:18:10.774] step=527 screen=COMBAT action_id=1 log_prob=-1.1137 value=-5.4839 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:18:11.943] step=528 screen=COMBAT action_id=15 log_prob=0.0000 value=-5.4697 valid_actions=1 legal=['end_turn'] hand=2 playable=0 energy=0
+[22:18:17.733] step=529 screen=COMBAT action_id=3 log_prob=-1.7630 value=-5.4751 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:18:18.998] step=530 screen=COMBAT action_id=15 log_prob=-1.6262 value=-5.4839 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:18:24.068] step=531 screen=COMBAT action_id=15 log_prob=-1.7147 value=-5.4658 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:18:35.553] step=532 screen=EVENT action_id=2 log_prob=-2.0933 value=-5.4973 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:18:36.674] step=533 screen=EVENT action_id=2 log_prob=-2.0424 value=-5.4929 valid_actions=8 legal=['choose_event_option'] hand=0 playable=0 energy=0
+[22:18:37.535] step=534 screen=MAP action_id=5 log_prob=-2.1007 value=-5.4949 valid_actions=8 legal=['choose_map_node'] hand=0 playable=0 energy=0
+[22:18:42.889] step=535 screen=COMBAT action_id=15 log_prob=-1.8979 value=-5.5016 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:18:49.624] step=536 screen=COMBAT action_id=1 log_prob=-1.7459 value=-5.4733 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:18:51.144] step=537 screen=COMBAT action_id=2 log_prob=-1.5691 value=-5.4756 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:18:52.394] step=538 screen=COMBAT action_id=15 log_prob=-1.1046 value=-5.4732 valid_actions=3 legal=['end_turn', 'play_card'] hand=3 playable=2 energy=1
+[22:19:01.659] step=539 screen=COMBAT action_id=1 log_prob=-1.8111 value=-5.5091 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3
+[22:19:02.973] step=540 screen=COMBAT action_id=2 log_prob=-1.6230 value=-5.5135 valid_actions=5 legal=['end_turn', 'play_card'] hand=4 playable=4 energy=2
+[22:19:04.265] step=541 screen=COMBAT action_id=15 log_prob=-1.4964 value=-5.5100 valid_actions=4 legal=['end_turn', 'play_card'] hand=3 playable=3 energy=1
+[22:19:11.853] step=542 screen=COMBAT action_id=15 log_prob=-1.7746 value=-5.4920 valid_actions=6 legal=['end_turn', 'play_card'] hand=5 playable=5 energy=3

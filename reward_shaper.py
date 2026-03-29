@@ -12,15 +12,14 @@ except ImportError:
 
 def _sum_enemy_hp(state: Dict) -> float:
     combat = state.get("combat") or {}
-    return float(sum((m.get("hp", 0) or 0) for m in (combat.get("monsters") or [])))
+    enemies = combat.get("enemies") or []
+    return float(sum((e.get("current_hp", 0) or 0) for e in enemies if isinstance(e, dict)))
 
 
 def _alive_enemy_count(state: Dict) -> int:
     combat = state.get("combat") or {}
-    return len([
-        m for m in (combat.get("monsters") or [])
-        if (m.get("hp", 0) or 0) > 0 and m.get("is_alive", True)
-    ])
+    enemies = combat.get("enemies") or []
+    return len([e for e in enemies if isinstance(e, dict)])
 
 
 def _player(state: Dict) -> Dict:
@@ -28,7 +27,8 @@ def _player(state: Dict) -> Dict:
 
 
 def _player_hp(state: Dict) -> float:
-    return float(_player(state).get("hp", 0) or 0)
+    p = _player(state)
+    return float(p.get("current_hp", p.get("hp", 0)) or 0)
 
 
 def _player_max_hp(state: Dict) -> float:
@@ -41,39 +41,39 @@ def _player_hp_ratio(state: Dict) -> float:
 
 def _sum_enemy_intent_damage(state: Dict) -> float:
     dmg = 0.0
-    monsters = ((state.get("combat") or {}).get("monsters") or [])
-    for m in monsters:
-        if (m.get("hp", 0) or 0) <= 0:
+    enemies = ((state.get("combat") or {}).get("enemies") or [])
+    for enemy in enemies:
+        if not isinstance(enemy, dict):
             continue
-        intents = m.get("intents")
+        intents = enemy.get("intents")
         if not isinstance(intents, list):
             intents = []
         for intent in intents:
             if not isinstance(intent, dict):
                 continue
-            intent_type = str(intent.get("type", "")).upper()
-            if intent_type not in ("Attack", "Attack_buff", "Attack_debuff"):
+            intent_type = str(intent.get("intent_type", "") or "").strip().upper().replace("-", "_").replace(" ", "_")
+            if intent_type not in ("ATTACK", "ATTACK_BUFF", "ATTACK_DEBUFF"):
                 continue
             total_damage = intent.get("total_damage")
             if total_damage is not None:
                 dmg += float(total_damage or 0)
             else:
                 base_dmg = float(intent.get("damage", 0) or 0)
-                times = int(intent.get("times", 1) or 1)
-                dmg += base_dmg * times
+                hits = int(intent.get("hits", 1) or 1)
+                dmg += base_dmg * hits
     return dmg
 
 
 def _enemy_total_damage(state: Dict) -> float:
     """
-    Sum enemy intents total_damage from intents[]; fallback to damage * times.
+    Sum enemy intents total_damage from intents[]; fallback to damage * hits.
     """
     total = 0.0
-    monsters = ((state.get("combat") or {}).get("monsters") or [])
-    for m in monsters:
-        if (m.get("hp", 0) or 0) <= 0:
+    enemies = ((state.get("combat") or {}).get("enemies") or [])
+    for enemy in enemies:
+        if not isinstance(enemy, dict):
             continue
-        intents = m.get("intents")
+        intents = enemy.get("intents")
         if not isinstance(intents, list):
             intents = []
         for intent in intents:
@@ -83,7 +83,7 @@ def _enemy_total_damage(state: Dict) -> float:
             if total_damage is not None:
                 total += float(total_damage or 0)
             else:
-                total += float(intent.get("damage", 0) or 0) * int(intent.get("times", 1) or 1)
+                total += float(intent.get("damage", 0) or 0) * int(intent.get("hits", 1) or 1)
     return total
 
 
@@ -92,6 +92,9 @@ def _state_phase(state: Dict) -> str:
 
 
 def _state_turn(state: Dict) -> int:
+    turn = state.get("turn")
+    if turn is not None:
+        return int(turn or 0)
     return int(((state.get("combat") or {}).get("round", 0)) or 0)
 
 
@@ -99,7 +102,7 @@ def _is_in_combat(state: Dict) -> bool:
     in_combat = state.get("in_combat")
     if in_combat is not None:
         return bool(in_combat)
-    return str(state.get("screen_type", "")).upper() == "COMBAT"
+    return str(state.get("screen", "")).upper() == "COMBAT"
 
 
 @dataclass
@@ -130,7 +133,7 @@ class CombatTracker:
     in_combat: bool = False
     combat_start_state: Optional[Dict] = None
     combat_start_floor: int = 0
-    combat_enemy_type: str = "NORMAL"
+    combat_enemy_type: str = "Monster"
     combat_turns: int = 0
 
     def on_combat_start(self, state: Dict):
@@ -142,28 +145,27 @@ class CombatTracker:
 
     @staticmethod
     def _detect_enemy_type(state: Dict) -> str:
-        state_type = str(state.get("state_type", "")).lower()
-        if state_type == "boss":
-            return "BOSS"
-        if state_type == "elite":
-            return "ELITE"
-
-        combat_type = str((state.get("combat") or {}).get("combat_type", "")).lower()
-        if combat_type == "boss":
-            return "BOSS"
-        if combat_type == "elite":
-            return "ELITE"
-
-        monsters = ((state.get("combat") or {}).get("monsters") or [])
-        for m in monsters:
-            if (m.get("hp", 0) or 0) <= 0:
-                continue
-            mtype = str(m.get("type", "") or "").upper()
-            if mtype == "BOSS" or bool(m.get("is_boss", False)):
+        # 优先使用新的 enemy_type 字段（来自 /api/v1/session/state）
+        combat = state.get("combat") or {}
+        if isinstance(combat, dict):
+            enemy_type = str(combat.get("enemy_type", "")).lower()
+            if enemy_type == "boss":
                 return "BOSS"
-            if mtype == "ELITE" or bool(m.get("is_elite", False)):
+            if enemy_type == "elite":
                 return "ELITE"
-        return "NORMAL"
+            if enemy_type == "monster":
+                return "MONSTER"
+        
+        enemies = ((state.get("combat") or {}).get("enemies") or [])
+        for enemy in enemies:
+            if not isinstance(enemy, dict):
+                continue
+            enemy_id = str(enemy.get("enemy_id", "") or "").upper()
+            if "BOSS" in enemy_id or bool(enemy.get("is_boss", False)):
+                return "BOSS"
+            if "ELITE" in enemy_id or bool(enemy.get("is_elite", False)):
+                return "ELITE"
+        return "MONSTER"
 
 
 @dataclass
@@ -215,6 +217,14 @@ class RewardShaper:
         smith_bonus: float = 0.5,
         remove_card_bonus: float = 0.4,
         choose_card_meta_bonus: float = 0.3,
+        claim_gold_bonus: float = 0.12,
+        claim_card_bonus: float = 0.18,
+        claim_potion_bonus: float = 0.15,
+        claim_relic_bonus: float = 0.25,
+        claim_remove_card_bonus: float = 0.2,
+        claim_special_card_bonus: float = 0.2,
+        claim_linked_set_bonus: float = 0.18,
+        claim_unknown_bonus: float = 0.1,
         buy_bonus: float = 0.2,
         terminal_victory_bonus: float = 100.0,
         terminal_defeat_penalty: float = 30.0,
@@ -270,6 +280,14 @@ class RewardShaper:
         self.smith_bonus = smith_bonus
         self.remove_card_bonus = remove_card_bonus
         self.choose_card_meta_bonus = choose_card_meta_bonus
+        self.claim_gold_bonus = claim_gold_bonus
+        self.claim_card_bonus = claim_card_bonus
+        self.claim_potion_bonus = claim_potion_bonus
+        self.claim_relic_bonus = claim_relic_bonus
+        self.claim_remove_card_bonus = claim_remove_card_bonus
+        self.claim_special_card_bonus = claim_special_card_bonus
+        self.claim_linked_set_bonus = claim_linked_set_bonus
+        self.claim_unknown_bonus = claim_unknown_bonus
         self.buy_bonus = buy_bonus
 
         self.terminal_victory_bonus = terminal_victory_bonus
@@ -296,6 +314,23 @@ class RewardShaper:
         self._b_trigger = 0.0
         self.last_breakdown: Dict[str, float] = {}
 
+    def update_layer_weights(self, layer_a: float, layer_b: float, layer_c: float, layer_d: float, layer_e: float):
+        """
+        动态更新 Layer 权重（用于阶段性权重调整）。
+        
+        Args:
+            layer_a: Layer A（动作级即时奖励）权重
+            layer_b: Layer B（回合级结算奖励）权重
+            layer_c: Layer C（战斗级结算奖励）权重
+            layer_d: Layer D（局外阶段奖励）权重
+            layer_e: Layer E（终局奖励）权重
+        """
+        self.layer_a_weight = float(max(0.0, layer_a))
+        self.layer_b_weight = float(max(0.0, layer_b))
+        self.layer_c_weight = float(max(0.0, layer_c))
+        self.layer_d_weight = float(max(0.0, layer_d))
+        self.layer_e_weight = float(max(0.0, layer_e))
+
     def shape(
         self,
         base_reward: float,
@@ -313,9 +348,8 @@ class RewardShaper:
         kind = str(action.get("action") or action.get("type") or "")
         prev_in_combat = _is_in_combat(prev_state)
         new_in_combat = _is_in_combat(new_state)
-        prev_screen = str(prev_state.get("screen_type", ""))
-        new_screen = str(new_state.get("screen_type", ""))
-        new_state_type = str(new_state.get("state_type", "")).lower()
+        prev_screen = str(prev_state.get("screen", "")).upper()
+        new_screen = str(new_state.get("screen", "")).upper()
 
         combat_start = (not prev_in_combat and new_in_combat)
         combat_end = (prev_in_combat and not new_in_combat)
@@ -355,11 +389,13 @@ class RewardShaper:
         b += resolved["total"]
 
         c = 0.0
-        if combat_end:
-            is_victory = new_state_type in (
-                "combat_rewards", "card_reward", "map", "rest_site",
-                "event", "shop", "treasure", "relic_select", "card_bundle"
-            )
+        if combat_end and prev_screen == "COMBAT" and new_screen == "REWARD":
+            game_over = new_state.get("game_over") or {}
+            if isinstance(game_over, dict) and ("is_victory" in game_over):
+                is_victory = bool(game_over.get("is_victory", False))
+            else:
+                # Layer C: combat victory is defined by COMBAT -> REWARD transition.
+                is_victory = True
             c = self.layer_c_combat_reward(new_state, is_victory)
             self.turn_tracker.in_combat = False
             self.combat_tracker.in_combat = False
@@ -446,8 +482,8 @@ class RewardShaper:
 
         max_hp = max(float(snap_player.get("max_hp", 80) or 80), 1.0)
 
-        snap_enemy_hp = float(sum((m.get("hp", 0) or 0) for m in (snap_combat.get("monsters") or []) if (m.get("hp", 0) or 0) > 0))
-        end_enemy_hp = float(sum((m.get("hp", 0) or 0) for m in (end_combat.get("monsters") or []) if (m.get("hp", 0) or 0) > 0))
+        snap_enemy_hp = float(sum((e.get("current_hp", 0) or 0) for e in (snap_combat.get("enemies") or []) if isinstance(e, dict)))
+        end_enemy_hp = float(sum((e.get("current_hp", 0) or 0) for e in (end_combat.get("enemies") or []) if isinstance(e, dict)))
         total_dmg_this_turn = max(snap_enemy_hp - end_enemy_hp, 0.0)
         dmg_efficiency = total_dmg_this_turn / (max_hp * 0.1)
         reward += min(dmg_efficiency * 0.8, self.dmg_reward_cap)
@@ -522,8 +558,8 @@ class RewardShaper:
 
     def layer_b_turn_reward(self, prev_state: Dict, new_state: Dict, action_kind: str) -> float:
         _ = action_kind
-        prev_round = int((prev_state.get("combat") or {}).get("round", 0) or 0)
-        new_round = int((new_state.get("combat") or {}).get("round", 0) or 0)
+        prev_round = _state_turn(prev_state)
+        new_round = _state_turn(new_state)
         if new_round < prev_round + 1:
             return 0.0
         return self._layer_b_progress(prev_state) + self._layer_b4_hp_loss_from_round_transition(prev_state, new_state)
@@ -534,7 +570,7 @@ class RewardShaper:
 
         enemy_type = self.combat_tracker.combat_enemy_type
         type_bonus_map = {
-            "NORMAL": self.normal_combat_bonus,
+            "MONSTER": self.normal_combat_bonus,
             "ELITE": self.elite_combat_bonus,
             "BOSS": self.boss_combat_bonus,
         }
@@ -557,10 +593,71 @@ class RewardShaper:
 
     def layer_d_meta_reward(self, prev_state: Dict, new_state: Dict, action: Dict) -> float:
         action_kind = str(action.get("action") or action.get("type") or "")
+        prev_screen = str(prev_state.get("screen", "") or "").upper()
+        new_screen = str(new_state.get("screen", "") or "").upper()
+        prev_legal = {str(a) for a in (prev_state.get("legal_actions") or [])}
+        prev_reward = prev_state.get("reward") or {}
         reward = 0.0
+
+        def _claim_reward_type_bonus() -> float:
+            if not isinstance(prev_reward, dict):
+                return 0.0
+
+            rewards = prev_reward.get("rewards") or []
+            if not isinstance(rewards, list) or not rewards:
+                return 0.0
+
+            option_index = int(action.get("option_index", action.get("index", -1)) or -1)
+            target = None
+
+            for item in rewards:
+                if not isinstance(item, dict):
+                    continue
+                if int(item.get("index", -9999) or -9999) == option_index:
+                    target = item
+                    break
+
+            if target is None and 0 <= option_index < len(rewards):
+                maybe_item = rewards[option_index]
+                if isinstance(maybe_item, dict):
+                    target = maybe_item
+
+            if not isinstance(target, dict):
+                return 0.0
+
+            reward_type = str(target.get("reward_type", "") or "").strip().upper()
+            if reward_type == "GOLD":
+                return self.claim_gold_bonus
+            if reward_type == "CARD":
+                return self.claim_card_bonus
+            if reward_type == "POTION":
+                return self.claim_potion_bonus
+            if reward_type == "RELIC":
+                return self.claim_relic_bonus
+            if reward_type == "REMOVECARD":
+                return self.claim_remove_card_bonus
+            if reward_type == "SPECIALCARD":
+                return self.claim_special_card_bonus
+            if reward_type == "LINKEDREWARDSET":
+                return self.claim_linked_set_bonus
+            return self.claim_unknown_bonus
 
         if action_kind == "choose_reward_card":
             reward += self.choose_card_meta_bonus
+        elif action_kind == "claim_reward":
+            # Use reward.rewards[].reward_type + option_index to give differentiated meta rewards.
+            reward += _claim_reward_type_bonus()
+        elif action_kind == "select_deck_card":
+            # Some reward-card picks are surfaced as select_deck_card by backend/action decoder.
+            pending_card_choice = bool(prev_reward.get("pending_card_choice", False)) if isinstance(prev_reward, dict) else False
+            reward_card_flow = (
+                pending_card_choice
+                or "choose_reward_card" in prev_legal
+                or prev_screen == "CARD_REWARD"
+                or (prev_screen == "REWARD" and new_screen == "REWARD")
+            )
+            if reward_card_flow:
+                reward += self.choose_card_meta_bonus
         elif action_kind == "skip_reward_cards":
             reward += 0.0
         elif action_kind == "choose_rest_option":
@@ -588,6 +685,9 @@ class RewardShaper:
         new_deck = len(new_state.get("deck") or [])
         if action_kind in ("buy_card", "remove_card_at_shop") and new_deck < prev_deck:
             reward += self.remove_card_bonus
+        elif action_kind == "select_deck_card" and new_deck < prev_deck:
+            # Covers remove-card event/shop flows that execute as select_deck_card.
+            reward += self.remove_card_bonus
 
         return reward
 
@@ -595,7 +695,7 @@ class RewardShaper:
         if not done:
             return 0.0
 
-        if bool((final_state.get("game_over") or {}).get("victory", False)):
+        if bool((final_state.get("game_over") or {}).get("is_victory", False)):
             return self.terminal_victory_bonus
 
         floor = float(final_state.get("floor", 0) or 0)
