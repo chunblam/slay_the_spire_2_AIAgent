@@ -223,6 +223,61 @@ StateEncoder 将游戏 JSON 转化为固定维度的 numpy 数组字典：
 
 该机制仍属于 Reward Shaping，不改 PPO 损失函数。
 
+### 3.4 阶段性权重调度（已实现，按 `total_steps` 比例）
+
+当前 `train.py` 已支持三阶段动态权重，不再使用固定步数阈值（如 0~5k / 5k~50k）。
+
+- 配置入口：`ppo_sts2agent.yaml` → `reward.phase_schedule`
+- 切分方式：按 `train.total_steps` 比例切分
+  - 前期：`[0, total_steps * early_end_ratio)`
+  - 中期：`[total_steps * early_end_ratio, total_steps * mid_end_ratio)`
+  - 后期：`[total_steps * mid_end_ratio, total_steps]`
+- 中期支持线性插值（`mid_start_weights` → `mid_end_weights`），避免权重突变带来的训练抖动
+
+| **参数** | **说明** |
+| :--- | :--- |
+| `enabled` | 是否启用阶段调度 |
+| `early_end_ratio` | 前期结束比例（如 0.2） |
+| `mid_end_ratio` | 中期结束比例（如 0.7） |
+| `early_weights` | 前期 A/B/C/D/E 权重 |
+| `mid_start_weights` | 中期开头权重 |
+| `mid_end_weights` | 中期结尾权重 |
+| `late_weights` | 后期权重 |
+
+> 建议：在单 RL 验证阶段保持温和权重变化，先验证奖励方向正确，再在 RL+LLM 阶段做强策略偏置。
+
+### 3.5 `claim_reward` 多类型差异化奖励（已实现）
+
+基于 STS2AIAgent 最新 API（`reward.rewards[]` 包含 `reward_type`），Layer D 已支持按奖励类型给不同 bonus：
+
+- `Gold`
+- `Card`
+- `Potion`
+- `Relic`
+- `RemoveCard`
+- `SpecialCard`
+- `LinkedRewardSet`
+- 未知类型兜底 `claim_unknown_bonus`
+
+实现逻辑：
+
+1. 根据动作中的 `option_index`，在 `prev_state.reward.rewards[]` 中定位目标奖励项
+2. 读取该项的 `reward_type`
+3. 映射到对应的 Layer D bonus 参数
+
+对应可调参数（`ppo_sts2agent.yaml`）：
+
+- `claim_gold_bonus`
+- `claim_card_bonus`
+- `claim_potion_bonus`
+- `claim_relic_bonus`
+- `claim_remove_card_bonus`
+- `claim_special_card_bonus`
+- `claim_linked_set_bonus`
+- `claim_unknown_bonus`
+
+这部分改动的目标是为后续 RL+LLM 联训提供可解释的策略信号：当 LLM 推荐某类奖励时，PPO 能在 reward 侧接收到类型差异。
+
 ---
 
 ## 4. 大模型集成方案
@@ -506,6 +561,50 @@ conda deactivate
 16. **游玩录像：** 录制 AI 游玩片段，展示 Agent 的具体决策行为
 17. **量化成果：** 「Agent 能稳定通关第一幕 BOSS（Win Rate 35%）」比「训练了游戏 AI」有说服力得多
 18. **技术博客：** 写一篇关于 LLM + RL 方案设计的技术文章（知乎/CSDN/Medium）
+
+### 7.4 RL+LLM 待升级方案（建议按优先级迭代）
+
+以下方案按照“先稳定、再变强、后泛化”的顺序设计。
+
+#### P0：联训稳定性与观测能力（优先级最高）
+
+- **统一实验配置快照**：保存 reward/llm 关键参数到每次 run 的配置快照，保证可复现对比
+- **分模块指标上报**：在训练日志中分别记录 `LayerA~E`、`LLM_match`、`LLM_global` 的均值/方差
+- **调用质量日志**：记录 LLM 推荐索引、置信度、实际选择、命中率（card/relic/map/opening 四类）
+- **超时与降级策略**：LLM 失败或超时时强制降级为纯 RL，不阻塞 rollout
+
+#### P1：奖励与建议耦合优化（直接影响效果）
+
+- **置信度分段奖励**：将当前“高置信度命中奖励”改为分段函数（低/中/高置信度不同幅度）
+- **类型感知加权**：对 `claim_reward` 的类型奖励与 LLM 建议做联合加权（如 relic > card > potion）
+- **阶段调度联动**：将 `phase_schedule` 与 `llm_weight` 联动
+  - 前期：较低 `llm_weight`，先学基础生存
+  - 中期：逐步升高 `llm_weight`
+  - 后期：按策略目标固定在稳定值
+- **负反馈软化**：对于 LLM 高置信但策略未采纳的情况，使用轻惩罚并限制上限，避免训练不稳定
+
+#### P2：提示词与知识检索升级（决定上限）
+
+- **模板化 Prompt**：按节点类型拆分模板（card/relic/map/combat），减少上下文噪声
+- **候选裁剪**：仅注入当前候选项相关知识（Top-K cards/relics/map routes）
+- **轻量 RAG**：用 embeddings 检索 synergies/strategies，替代全量文本拼接
+- **结构化输出校验**：对 LLM JSON 输出做 schema 校验 + 自动重试
+
+#### P3：训练与评测闭环（用于最终迭代）
+
+- **A/B 实验矩阵**：纯 RL vs RL+LLM；不同 `llm_weight`、不同 `phase_schedule` 组合
+- **关键业务指标**：平均层数、Act1 胜率、精英击杀率、高价值遗物命中率、牌组质量指标
+- **离线回放评估**：固定种子回放，比较不同策略在同局面下的动作质量
+- **成本评估**：统计每局 LLM 调用次数、平均时延、token 成本（云端模型时）
+
+### 7.5 LLM 接入后重点优化清单（Checklist）
+
+- [ ] `llm.enabled=true` 时，不影响基础 rollout 速度与稳定性
+- [ ] LLM 调用失败不会阻塞训练（有 fallback）
+- [ ] card/relic/map/opening 四类建议均有可观测命中率日志
+- [ ] `llm_weight` 与 `phase_schedule` 联动规则已配置并验证
+- [ ] `claim_reward` 类型奖励与 LLM 建议在日志中可解释
+- [ ] 至少完成 3 组 A/B 实验并输出结论
 
 ---
 
