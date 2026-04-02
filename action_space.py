@@ -63,11 +63,17 @@ class STS2ActionSpace:
     ):
         self.max_hand = max_hand_size
         self.max_potions = max_potions
-        self.total_actions = max(16, 10)
+        # 10 hand slots + 5 potion slots + 1 end-turn slot
+        self.total_actions = self.max_hand + self.max_potions + 1
         self._card_select_cursor = 0
+        self._last_screen = ""
 
     def decode(self, action_id: int, state: Dict) -> Dict:
+        action_id = max(0, int(action_id))
         screen = str(state.get("screen", "") or "").upper()
+        if screen != "CARD_SELECTION" and self._last_screen == "CARD_SELECTION":
+            self._card_select_cursor = 0
+        self._last_screen = screen
         legal = _get_legal_actions(state)
         if not _can_act_now(state):
             # Env should gate posting when can_act=False; keep decode conservative.
@@ -89,6 +95,12 @@ class STS2ActionSpace:
             candidate = self._decode_shop(action_id, state)
         elif screen == "EVENT":
             candidate = self._decode_event(action_id, state)
+        elif screen == "CRYSTAL":
+            legal = _get_legal_actions(state)
+            if "crystal_auto_play" in legal:
+                candidate = {"action": "crystal_auto_play"}
+            else:
+                candidate = self._fallback_from_legal_actions(state)
         elif screen == "CARD_BUNDLE":
             candidate = self._decode_choose_card_bundle(action_id, state)
         elif screen == "CHEST":
@@ -127,8 +139,6 @@ class STS2ActionSpace:
             return {"action": "play_card", "card_index": 0}
         if "use_potion" in legal:
             return {"action": "use_potion", "option_index": 0}
-        if "discard_potion" in legal:
-            return {"action": "discard_potion", "option_index": 0}
         if "end_turn" in legal:
             return {"action": "end_turn"}
 
@@ -199,7 +209,10 @@ class STS2ActionSpace:
         if "dismiss_modal" in legal:
             return {"action": "dismiss_modal"}
 
-        return {"action": legal[0]}
+        for action_name in legal:
+            if action_name != "discard_potion":
+                return {"action": action_name}
+        return {"action": "proceed"}
 
     def _decode_choose_card_bundle(self, action_id: int, state: Dict) -> Dict:
         legal = _get_legal_actions(state)
@@ -236,7 +249,8 @@ class STS2ActionSpace:
         if action_id < self.max_hand:
             if action_id < len(hand):
                 card = hand[action_id] if isinstance(hand[action_id], dict) else {}
-                body: Dict = {"action": "play_card", "card_index": action_id}
+                card_index = int(card.get("index", action_id) or action_id)
+                body: Dict = {"action": "play_card", "card_index": card_index}
                 # Only attach target_index when the selected card requires a target.
                 target_index = _pick_target_index_for_card(card, enemies)
                 if target_index is not None:
@@ -248,7 +262,8 @@ class STS2ActionSpace:
             slot = action_id - self.max_hand
             if slot < len(potions):
                 potion = potions[slot] if isinstance(potions[slot], dict) else {}
-                body = {"action": "use_potion", "option_index": slot}
+                option_index = int(potion.get("index", slot) or slot)
+                body = {"action": "use_potion", "option_index": option_index}
                 # Only attach target_index when the selected potion requires a target.
                 target_index = _pick_target_index_for_potion(potion, enemies)
                 if target_index is not None:
@@ -262,9 +277,20 @@ class STS2ActionSpace:
 
     def _decode_card_reward(self, action_id: int, state: Dict) -> Dict:
         cards = state.get("card_reward", {}).get("cards", [])
-        if not cards or action_id == 0 or action_id > len(cards):
+        legal = _get_legal_actions(state)
+        if not cards:
+            return self._fallback_from_legal_actions(state)
+
+        # action_id in [0, n_cards-1] selects a card; larger ids map to skip when legal.
+        if "choose_reward_card" in legal and 0 <= action_id < len(cards):
+            card = cards[action_id] if isinstance(cards[action_id], dict) else {}
+            option_index = int(card.get("index", action_id) or action_id)
+            return {"action": "choose_reward_card", "option_index": option_index}
+
+        if "skip_reward_cards" in legal:
             return {"action": "skip_reward_cards"}
-        return {"action": "choose_reward_card", "option_index": action_id - 1}
+
+        return {"action": "choose_reward_card", "option_index": 0}
 
     def _decode_reward(self, action_id: int, state: Dict) -> Dict:
         reward = state.get("reward") or {}
@@ -274,8 +300,10 @@ class STS2ActionSpace:
 
         # Reward screen may currently be in card-choice subphase.
         if "choose_reward_card" in legal and isinstance(card_options, list) and card_options:
-            if 1 <= action_id <= len(card_options):
-                return {"action": "choose_reward_card", "option_index": action_id - 1}
+            if 0 <= action_id < len(card_options):
+                card = card_options[action_id] if isinstance(card_options[action_id], dict) else {}
+                option_index = int(card.get("index", action_id) or action_id)
+                return {"action": "choose_reward_card", "option_index": option_index}
             if "skip_reward_cards" in legal:
                 return {"action": "skip_reward_cards"}
             return {"action": "choose_reward_card", "option_index": 0}
@@ -285,7 +313,9 @@ class STS2ActionSpace:
 
         if rewards and "claim_reward" in legal:
             idx = min(max(action_id, 0), len(rewards) - 1)
-            return {"action": "claim_reward", "option_index": idx}
+            reward_item = rewards[idx] if isinstance(rewards[idx], dict) else {}
+            option_index = int(reward_item.get("index", idx) or idx)
+            return {"action": "claim_reward", "option_index": option_index}
         if "collect_rewards_and_proceed" in legal:
             return {"action": "collect_rewards_and_proceed"}
         if "proceed" in legal:
@@ -304,8 +334,14 @@ class STS2ActionSpace:
         nodes = self._map_next_options(state)
         if not nodes:
             return self._fallback_from_legal_actions(state)
-        idx = min(action_id, len(nodes) - 1)
-        return {"action": "choose_map_node", "option_index": idx}
+        idx = min(max(action_id, 0), len(nodes) - 1)
+        node = nodes[idx]
+        option_index = idx
+        if isinstance(node, dict):
+            option_index = int(node.get("index", idx) or idx)
+        elif isinstance(node, int):
+            option_index = node
+        return {"action": "choose_map_node", "option_index": option_index}
 
     def _decode_rest(self, action_id: int, state: Dict) -> Dict:
         """
@@ -322,7 +358,9 @@ class STS2ActionSpace:
             return self._fallback_from_legal_actions(state)
 
         idx = min(max(int(action_id), 0), len(options) - 1)
-        return {"action": "choose_rest_option", "option_index": idx}
+        option = options[idx] if isinstance(options[idx], dict) else {}
+        option_index = int(option.get("index", idx) or idx)
+        return {"action": "choose_rest_option", "option_index": option_index}
 
     def _decode_card_select(self, action_id: int, state: Dict) -> Dict:
         legal = _get_legal_actions(state)
@@ -337,22 +375,32 @@ class STS2ActionSpace:
 
         if cards:
             base_idx = max(int(action_id), 0)
-            # Multi-select flows may reject repeated picks of the same card index.
-            # Offset by selected_count to advance candidate card indices.
-            idx = (base_idx + max(selected_count, 0)) % len(cards)
+            # Prefer cards that are not yet selected to reduce no-op repeat clicks.
+            candidate_positions: List[int] = []
+            for i, c in enumerate(cards):
+                if not isinstance(c, dict):
+                    continue
+                already_selected = bool(
+                    c.get("selected", False)
+                    or c.get("is_selected", False)
+                    or c.get("chosen", False)
+                )
+                if not already_selected:
+                    candidate_positions.append(i)
+            if not candidate_positions:
+                candidate_positions = list(range(len(cards)))
+            pick_pos = candidate_positions[(base_idx + max(selected_count, 0)) % len(candidate_positions)]
+            picked = cards[pick_pos] if isinstance(cards[pick_pos], dict) else {}
+            idx = int(picked.get("index", pick_pos) or pick_pos)
         else:
-            # When selection.cards metadata is temporarily unavailable, rotate indices
-            # instead of pinning option_index=0 to reduce repeated-click deadlocks.
-            span = max(1, min(self.max_hand, 8))
-            idx = (self._card_select_cursor + max(int(action_id), 0)) % span
-            self._card_select_cursor = (idx + 1) % span
+            # Without selection metadata, stay conservative and use option 0.
+            idx = 0
 
-        if "confirm_selection" in legal and can_confirm and selected_count >= min_select:
-            # For multi-select and explicit-confirm flows, finalize once confirm is available.
-            if selected_count >= max_select or requires_confirmation or "select_deck_card" not in legal:
+        if "confirm_selection" in legal and selected_count >= min_select:
+            # Some backends expose confirm_selection before can_confirm flips true.
+            # Prefer confirm to avoid repeated select_deck_card loops.
+            if can_confirm or selected_count >= max_select or requires_confirmation or "select_deck_card" not in legal:
                 return {"action": "confirm_selection"}
-            # Even in optional extra-pick flows, prefer confirming to avoid card-select stalls.
-            return {"action": "confirm_selection"}
 
         if "select_deck_card" in legal:
             return {"action": "select_deck_card", "option_index": idx}
@@ -377,7 +425,7 @@ class STS2ActionSpace:
                 for i, item in enumerate(cards):
                     if not isinstance(item, dict):
                         continue
-                    affordable = bool(item.get("affordable", item.get("enough_gold", True)))
+                    affordable = bool(item.get("affordable", item.get("enough_gold", False)))
                     stocked = bool(item.get("stocked", item.get("available", True)))
                     if affordable and stocked:
                         buyable.append(int(item.get("index", i) or i))
@@ -391,7 +439,7 @@ class STS2ActionSpace:
                 for i, item in enumerate(relics):
                     if not isinstance(item, dict):
                         continue
-                    affordable = bool(item.get("affordable", item.get("enough_gold", True)))
+                    affordable = bool(item.get("affordable", item.get("enough_gold", False)))
                     stocked = bool(item.get("stocked", item.get("available", True)))
                     if affordable and stocked:
                         buyable.append(int(item.get("index", i) or i))
@@ -405,7 +453,7 @@ class STS2ActionSpace:
                 for i, item in enumerate(potions):
                     if not isinstance(item, dict):
                         continue
-                    affordable = bool(item.get("affordable", item.get("enough_gold", True)))
+                    affordable = bool(item.get("affordable", item.get("enough_gold", False)))
                     stocked = bool(item.get("stocked", item.get("available", True)))
                     if affordable and stocked:
                         buyable.append(int(item.get("index", i) or i))
@@ -426,17 +474,17 @@ class STS2ActionSpace:
             
             # Check if there's anything to buy before opening
             cards_available = bool(shop.get("cards") and any(
-                bool(item.get("affordable", item.get("enough_gold", True))) and 
+                bool(item.get("affordable", item.get("enough_gold", False))) and 
                 bool(item.get("stocked", item.get("available", True)))
                 for item in shop.get("cards", []) if isinstance(item, dict)
             ))
             relics_available = bool(shop.get("relics") and any(
-                bool(item.get("affordable", item.get("enough_gold", True))) and 
+                bool(item.get("affordable", item.get("enough_gold", False))) and 
                 bool(item.get("stocked", item.get("available", True)))
                 for item in shop.get("relics", []) if isinstance(item, dict)
             ))
             potions_available = bool(shop.get("potions") and any(
-                bool(item.get("affordable", item.get("enough_gold", True))) and 
+                bool(item.get("affordable", item.get("enough_gold", False))) and 
                 bool(item.get("stocked", item.get("available", True)))
                 for item in shop.get("potions", []) if isinstance(item, dict)
             ))
@@ -463,7 +511,9 @@ class STS2ActionSpace:
 
         if options and "choose_event_option" in legal:
             idx = min(max(action_id, 0), len(options) - 1)
-            return {"action": "choose_event_option", "option_index": idx}
+            opt = options[idx] if isinstance(options[idx], dict) else {}
+            option_index = int(opt.get("index", idx) or idx)
+            return {"action": "choose_event_option", "option_index": option_index}
 
         return self._fallback_from_legal_actions(state)
 
@@ -476,7 +526,9 @@ class STS2ActionSpace:
         if "open_chest" in legal:
             return {"action": "open_chest"}
         if relics and "choose_treasure_relic" in legal:
-            return {"action": "choose_treasure_relic", "option_index": idx}
+            relic = relics[idx] if isinstance(relics[idx], dict) else {}
+            option_index = int(relic.get("index", idx) or idx)
+            return {"action": "choose_treasure_relic", "option_index": option_index}
         if "proceed" in legal:
             return {"action": "proceed"}
 
@@ -489,6 +541,11 @@ class STS2ActionSpace:
             mask[0] = True
             return mask
         legal_actions = _get_legal_actions(state)
+
+        def _set_prefix(count: int):
+            for i in range(min(max(1, count), self.total_actions)):
+                mask[i] = True
+
         if legal_actions:
             if "end_turn" in legal_actions:
                 mask[self.max_hand + self.max_potions] = True
@@ -504,22 +561,62 @@ class STS2ActionSpace:
                 for i in range(min(self.max_potions, self.total_actions - self.max_hand)):
                     mask[self.max_hand + i] = True
 
-            if any(
+            if "choose_reward_card" in legal_actions:
+                options = (state.get("reward") or {}).get("card_options") or (state.get("card_reward") or {}).get("cards") or []
+                option_count = len(options) if isinstance(options, list) else 0
+                if "skip_reward_cards" in legal_actions:
+                    option_count += 1
+                _set_prefix(option_count)
+
+            elif "claim_reward" in legal_actions:
+                rewards = (state.get("reward") or {}).get("rewards") or []
+                _set_prefix(len(rewards) if isinstance(rewards, list) else 1)
+
+            elif "choose_map_node" in legal_actions:
+                nodes = self._map_next_options(state)
+                _set_prefix(len(nodes))
+
+            elif "choose_rest_option" in legal_actions:
+                options = (state.get("rest") or {}).get("options") or []
+                _set_prefix(len(options) if isinstance(options, list) else 1)
+
+            elif "choose_event_option" in legal_actions:
+                options = (state.get("event") or {}).get("options") or []
+                _set_prefix(len(options) if isinstance(options, list) else 1)
+
+            elif "choose_treasure_relic" in legal_actions:
+                relics = (state.get("chest") or {}).get("relic_options") or []
+                _set_prefix(len(relics) if isinstance(relics, list) else 1)
+
+            elif "choose_bundle" in legal_actions:
+                controls = (state.get("card_bundle") or {}).get("ui_controls") or []
+                picks = 0
+                if isinstance(controls, list):
+                    picks = sum(1 for c in controls if isinstance(c, dict) and c.get("role") == "choose_bundle")
+                _set_prefix(picks if picks > 0 else 1)
+
+            elif "select_deck_card" in legal_actions:
+                cards = (state.get("selection") or {}).get("cards") or []
+                _set_prefix(len(cards) if isinstance(cards, list) and cards else 1)
+
+            elif any(
                 a in legal_actions for a in (
-                    "choose_map_node", "choose_rest_option", "choose_event_option",
-                    "select_deck_card", "choose_reward_card", "choose_treasure_relic",
-                    "claim_reward", "skip_reward_cards", "proceed", "confirm_selection",
                     "buy_card", "buy_relic", "buy_potion", "remove_card_at_shop",
-                    "open_shop_inventory", "close_shop_inventory", "open_character_select", "select_character",
-                    "embark", "return_to_main_menu", "choose_bundle", "collect_rewards_and_proceed",
+                    "open_shop_inventory", "close_shop_inventory", "proceed",
+                    "confirm_selection", "collect_rewards_and_proceed", "crystal_auto_play",
+                    "open_character_select", "select_character", "embark", "return_to_main_menu",
                 )
             ):
-                for i in range(min(8, self.total_actions)):
-                    if not mask[i]:
-                        mask[i] = True
+                _set_prefix(4)
 
             if any(mask):
                 return mask
+
+            # When legal actions are present but do not map to our policy head
+            # (e.g. discard_potion-only transient states), avoid heuristic guesses.
+            # Keep at least one valid index to preserve numerical stability.
+            mask[0] = True
+            return mask
 
         screen = str(state.get("screen", "") or "").upper()
         combat = state.get("combat", {})
@@ -528,16 +625,23 @@ class STS2ActionSpace:
 
         if screen == "COMBAT":
             for i, card in enumerate(hand[: self.max_hand]):
-                cost = card.get("cost", 0)
-                cost_val = cost if isinstance(cost, int) else 0
-                if bool(card.get("playable", True)) and (cost_val <= energy or cost == "X"):
+                energy_cost = card.get("energy_cost", card.get("cost", 0))
+                if isinstance(energy_cost, str):
+                    cost_token = energy_cost.strip().upper()
+                    cost_val = 0
+                    is_x_cost = (cost_token == "X")
+                else:
+                    cost_val = int(energy_cost or 0)
+                    is_x_cost = bool(card.get("costs_x", False))
+
+                if bool(card.get("playable", True)) and (cost_val <= energy or is_x_cost):
                     mask[i] = True
             potions = state.get("potions", [])
             for i in range(min(len(potions), self.max_potions)):
                 mask[self.max_hand + i] = True
             mask[self.max_hand + self.max_potions] = True
 
-        elif screen in ("CARD_REWARD", "REWARD", "MAP", "REST", "SHOP", "CARD_SELECTION", "CHEST", "CARD_BUNDLE", "EVENT"):
+        elif screen in ("CARD_REWARD", "REWARD", "MAP", "REST", "SHOP", "CARD_SELECTION", "CHEST", "CARD_BUNDLE", "EVENT", "CRYSTAL"):
             for i in range(min(8, self.total_actions)):
                 mask[i] = True
 

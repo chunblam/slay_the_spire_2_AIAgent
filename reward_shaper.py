@@ -26,6 +26,39 @@ def _player(state: Dict) -> Dict:
     return ((state.get("combat") or {}).get("player") or {})
 
 
+def _extract_powers(entity: Dict) -> List[Dict]:
+    """Read powers with backward-compatible fallback to buffs."""
+    powers = entity.get("powers")
+    if not isinstance(powers, list):
+        powers = entity.get("buffs")
+    if not isinstance(powers, list):
+        return []
+    return [p for p in powers if isinstance(p, dict)]
+
+
+def _sum_positive_player_buff_amount(state: Dict) -> float:
+    player = _player(state)
+    total = 0.0
+    for p in _extract_powers(player):
+        if bool(p.get("is_debuff", False)):
+            continue
+        total += max(float(p.get("amount", 0) or 0), 0.0)
+    return total
+
+
+def _sum_enemy_debuff_amount(state: Dict) -> float:
+    enemies = ((state.get("combat") or {}).get("enemies") or [])
+    total = 0.0
+    for e in enemies:
+        if not isinstance(e, dict):
+            continue
+        for p in _extract_powers(e):
+            if not bool(p.get("is_debuff", False)):
+                continue
+            total += max(float(p.get("amount", 0) or 0), 0.0)
+    return total
+
+
 def _player_hp(state: Dict) -> float:
     p = _player(state)
     return float(p.get("current_hp", p.get("hp", 0)) or 0)
@@ -191,6 +224,7 @@ class RewardShaper:
         layer_e_weight: float = 1.0,
         action_damage_coef: float = 0.004,
         action_block_coef: float = 0.002,
+        action_kill_bonus: float = 0.3,
         action_card_pick_bonus: float = 0.05,
         action_potion_bonus: float = 0.05,
         dmg_reward_cap: float = 1.5,
@@ -201,6 +235,10 @@ class RewardShaper:
         energy_waste_penalty: float = 0.5,
         hp_loss_penalty: float = 1.5,
         hp_loss_urgency_max_mul: float = 2.0,
+        action_player_buff_gain_bonus: float = 0.05,
+        action_enemy_debuff_gain_bonus: float = 0.08,
+        player_buff_gain_bonus: float = 0.15,
+        enemy_debuff_gain_bonus: float = 0.1,
         normal_combat_bonus: float = 3.0,
         elite_combat_bonus: float = 8.0,
         boss_combat_bonus: float = 20.0,
@@ -208,6 +246,8 @@ class RewardShaper:
         hp_efficiency_max: float = 4.0,
         elite_clean_bonus: float = 3.0,
         elite_clean_threshold: float = 0.3,
+        high_hp_loss_threshold: float = 0.5,
+        high_hp_loss_penalty_scale: float = 3.0,
         rest_low_hp_bonus: float = 1.0,
         rest_mid_hp_bonus: float = 0.3,
         rest_high_hp_penalty: float = 0.5,
@@ -225,6 +265,21 @@ class RewardShaper:
         claim_special_card_bonus: float = 0.2,
         claim_linked_set_bonus: float = 0.18,
         claim_unknown_bonus: float = 0.1,
+        event_option_bonus: float = 0.1,
+        map_node_bonus: float = 0.0,
+        deck_optimal_min: int = 10,
+        deck_optimal_max: int = 20,
+        deck_optimal_bonus: float = 0.05,
+        deck_large_threshold: int = 25,
+        deck_large_penalty_per_card: float = 0.1,
+        deck_too_small_threshold: int = 6,
+        deck_too_small_penalty: float = 0.1,
+        remove_curse_bonus: float = 0.6,
+        buy_card_common_bonus: float = 0.1,
+        buy_card_uncommon_bonus: float = 0.25,
+        buy_card_rare_bonus: float = 0.4,
+        smith_low_upgrade_ratio_threshold: float = 0.3,
+        smith_low_upgrade_ratio_mul: float = 1.5,
         buy_bonus: float = 0.2,
         terminal_victory_bonus: float = 100.0,
         terminal_defeat_penalty: float = 30.0,
@@ -237,6 +292,12 @@ class RewardShaper:
         relic_choice_weight: float = 0.25,
         map_route_weight: float = 0.25,
         combat_opening_weight: float = 0.2,
+        remove_choice_weight: float = 0.15,
+        remove_match_bonus: float = 0.8,
+        remove_mismatch_penalty: float = 0.4,
+        shop_choice_weight: float = 0.15,
+        shop_match_bonus: float = 0.8,
+        shop_mismatch_penalty: float = 0.4,
         combat_bias_steps: int = 3,
         reward_clip: float = 50.0,
     ):
@@ -251,6 +312,7 @@ class RewardShaper:
 
         self.action_damage_coef = action_damage_coef
         self.action_block_coef = action_block_coef
+        self.action_kill_bonus = action_kill_bonus
         self.action_card_pick_bonus = action_card_pick_bonus
         self.action_potion_bonus = action_potion_bonus
 
@@ -262,6 +324,10 @@ class RewardShaper:
         self.energy_waste_penalty = energy_waste_penalty
         self.hp_loss_penalty = hp_loss_penalty
         self.hp_loss_urgency_max_mul = hp_loss_urgency_max_mul
+        self.action_player_buff_gain_bonus = action_player_buff_gain_bonus
+        self.action_enemy_debuff_gain_bonus = action_enemy_debuff_gain_bonus
+        self.player_buff_gain_bonus = player_buff_gain_bonus
+        self.enemy_debuff_gain_bonus = enemy_debuff_gain_bonus
 
         self.normal_combat_bonus = normal_combat_bonus
         self.elite_combat_bonus = elite_combat_bonus
@@ -270,6 +336,8 @@ class RewardShaper:
         self.hp_efficiency_max = hp_efficiency_max
         self.elite_clean_bonus = elite_clean_bonus
         self.elite_clean_threshold = elite_clean_threshold
+        self.high_hp_loss_threshold = high_hp_loss_threshold
+        self.high_hp_loss_penalty_scale = high_hp_loss_penalty_scale
 
         self.rest_low_hp_bonus = rest_low_hp_bonus
         self.rest_mid_hp_bonus = rest_mid_hp_bonus
@@ -288,6 +356,21 @@ class RewardShaper:
         self.claim_special_card_bonus = claim_special_card_bonus
         self.claim_linked_set_bonus = claim_linked_set_bonus
         self.claim_unknown_bonus = claim_unknown_bonus
+        self.event_option_bonus = event_option_bonus
+        self.map_node_bonus = map_node_bonus
+        self.deck_optimal_min = max(1, int(deck_optimal_min))
+        self.deck_optimal_max = max(self.deck_optimal_min, int(deck_optimal_max))
+        self.deck_optimal_bonus = deck_optimal_bonus
+        self.deck_large_threshold = max(self.deck_optimal_max, int(deck_large_threshold))
+        self.deck_large_penalty_per_card = deck_large_penalty_per_card
+        self.deck_too_small_threshold = max(1, int(deck_too_small_threshold))
+        self.deck_too_small_penalty = deck_too_small_penalty
+        self.remove_curse_bonus = remove_curse_bonus
+        self.buy_card_common_bonus = buy_card_common_bonus
+        self.buy_card_uncommon_bonus = buy_card_uncommon_bonus
+        self.buy_card_rare_bonus = buy_card_rare_bonus
+        self.smith_low_upgrade_ratio_threshold = smith_low_upgrade_ratio_threshold
+        self.smith_low_upgrade_ratio_mul = smith_low_upgrade_ratio_mul
         self.buy_bonus = buy_bonus
 
         self.terminal_victory_bonus = terminal_victory_bonus
@@ -302,6 +385,12 @@ class RewardShaper:
         self.relic_choice_weight = relic_choice_weight
         self.map_route_weight = map_route_weight
         self.combat_opening_weight = combat_opening_weight
+        self.remove_choice_weight = remove_choice_weight
+        self.remove_match_bonus = remove_match_bonus
+        self.remove_mismatch_penalty = remove_mismatch_penalty
+        self.shop_choice_weight = shop_choice_weight
+        self.shop_match_bonus = shop_match_bonus
+        self.shop_mismatch_penalty = shop_mismatch_penalty
         self.combat_bias_steps = max(1, int(combat_bias_steps))
         self.reward_clip = abs(float(reward_clip))
 
@@ -341,6 +430,9 @@ class RewardShaper:
         agent_card_index: Optional[int] = None,
         agent_relic_index: Optional[int] = None,
         agent_map_index: Optional[int] = None,
+        agent_remove_index: Optional[int] = None,
+        agent_shop_action: Optional[str] = None,
+        agent_shop_index: Optional[int] = None,
         combat_step: Optional[int] = None,
         agent_card_played: Optional[int] = None,
     ) -> float:
@@ -421,11 +513,15 @@ class RewardShaper:
         llm_card = self._compute_card_match_bonus(agent_card_index) if agent_card_index is not None else 0.0
         llm_relic = self._compute_relic_match_bonus(agent_relic_index) if agent_relic_index is not None else 0.0
         llm_map = self._compute_map_match_bonus(agent_map_index) if agent_map_index is not None else 0.0
+        llm_remove = self._compute_remove_match_bonus(prev_state, new_state, action, agent_remove_index) if agent_remove_index is not None else 0.0
+        llm_shop = self._compute_shop_match_bonus(agent_shop_action, agent_shop_index) if agent_shop_action is not None else 0.0
         llm_open = self._compute_combat_opening_bonus(combat_step, agent_card_played)
 
         total += self.card_weight * llm_card
         total += self.relic_choice_weight * llm_relic
         total += self.map_route_weight * llm_map
+        total += self.remove_choice_weight * llm_remove
+        total += self.shop_choice_weight * llm_shop
         total += self.combat_opening_weight * llm_open
 
         if self.llm_advisor is not None:
@@ -435,6 +531,10 @@ class RewardShaper:
                 self.llm_advisor.invalidate_relic_recommendation()
             if agent_map_index is not None:
                 self.llm_advisor.invalidate_map_recommendation()
+            if agent_remove_index is not None and hasattr(self.llm_advisor, "invalidate_remove_recommendation"):
+                self.llm_advisor.invalidate_remove_recommendation()
+            if agent_shop_action is not None and hasattr(self.llm_advisor, "invalidate_shop_recommendation"):
+                self.llm_advisor.invalidate_shop_recommendation()
 
         if self.reward_clip > 0:
             total = max(min(total, self.reward_clip), -self.reward_clip)
@@ -453,6 +553,8 @@ class RewardShaper:
             "LLM_card": float(llm_card),
             "LLM_relic": float(llm_relic),
             "LLM_map": float(llm_map),
+            "LLM_remove": float(llm_remove),
+            "LLM_shop": float(llm_shop),
             "LLM_opening": float(llm_open),
             "total": float(total),
         }
@@ -463,9 +565,18 @@ class RewardShaper:
         if action_kind == "play_card":
             dmg = max(_sum_enemy_hp(prev_state) - _sum_enemy_hp(new_state), 0.0)
             reward += dmg * self.action_damage_coef
+            kills = max(_alive_enemy_count(prev_state) - _alive_enemy_count(new_state), 0)
+            if kills > 0:
+                reward += kills * self.action_kill_bonus
             prev_blk = float((_player(prev_state)).get("block", 0) or 0)
             new_blk = float((_player(new_state)).get("block", 0) or 0)
             reward += max(new_blk - prev_blk, 0.0) * self.action_block_coef
+
+            # Immediate shaping for self buffs and enemy debuffs applied by us.
+            player_buff_gain = max(_sum_positive_player_buff_amount(new_state) - _sum_positive_player_buff_amount(prev_state), 0.0)
+            enemy_debuff_gain = max(_sum_enemy_debuff_amount(new_state) - _sum_enemy_debuff_amount(prev_state), 0.0)
+            reward += player_buff_gain * self.action_player_buff_gain_bonus
+            reward += enemy_debuff_gain * self.action_enemy_debuff_gain_bonus
         elif action_kind == "use_potion":
             reward += self.action_potion_bonus
         elif action_kind == "choose_reward_card":
@@ -497,15 +608,42 @@ class RewardShaper:
             block_coverage = effective_block / expected_dmg
             reward += block_coverage * self.block_coverage_reward
 
+        # Buff/debuff progression signal (strictly our buffs + enemy debuffs).
+        prev_player_buff_amount = _sum_positive_player_buff_amount(snap)
+        new_player_buff_amount = _sum_positive_player_buff_amount(end_state)
+        reward += max(new_player_buff_amount - prev_player_buff_amount, 0.0) * self.player_buff_gain_bonus
+
+        prev_enemy_debuff_amount = _sum_enemy_debuff_amount(snap)
+        new_enemy_debuff_amount = _sum_enemy_debuff_amount(end_state)
+        reward += max(new_enemy_debuff_amount - prev_enemy_debuff_amount, 0.0) * self.enemy_debuff_gain_bonus
+
         return reward
 
     def _arm_pending_end_turn(self, state: Dict) -> None:
         combat = state.get("combat") or {}
         player = combat.get("player") or {}
         legal = [str(a) for a in (state.get("legal_actions") or [])]
+        hand = combat.get("hand") or []
+        energy = float(combat.get("energy", player.get("energy", 0)) or 0)
+
+        playable_from_hand = False
+        for card in hand:
+            if not isinstance(card, dict):
+                continue
+            if bool(card.get("playable", False)):
+                playable_from_hand = True
+                break
+            if bool(card.get("costs_x", False)) and energy > 0:
+                playable_from_hand = True
+                break
+            cost = int(card.get("energy_cost", 99) or 99)
+            if cost <= energy and not str(card.get("unplayable_reason", "") or "").strip():
+                playable_from_hand = True
+                break
+
         self.pending_turn_penalty.armed = True
-        self.pending_turn_penalty.energy_before_end = float(combat.get("energy", 0) or 0)
-        self.pending_turn_penalty.play_card_legal = "play_card" in legal
+        self.pending_turn_penalty.energy_before_end = energy
+        self.pending_turn_penalty.play_card_legal = ("play_card" in legal) and playable_from_hand
         self.pending_turn_penalty.block_before_end = float(player.get("block", 0) or 0)
         self.pending_turn_penalty.enemy_total_damage_before_end = float(_enemy_total_damage(state))
         self.pending_turn_penalty.turn_at_end = _state_turn(state)
@@ -589,6 +727,9 @@ class RewardShaper:
         if enemy_type == "BOSS":
             reward += self.boss_extra_bonus
 
+        if hp_lost_ratio > self.high_hp_loss_threshold:
+            reward -= (hp_lost_ratio - self.high_hp_loss_threshold) * self.high_hp_loss_penalty_scale
+
         return reward
 
     def layer_d_meta_reward(self, prev_state: Dict, new_state: Dict, action: Dict) -> float:
@@ -598,6 +739,52 @@ class RewardShaper:
         prev_legal = {str(a) for a in (prev_state.get("legal_actions") or [])}
         prev_reward = prev_state.get("reward") or {}
         reward = 0.0
+
+        def _selection_card_by_option_index() -> Dict:
+            selection = prev_state.get("selection") or {}
+            cards = selection.get("cards") if isinstance(selection.get("cards"), list) else []
+            option_index = int(action.get("option_index", action.get("index", -1)) or -1)
+            if option_index < 0 or not cards:
+                return {}
+            for c in cards:
+                if not isinstance(c, dict):
+                    continue
+                if int(c.get("index", -9999) or -9999) == option_index:
+                    return c
+            if 0 <= option_index < len(cards) and isinstance(cards[option_index], dict):
+                return cards[option_index]
+            return {}
+
+        def _remove_card_bonus_from_selection() -> float:
+            c = _selection_card_by_option_index()
+            card_type = str(c.get("card_type", c.get("type", "")) or "").strip().upper()
+            if card_type in ("CURSE", "STATUS"):
+                return self.remove_curse_bonus
+            return self.remove_card_bonus
+
+        def _shop_item_by_action() -> Dict:
+            shop = prev_state.get("shop") or {}
+            option_index = int(action.get("option_index", action.get("index", -1)) or -1)
+            if option_index < 0:
+                return {}
+            key = ""
+            if action_kind == "buy_card":
+                key = "cards"
+            elif action_kind == "buy_relic":
+                key = "relics"
+            elif action_kind == "buy_potion":
+                key = "potions"
+            if not key:
+                return {}
+            items = shop.get(key) if isinstance(shop.get(key), list) else []
+            for it in items:
+                if not isinstance(it, dict):
+                    continue
+                if int(it.get("index", -9999) or -9999) == option_index:
+                    return it
+            if 0 <= option_index < len(items) and isinstance(items[option_index], dict):
+                return items[option_index]
+            return {}
 
         def _claim_reward_type_bonus() -> float:
             if not isinstance(prev_reward, dict):
@@ -663,7 +850,16 @@ class RewardShaper:
         elif action_kind == "choose_rest_option":
             idx = int(action.get("index", action.get("option_index", 0)) or 0)
             if idx == 1:
-                reward += self.smith_bonus
+                deck_cards = prev_state.get("deck") or []
+                if isinstance(deck_cards, list) and deck_cards:
+                    upgraded_count = sum(1 for c in deck_cards if isinstance(c, dict) and bool(c.get("upgraded", False)))
+                    upgrade_ratio = upgraded_count / max(len(deck_cards), 1)
+                    if upgrade_ratio < self.smith_low_upgrade_ratio_threshold:
+                        reward += self.smith_bonus * self.smith_low_upgrade_ratio_mul
+                    else:
+                        reward += self.smith_bonus
+                else:
+                    reward += self.smith_bonus
             elif idx == 0:
                 prev_hp_ratio = _player_hp_ratio(prev_state)
                 if prev_hp_ratio < self.rest_low_threshold:
@@ -672,22 +868,52 @@ class RewardShaper:
                     reward += self.rest_mid_hp_bonus
                 elif prev_hp_ratio > self.rest_high_threshold:
                     reward -= self.rest_high_hp_penalty
-        elif action_kind in ("buy_card", "buy_relic", "buy_potion"):
+        elif action_kind == "buy_card":
+            item = _shop_item_by_action()
+            rarity = str(item.get("rarity", "") or "").strip().upper()
+            if rarity == "RARE":
+                reward += self.buy_card_rare_bonus
+            elif rarity == "UNCOMMON":
+                reward += self.buy_card_uncommon_bonus
+            else:
+                reward += self.buy_card_common_bonus
+        elif action_kind in ("buy_relic", "buy_potion"):
             reward += self.buy_bonus
         elif action_kind == "choose_map_node":
-            reward += 0.0
+            reward += self.map_node_bonus
         elif action_kind == "choose_event_option":
-            reward += 0.0
+            reward += self.event_option_bonus
         elif action_kind in ("remove_card", "remove_card_at_shop", "scrap"):
-            reward += self.remove_card_bonus
+            reward += _remove_card_bonus_from_selection()
 
         prev_deck = len(prev_state.get("deck") or [])
         new_deck = len(new_state.get("deck") or [])
-        if action_kind in ("buy_card", "remove_card_at_shop") and new_deck < prev_deck:
-            reward += self.remove_card_bonus
-        elif action_kind == "select_deck_card" and new_deck < prev_deck:
+        is_reward_card_select = False
+        if action_kind == "select_deck_card" and new_deck < prev_deck:
             # Covers remove-card event/shop flows that execute as select_deck_card.
-            reward += self.remove_card_bonus
+            reward += _remove_card_bonus_from_selection()
+        if action_kind == "select_deck_card":
+            pending_card_choice = bool(prev_reward.get("pending_card_choice", False)) if isinstance(prev_reward, dict) else False
+            is_reward_card_select = (
+                pending_card_choice
+                or "choose_reward_card" in prev_legal
+                or prev_screen == "CARD_REWARD"
+                or (prev_screen == "REWARD" and new_screen in ("REWARD", "CARD_SELECTION"))
+            )
+
+        # Deck-size shaping on meta decisions (non-combat strategy quality signal).
+        if action_kind in {
+            "claim_reward", "choose_reward_card", "skip_reward_cards",
+            "choose_rest_option", "buy_card", "buy_relic", "buy_potion",
+            "remove_card", "remove_card_at_shop", "scrap", "choose_event_option", "choose_map_node",
+        } or (action_kind == "select_deck_card" and (new_deck < prev_deck or is_reward_card_select)):
+            deck_size = len(new_state.get("deck") or [])
+            if self.deck_optimal_min <= deck_size <= self.deck_optimal_max:
+                reward += self.deck_optimal_bonus
+            elif deck_size > self.deck_large_threshold:
+                reward -= (deck_size - self.deck_large_threshold) * self.deck_large_penalty_per_card
+            elif deck_size < self.deck_too_small_threshold:
+                reward -= self.deck_too_small_penalty
 
         return reward
 
@@ -767,6 +993,53 @@ class RewardShaper:
         except Exception:
             return 0.0
         return 0.5 if expected == agent_card_played else -0.2
+
+    def _compute_remove_match_bonus(
+        self,
+        prev_state: Dict,
+        new_state: Dict,
+        action: Dict,
+        agent_remove_index: Optional[int],
+    ) -> float:
+        if self.llm_advisor is None or agent_remove_index is None:
+            return 0.0
+        if str(action.get("action", "")) != "select_deck_card":
+            return 0.0
+        prev_deck = len(prev_state.get("deck") or [])
+        new_deck = len(new_state.get("deck") or [])
+        if new_deck >= prev_deck:
+            return 0.0
+        getter = getattr(self.llm_advisor, "get_last_remove_recommendation", None)
+        if getter is None:
+            return 0.0
+        rec_idx, conf = getter()
+        if rec_idx == -99 or conf < self.confidence_threshold:
+            return 0.0
+        if int(agent_remove_index) == int(rec_idx):
+            return self.remove_match_bonus
+        if conf >= self.confidence_threshold + 0.1:
+            return -self.remove_mismatch_penalty
+        return 0.0
+
+    def _compute_shop_match_bonus(
+        self,
+        agent_shop_action: Optional[str],
+        agent_shop_index: Optional[int],
+    ) -> float:
+        if self.llm_advisor is None or not agent_shop_action:
+            return 0.0
+        getter = getattr(self.llm_advisor, "get_last_shop_recommendation", None)
+        if getter is None:
+            return 0.0
+        rec_action, rec_idx, conf = getter()
+        if not rec_action or rec_action == "NONE" or conf < self.confidence_threshold:
+            return 0.0
+        if str(agent_shop_action) == str(rec_action):
+            if rec_idx is None or agent_shop_index is None or int(rec_idx) == int(agent_shop_index):
+                return self.shop_match_bonus
+        if conf >= self.confidence_threshold + 0.1:
+            return -self.shop_mismatch_penalty
+        return 0.0
 
     @staticmethod
     def _should_query_llm(screen: str) -> bool:

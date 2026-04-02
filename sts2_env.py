@@ -77,7 +77,11 @@ class STS2Env(gym.Env):
 
         # One preflight check before POST to avoid dispatching during transient phases.
         if not self._can_act_now(prev_state) and not self._is_terminal_state(prev_state):
-            refreshed = self._get_state()
+            refreshed = self._wait_until_actionable_or_terminal(
+                prev_state,
+                max_wait=5.0,
+                poll=self.action_poll_interval,
+            )
             if not self._can_act_now(refreshed) and not self._is_terminal_state(refreshed):
                 raise RuntimeError(
                     f"step() called but state not actionable: screen={refreshed.get('screen')} can_act={refreshed.get('can_act')}"
@@ -207,9 +211,10 @@ class STS2Env(gym.Env):
         # API 标准字段：run.deck[], run.relics[], run.potions[]
         raw_deck = run.get("deck", _pick("deck", []))
         raw_relics = run.get("relics", _pick("relics", []))
-        raw_potions = run.get("potions", _pick("potions", []))
+        # Prefer combat.potions as it is typically the most up-to-date source after potion actions.
+        raw_potions = combat.get("potions", [])
         if (not isinstance(raw_potions, list)) or (not raw_potions):
-            raw_potions = combat.get("potions", [])
+            raw_potions = run.get("potions", _pick("potions", []))
         # 验证类型且保留原始 API 格式
         out["deck"] = [c for c in raw_deck if isinstance(c, dict)] if isinstance(raw_deck, list) else []
         out["relics"] = [r for r in raw_relics if isinstance(r, dict)] if isinstance(raw_relics, list) else []
@@ -242,6 +247,21 @@ class STS2Env(gym.Env):
                 continue
             # API 字段直接映射，不再做别名转换
             card_energy_cost = int(card.get("energy_cost", 0) or 0)
+            raw_key_words = card.get("key_words", card.get("keywords", []))
+            key_words: List[str] = []
+            if isinstance(raw_key_words, list):
+                seen = set()
+                for kw in raw_key_words:
+                    token = ""
+                    if isinstance(kw, str):
+                        token = kw.strip()
+                    elif isinstance(kw, dict):
+                        token = str(kw.get("name", "") or "").strip()
+                    elif kw is not None:
+                        token = str(kw).strip()
+                    if token and token not in seen:
+                        seen.add(token)
+                        key_words.append(token)
             # 如果 playable 字段缺失，基于能量推算
             playable = card.get("playable")
             if playable is None:
@@ -258,6 +278,7 @@ class STS2Env(gym.Env):
                 "star_costs_x": bool(card.get("star_costs_x", False)),
                 "energy_cost": card_energy_cost,
                 "star_cost": int(card.get("star_cost", 0) or 0),
+                "key_words": key_words,
                 "playable": bool(playable),
                 "unplayable_reason": card.get("unplayable_reason"),
                 # 额外推导字段供 encoder 使用
@@ -544,6 +565,11 @@ class STS2Env(gym.Env):
 
         if resp.status_code == 409:
             current = self._get_state()
+            current = self._wait_until_actionable_or_terminal(
+                current,
+                max_wait=5.0,
+                poll=self.action_poll_interval,
+            )
             if self.post_action_settle > 0:
                 time.sleep(self.post_action_settle)
             return current
@@ -588,7 +614,7 @@ class STS2Env(gym.Env):
             # Already in a playable run-state
             if screen in (
                 "COMBAT", "MAP", "EVENT", "SHOP", "REST", "REWARD",
-                "CARD_REWARD", "CARD_SELECTION", "CARD_BUNDLE", "CHEST",
+                "CARD_REWARD", "CARD_SELECTION", "CARD_BUNDLE", "CHEST", "CRYSTAL",
             ):
                 self._startup_character_selected = False
                 return st

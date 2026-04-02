@@ -45,6 +45,28 @@ class StateEncoder:
     CARD_TYPE_MAP = {"ATTACK": 0, "SKILL": 1, "POWER": 2, "STATUS": 3, "CURSE": 4}
     CARD_COST_SPECIAL = {"X": -1, "UNPLAYABLE": -2}
 
+    # 关键词加权：将 key_words 聚合为单一标量，保持手牌输入维度不变。
+    KEYWORD_WEIGHTS = {
+        "易伤": 1.00,
+        "力量": 0.85,
+        "虚弱": 0.65,
+        "格挡": 0.60,
+        "保留": 0.45,
+        "消耗": 0.30,
+        "敏捷": 0.20,
+        "中毒": 0.10,
+        "临时": 0.10,
+        "附魔": 0.05,
+        "灌注": 0.05,
+        "集中": 0.02,
+        "球位": 0.02,
+        "脆弱": -0.80,
+        "力量流失": -0.85,
+        "眩晕": -0.90,
+        "灼伤": -0.95,
+        "虚空": -1.00,
+    }
+
     @staticmethod
     def _norm_token(value: Optional[str]) -> str:
         if value is None:
@@ -53,6 +75,29 @@ class StateEncoder:
         if not s:
             return ""
         return s.replace("-", "_").replace(" ", "_").upper()
+
+    def _compute_keyword_signal(self, key_words: object) -> float:
+        if not isinstance(key_words, list):
+            return 0.0
+
+        score = 0.0
+        seen = set()
+        for kw in key_words:
+            token = ""
+            if isinstance(kw, str):
+                token = kw.strip()
+            elif isinstance(kw, dict):
+                token = str(kw.get("name", "") or "").strip()
+            elif kw is not None:
+                token = str(kw).strip()
+
+            if not token or token in seen:
+                continue
+            seen.add(token)
+            score += float(self.KEYWORD_WEIGHTS.get(token, 0.0))
+
+        # 经验归一化区间 [-1.8, 1.8] -> [0, 1]
+        return float(np.clip((score + 1.8) / 3.6, 0.0, 1.0))
 
     def get_observation_space(self) -> gym.spaces.Dict:
         """返回 Gymnasium 观测空间定义"""
@@ -64,8 +109,8 @@ class StateEncoder:
                 low=0.0, high=1.0, shape=(PLAYER_FEATURE_DIM,), dtype=np.float32
             ),
             # 手牌矩阵: [MAX_HAND × CARD_FEATURE_DIM]
-            # 每张卡: [cost_norm, damage_norm, block_norm, card_type_oh×5,
-            #          is_ethereal, is_exhaust, is_innate]  (dim=8)
+            # 每张卡: [cost_norm, damage_norm, block_norm, upgraded,
+            #          costs_x, star_costs_x, keyword_signal, playable]  (dim=8)
             "hand": gym.spaces.Box(
                 low=0.0, high=1.0, shape=(MAX_HAND, CARD_FEATURE_DIM), dtype=np.float32
             ),
@@ -127,9 +172,25 @@ class StateEncoder:
         floor_ = state.get("floor", 0)
         relics = state.get("relics", [])
         deck = state.get("deck", [])
-        buffs = player.get("buffs", [])
-        debuffs = [b for b in buffs if b.get("amount", 0) < 0]
-        pos_buffs = [b for b in buffs if b.get("amount", 0) >= 0]
+        powers = player.get("powers")
+        if not isinstance(powers, list):
+            powers = player.get("buffs", [])
+        if not isinstance(powers, list):
+            powers = []
+
+        debuffs = []
+        pos_buffs = []
+        for p in powers:
+            if not isinstance(p, dict):
+                continue
+            if "is_debuff" in p:
+                is_debuff = bool(p.get("is_debuff", False))
+            else:
+                is_debuff = float(p.get("amount", 0) or 0) < 0
+            if is_debuff:
+                debuffs.append(p)
+            else:
+                pos_buffs.append(p)
 
         return np.array([
             hp / max_hp,                          # HP 比例
@@ -168,8 +229,11 @@ class StateEncoder:
             costs_x = bool(card.get("costs_x", False))
             damage = int(card.get("damage", 0) or 0)
             block = int(card.get("block", 0) or 0)
+            keyword_signal = self._compute_keyword_signal(
+                card.get("key_words", card.get("keywords", []))
+            )
 
-            # 手牌中通常没有 card_type，但如果有就用；encoder 不负责补充 card_type
+            # 保持 8 维输入兼容：第 6 位改为关键词加权信号。
             mat[i] = [
                 cost_val / 3.0,                      # 费用归一化 (energy_cost / 3)
                 min(damage / MAX_DAMAGE, 1.0),       # 伤害归一化
@@ -177,7 +241,7 @@ class StateEncoder:
                 float(card.get("upgraded", False)),  # 是否已升级
                 float(costs_x),                      # 是否为X费
                 float(card.get("star_costs_x", False)),  # 是否为星星X费
-                float(card.get("requires_target", False)),  # 是否需要目标
+                keyword_signal,                      # 关键词加权信号
                 float(card.get("playable", False)),  # 是否可打出
             ]
 
@@ -203,40 +267,51 @@ class StateEncoder:
             max_hp = max(int(monster.get("max_hp", 1) or 1), 1)
             block = int(monster.get("block", 0) or 0)
             
-            # 从 intents[] 提取主意图
+            # 从 intents[] 聚合多意图（不再只看 intents[0]）
             intents = monster.get("intents")
             if not isinstance(intents, list):
                 intents = []
-            primary_intent = intents[0] if intents and isinstance(intents[0], dict) else {}
 
             # API 字段: intent_type（不是 type）、hits（不是 times）
-            intent_type = primary_intent.get("intent_type", "UNKNOWN")
-            intent_type_norm = self._norm_token(intent_type)
-            
-            total_damage = primary_intent.get("total_damage")
-            if total_damage is not None:
-                intent_dmg = float(total_damage or 0)
-            else:
-                hits = int(primary_intent.get("hits", 1) or 1)
-                damage = float(primary_intent.get("damage", 0) or 0)
-                intent_dmg = damage * hits
+            intent_dmg = 0.0
+            has_attack = False
+            has_defend = False
+            has_buff = False
 
-            # Intent type 映射
-            intent_map = {
-                "ATTACK": 0,
-                "ATTACK_BUFF": 0,
-                "ATTACK_DEBUFF": 0,
-                "DEFEND": 1,
-                "BUFF": 2,
-                "DEBUFF": 3,
-                "SLEEP": 4,
-                "ESCAPE": 5,
-                "STATUS_CARD": 6,
-                "UNKNOWN": 7,
-            }
-            intent_idx = intent_map.get(intent_type_norm, 7)
+            for intent in intents:
+                if not isinstance(intent, dict):
+                    continue
+                intent_type_norm = self._norm_token(intent.get("intent_type", "UNKNOWN"))
+
+                if intent_type_norm in ("ATTACK", "ATTACK_BUFF", "ATTACK_DEBUFF"):
+                    has_attack = True
+                    total_damage = intent.get("total_damage")
+                    if total_damage is not None:
+                        intent_dmg += float(total_damage or 0)
+                    else:
+                        hits = int(intent.get("hits", 1) or 1)
+                        damage = float(intent.get("damage", 0) or 0)
+                        intent_dmg += damage * hits
+                elif intent_type_norm == "DEFEND":
+                    has_defend = True
+                elif intent_type_norm == "BUFF":
+                    has_buff = True
+                else:
+                    # 包含 DEBUFF / STATUS_CARD / SLEEP / ESCAPE / UNKNOWN 等。
+                    pass
+
+            # 4维 one-hot 采用优先级聚合，保持输出维度与模型兼容。
+            if has_attack:
+                intent_idx = 0
+            elif has_defend:
+                intent_idx = 1
+            elif has_buff:
+                intent_idx = 2
+            else:
+                intent_idx = 3
+
             intent_oh = np.zeros(4)
-            intent_oh[min(intent_idx, 3)] = 1.0
+            intent_oh[intent_idx] = 1.0
 
             mat[i] = [
                 current_hp / max_hp,                 # HP 比例

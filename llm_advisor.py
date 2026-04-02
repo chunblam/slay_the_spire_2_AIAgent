@@ -38,16 +38,28 @@ class LLMAdvice:
     map_recommendation: int = -99
     map_confidence: float = 0.0
     map_route_scores: List[float] = field(default_factory=list)
+    remove_recommendation: int = -99
+    remove_confidence: float = 0.0
+    shop_recommendation_action: str = "NONE"
+    shop_recommendation_index: Optional[int] = None
+    shop_confidence: float = 0.0
     combat_opening: Dict = field(default_factory=dict)
 
 
 # ─── LLM 后端封装 ──────────────────────────────────────────────────────────────
 
 class LLMBackend:
-    def __init__(self, backend: str = "openai", model: str = "gpt-4o-mini", api_key: str = ""):
+    def __init__(
+        self,
+        backend: str = "openai",
+        model: str = "gpt-4o-mini",
+        api_key: str = "",
+        base_url: str = "",
+    ):
         self.backend = backend
         self.model = model
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
+        self.base_url = str(base_url or "").rstrip("/")
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "") or os.getenv("DEEPSEEK_API_KEY", "")
 
     def call(self, system_prompt: str, user_prompt: str, max_tokens: int = 512) -> str:
         if self.backend == "openai":
@@ -60,6 +72,7 @@ class LLMBackend:
             raise ValueError(f"不支持的后端: {self.backend}")
 
     def _call_openai(self, system: str, user: str, max_tokens: int) -> str:
+        endpoint = f"{(self.base_url or 'https://api.openai.com/v1')}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -74,13 +87,14 @@ class LLMBackend:
             "temperature": 0.3,
         }
         resp = requests.post(
-            "https://api.openai.com/v1/chat/completions",
+            endpoint,
             headers=headers, json=payload, timeout=30,
         )
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
 
     def _call_ollama(self, system: str, user: str, max_tokens: int) -> str:
+        endpoint = f"{(self.base_url or 'http://localhost:11434')}/api/chat"
         payload = {
             "model": self.model,
             "messages": [
@@ -90,7 +104,7 @@ class LLMBackend:
             "stream": False,
             "options": {"num_predict": max_tokens, "temperature": 0.3},
         }
-        resp = requests.post("http://localhost:11434/api/chat", json=payload, timeout=60)
+        resp = requests.post(endpoint, json=payload, timeout=60)
         resp.raise_for_status()
         return resp.json()["message"]["content"]
 
@@ -225,6 +239,28 @@ reward_shaping 规则:
   "expected_rounds": "预计结束回合数: 1/2/3/4+"
 }"""
 
+    SYSTEM_PROMPT_REMOVE_EVAL = """你是杀戮尖塔2的顶级策略专家。
+你的任务：在删牌界面中，基于当前牌组路线和卡组冗余，选择最该移除的一张牌。
+必须只返回JSON，不要有任何其他文字：
+{
+    "recommended_index": 整数（0开始）,
+    "confidence": 0.0到1.0,
+    "reasoning": "推荐理由（80字以内）"
+}"""
+
+    SYSTEM_PROMPT_SHOP_EVAL = """你是杀戮尖塔2的顶级策略专家。
+你的任务：在商店界面中，综合金币、当前路线、商店选项，给出最优购买动作。
+必须只返回JSON，不要有任何其他文字：
+{
+    "recommended_action": "buy_card|buy_relic|buy_potion|remove_card_at_shop|proceed|NONE",
+    "option_index": 整数或null,
+    "confidence": 0.0到1.0,
+    "reasoning": "推荐理由（100字以内）"
+}
+注意：
+- 若建议 buy_card/buy_relic/buy_potion，option_index 必须为对应列表内索引。
+- 若建议 remove_card_at_shop/proceed/NONE，option_index 可为 null。"""
+
     def __init__(
         self,
         llm_backend: LLMBackend,
@@ -260,10 +296,11 @@ reward_shaping 规则:
         """
         self._step_counter += 1
         now = time.time()
-        screen = state.get("screen_type", "")
+        screen = str(state.get("screen", state.get("screen_type", "")) or "").upper()
+        pending_card_choice = bool((state.get("reward") or {}).get("pending_card_choice", False))
 
-        # CARD_REWARD 一定强制刷新
-        if screen == "CARD_REWARD":
+        # REWARD 且存在选牌时强制刷新
+        if screen in ("CARD_REWARD", "REWARD") and pending_card_choice:
             force = True
 
         if not force and (
@@ -524,6 +561,155 @@ reward_shaping 规则:
             self._last_advice.combat_opening = fallback
             return fallback
 
+    def evaluate_card_remove(
+        self,
+        state: Dict,
+        removable_cards: List[Dict],
+    ) -> Tuple[int, float, str]:
+        """评估删牌选项，返回 (recommended_index, confidence, reasoning)"""
+        if not removable_cards:
+            return -99, 0.0, "无可删牌"
+
+        deck = state.get("deck", [])
+        floor = state.get("floor", 0)
+        selection = state.get("selection") or {}
+        prompt_text = str(selection.get("prompt", "") or "")
+        options_text = "\n".join(
+            f"[{i}] {c.get('name', '?')} | type={c.get('card_type', c.get('type', '?'))} | rarity={c.get('rarity', '?')} | upgraded={bool(c.get('upgraded', False))}"
+            for i, c in enumerate(removable_cards)
+        )
+        user_prompt = (
+            f"楼层: {floor}\n"
+            f"删牌提示: {prompt_text}\n"
+            f"当前牌组摘要:\n{self._summarize_deck(deck)}\n\n"
+            f"可选删牌:\n{options_text}\n"
+            "请给出最优删牌索引。"
+        )
+
+        try:
+            resp = self.llm.call(self.SYSTEM_PROMPT_REMOVE_EVAL, user_prompt, max_tokens=260)
+            data = _parse_json_response(resp)
+            idx = int(data.get("recommended_index", 0))
+            conf = float(data.get("confidence", 0.5))
+            reason = str(data.get("reasoning", ""))
+
+            if idx < 0:
+                idx = 0
+            if idx >= len(removable_cards):
+                idx = len(removable_cards) - 1
+
+            if self._last_advice is None:
+                self._last_advice = LLMAdvice(
+                    deck_route="mixed",
+                    route_score=0.5,
+                    key_synergies=[],
+                    reward_shaping=0.0,
+                    reasoning="remove_eval_only",
+                )
+            self._last_advice.remove_recommendation = idx
+            self._last_advice.remove_confidence = conf
+            return idx, conf, reason
+        except Exception as e:
+            print(f"[LLMAdvisor] evaluate_card_remove 失败: {e}")
+            if self._last_advice is not None:
+                self._last_advice.remove_recommendation = -99
+                self._last_advice.remove_confidence = 0.0
+            return -99, 0.0, f"LLM 调用失败: {e}"
+
+    def evaluate_shop_purchase(
+        self,
+        state: Dict,
+        shop_items: Dict,
+    ) -> Tuple[str, Optional[int], float, str]:
+        """评估商店购买动作，返回 (action, option_index, confidence, reasoning)"""
+        if not isinstance(shop_items, dict) or not shop_items:
+            return "NONE", None, 0.0, "无商店选项"
+
+        gold = int(state.get("gold", 0) or 0)
+        floor = state.get("floor", 0)
+        cards = shop_items.get("cards") if isinstance(shop_items.get("cards"), list) else []
+        relics = shop_items.get("relics") if isinstance(shop_items.get("relics"), list) else []
+        potions = shop_items.get("potions") if isinstance(shop_items.get("potions"), list) else []
+        can_remove = bool(shop_items.get("can_remove_card", False))
+        remove_cost = shop_items.get("remove_cost", None)
+
+        cards_text = "\n".join(
+            f"[{i}] {c.get('name', '?')} | price={c.get('price', '?')} | rarity={c.get('rarity', '?')}"
+            for i, c in enumerate(cards)
+        ) or "（无）"
+        relics_text = "\n".join(
+            f"[{i}] {r.get('name', '?')} | price={r.get('price', '?')}"
+            for i, r in enumerate(relics)
+        ) or "（无）"
+        potions_text = "\n".join(
+            f"[{i}] {p.get('name', '?')} | price={p.get('price', '?')}"
+            for i, p in enumerate(potions)
+        ) or "（无）"
+
+        user_prompt = (
+            f"楼层: {floor} | 金币: {gold}\n"
+            f"当前牌组摘要:\n{self._summarize_deck(state.get('deck', []))}\n\n"
+            f"商店卡牌:\n{cards_text}\n\n"
+            f"商店遗物:\n{relics_text}\n\n"
+            f"商店药水:\n{potions_text}\n\n"
+            f"可否删牌: {can_remove} | 删牌价格: {remove_cost}\n"
+            "请给出本次最优购买动作与索引。"
+        )
+
+        fallback_action = "NONE"
+        fallback_index: Optional[int] = None
+
+        try:
+            resp = self.llm.call(self.SYSTEM_PROMPT_SHOP_EVAL, user_prompt, max_tokens=320)
+            data = _parse_json_response(resp)
+            action = str(data.get("recommended_action", "NONE") or "NONE")
+            raw_idx = data.get("option_index", None)
+            conf = float(data.get("confidence", 0.5))
+            reason = str(data.get("reasoning", ""))
+
+            allowed_actions = {"buy_card", "buy_relic", "buy_potion", "remove_card_at_shop", "proceed", "NONE"}
+            if action not in allowed_actions:
+                action = "NONE"
+
+            idx: Optional[int] = None
+            if raw_idx is not None:
+                try:
+                    idx = int(raw_idx)
+                except Exception:
+                    idx = None
+
+            if action == "buy_card" and idx is not None:
+                if idx < 0 or idx >= len(cards):
+                    idx = None
+            elif action == "buy_relic" and idx is not None:
+                if idx < 0 or idx >= len(relics):
+                    idx = None
+            elif action == "buy_potion" and idx is not None:
+                if idx < 0 or idx >= len(potions):
+                    idx = None
+            else:
+                idx = None
+
+            if self._last_advice is None:
+                self._last_advice = LLMAdvice(
+                    deck_route="mixed",
+                    route_score=0.5,
+                    key_synergies=[],
+                    reward_shaping=0.0,
+                    reasoning="shop_eval_only",
+                )
+            self._last_advice.shop_recommendation_action = action
+            self._last_advice.shop_recommendation_index = idx
+            self._last_advice.shop_confidence = conf
+            return action, idx, conf, reason
+        except Exception as e:
+            print(f"[LLMAdvisor] evaluate_shop_purchase 失败: {e}")
+            if self._last_advice is not None:
+                self._last_advice.shop_recommendation_action = "NONE"
+                self._last_advice.shop_recommendation_index = None
+                self._last_advice.shop_confidence = 0.0
+            return fallback_action, fallback_index, 0.0, f"LLM 调用失败: {e}"
+
     def get_reward_shaping_bonus(self, state: Dict) -> float:
         """全局路线质量的奖励塑形分 — 供 RewardShaper 在非 CARD_REWARD 时用"""
         advice = self.get_advice(state)
@@ -567,6 +753,31 @@ reward_shaping 规则:
             self._last_advice.map_recommendation = -99
             self._last_advice.map_confidence = 0.0
             self._last_advice.map_route_scores = []
+
+    def get_last_remove_recommendation(self) -> Tuple[int, float]:
+        if self._last_advice is None or self._last_advice.remove_recommendation == -99:
+            return -99, 0.0
+        return self._last_advice.remove_recommendation, self._last_advice.remove_confidence
+
+    def invalidate_remove_recommendation(self):
+        if self._last_advice is not None:
+            self._last_advice.remove_recommendation = -99
+            self._last_advice.remove_confidence = 0.0
+
+    def get_last_shop_recommendation(self) -> Tuple[str, Optional[int], float]:
+        if self._last_advice is None:
+            return "NONE", None, 0.0
+        return (
+            self._last_advice.shop_recommendation_action,
+            self._last_advice.shop_recommendation_index,
+            self._last_advice.shop_confidence,
+        )
+
+    def invalidate_shop_recommendation(self):
+        if self._last_advice is not None:
+            self._last_advice.shop_recommendation_action = "NONE"
+            self._last_advice.shop_recommendation_index = None
+            self._last_advice.shop_confidence = 0.0
 
     def get_last_combat_opening(self) -> Dict:
         if self._last_advice is None:

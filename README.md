@@ -51,7 +51,7 @@
 | `buy_card` / `buy_relic` / `buy_potion` / `proceed` | 商店购买 / 离开等继续流程 |
 | `choose_event_option` | 事件选项：`option_index` |
 
-| **提示** | `STS2AIAgent` 默认监听 **`127.0.0.1:18080`**。若使用自定义端口，可通过环境变量 **`STS2_API_PORT`** 或启动脚本参数覆盖，并在 **`ppo_default.yaml`** / **`test_connection.py --port`** 同步。 |
+| **提示** | `STS2AIAgent` 默认监听 **`127.0.0.1:18080`**。若使用自定义端口，可通过环境变量 **`STS2_API_PORT`** 或启动脚本参数覆盖，并在 **`ppo_sts2agent.yaml`** / **`test_connection.py --port`** 同步。 |
 
 #### Spire Codex --- 游戏知识库（离线使用）
 
@@ -304,7 +304,7 @@ StateEncoder 将游戏 JSON 转化为固定维度的 numpy 数组字典：
 
 | **推荐方案** |
 | :--- |
-| 开发阶段使用 Ollama + Qwen2.5:7B（本地免费），最终评估时切换到 gpt-4o-mini 做效果对比。只需修改 configs/ppo_default.yaml 中 llm.backend 和 llm.model 两个字段即可，代码无需任何改动。 |
+| 开发阶段使用 Ollama + Qwen2.5:7B（本地免费），最终评估时切换到 gpt-4o-mini 做效果对比。只需修改 ppo_sts2agent.yaml 中 llm.backend 和 llm.model 两个字段即可，代码无需任何改动。 |
 
 ### 4.3 Prompt 设计原则（更新）
 
@@ -422,7 +422,7 @@ conda deactivate
 | gymnasium | RL 环境接口 |
 | numpy | 数值计算 |
 | requests | 调用 Mod 的 HTTP API |
-| PyYAML | 读取 `ppo_default.yaml` |
+| PyYAML | 读取 `ppo_sts2agent.yaml` |
 
 一键安装：在项目根目录执行 **`pip install -r requirements.txt`**（若已按 **6.0** 建好 Conda 环境，请在激活该环境后执行）。
 
@@ -476,7 +476,7 @@ conda deactivate
 
 **Step 3：修改训练配置**
 
-编辑项目根目录下的 **`ppo_default.yaml`**，建议初次训练：
+编辑项目根目录下的 **`ppo_sts2agent.yaml`**，建议初次训练：
 
 - **`llm.enabled: false`** 先关闭 LLM，验证 RL 部分正常
 - **`train.total_steps: 50000`** 快速验证后再增大
@@ -488,7 +488,7 @@ conda deactivate
 
 **Step 4：开始训练**
 
-`python train.py --config ppo_default.yaml`
+`python train.py --config ppo_sts2agent.yaml`
 
 训练过程打印示例：
 
@@ -498,11 +498,22 @@ conda deactivate
 
 **Update @ step 2048 | avg_reward: 10.40 | pg_loss: 0.023 | vf_loss: 0.089**
 
+**Step 5：固定策略演示评估（面试展示推荐）**
+
+`python evaluate.py --config ppo_sts2agent.yaml --model checkpoints/best_model.pt --episodes 3`
+
+可选参数：
+
+- **`--model checkpoints/latest_model.pt`**：改为加载最新模型
+- **`--max-steps-per-episode 3000`**：限制单局最大步数
+
+预期输出：每局会打印 reward、floor、max_floor、hp、steps、victory 和 top_actions；末尾输出汇总 JSON（均值奖励、均值层数、胜率）。
+
 ### 6.3 调试问题速查
 
 | **问题现象** | **可能原因** | **解决方法** |
 | :--- | :--- | :--- |
-| test_connection.py 超时或连接失败 | 游戏未运行、Mod 未启用或端口错误 | 确认 API 地址为 **`http://127.0.0.1:<端口>/health`** 可访问，并与 **`ppo_default.yaml`** 中 **`env.port`** 一致 |
+| test_connection.py 超时或连接失败 | 游戏未运行、Mod 未启用或端口错误 | 确认 API 地址为 **`http://127.0.0.1:<端口>/health`** 可访问，并与 **`ppo_sts2agent.yaml`** 中 **`env.port`** 一致 |
 | HTTP 409 | 动作不在当前 `legal_actions`、或参数不合法 | 检查 `session/state` 的 `can_act` 与 `legal_actions`；参数统一使用 `option_index` / `target_index` |
 | 训练开始后立即报错 | 游戏不在可操作屏幕 | 在游戏中进入一局，保持在战斗/地图屏幕 |
 | reward 全为 0 | 奖励函数未触发 | 检查 screen_type 是否为 COMBAT，打印 info 字典 |

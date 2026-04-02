@@ -10,9 +10,9 @@ env:
   port: 18080               # STS2AIAgent Mod 端口
   character_index: 0          # 自动开局时角色索引（0-based）
   startup_debug: false        # 仅排障时打开，常态训练建议关闭
-  action_poll_interval: 0.8   # 轮询退避间隔（用于 reset/retry）；更大更平滑
-  action_min_interval: 0.8    # 每两个 action 的最小间隔（秒）
-  post_action_settle: 0.8     # action 发出后等待状态稳定的时间（秒）
+  action_poll_interval: 0.35  # 轮询退避间隔（用于 reset/retry）
+  action_min_interval: 0.30   # 每两个 action 的最小间隔（秒）
+  post_action_settle: 0.25    # action 发出后等待状态稳定的时间（秒）
   action_retry_count: 1       # 单步动作失败重试次数（不宜过大，避免抖动）
   num_actions: 16
 
@@ -24,17 +24,17 @@ model:
 
 # ── 训练超参数 ─────────────────────────────────────────────────────────────────
 train:
-  total_steps: 30000 #2_000_000
-  buffer_size: 256
-  n_epochs: 3 #4
-  batch_size: 64
-  lr: 3.0e-4
+  total_steps: 300000
+  buffer_size: 512
+  n_epochs: 4
+  batch_size: 128
+  lr: 2.5e-4
   clip_eps: 0.2
   value_loss_coef: 0.5
-  entropy_coef: 0.01
+  entropy_coef: 0.008
   gamma: 0.99
   gae_lambda: 0.95
-  save_interval: 5000 
+  save_interval: 20000 
   resume_on_restart: true      # 中断后自动读取 checkpoints/training_state.json 续训
   save_latest_per_update: true # 每次 PPO update 保存 latest_model.pt，降低中断损失
   continue_logs_on_resume: true      # 续训时复用上次 latest_run_dir，日志继续追加
@@ -43,18 +43,15 @@ train:
 
 # ── LLM Advisor ───────────────────────────────────────────────────────────────
 llm:
-  enabled: false             # 总开关：false=纯RL，true=启用全部LLM综合评估（card/relic/map/combat_opening）
+  enabled: true
 
   # ── 后端选择（取消注释其中一组）──────────────────────────────────────────
-  # 选项 A: 本地 Ollama（推荐，免费）
-  backend: "ollama"
-  model: "qwen2.5:7b"        # 替代: "llama3.2:3b"（更快但效果弱）
-  base_url: "http://127.0.0.1:11434"
+  # 选项 A: DeepSeek（OpenAI 兼容）
+  backend: "openai"
+  model: "deepseek-chat"
+  base_url: "https://api.deepseek.com/v1"
+  # api_key 建议通过环境变量提供：DEEPSEEK_API_KEY
 
-  # 选项 B: OpenAI API（需KEY）
-  # backend: "openai"
-  # model: "gpt-4-turbo-preview"
-  # api_key: "sk-xxx"         # 建议以环境变量 OPENAI_API_KEY 提供
 
   # 选项 C: 离线模式（无需任何LLM服务）
   # backend: "offline"
@@ -63,12 +60,26 @@ llm:
   # ── 综合评估开关 ──────────────────────────────────────────────────────────
   strategy: "balanced"      # aggressive | balanced | conservative
 
-  use_map_advisor: false
-  use_combat_advisor: false
-  use_relic_advisor: false
-  use_card_advisor: false
+  use_map_advisor: true
+  use_combat_advisor: true
+  use_relic_advisor: true
+  use_card_advisor: true
   use_rest_advisor: false
   use_event_advisor: false
+
+  # LLM 调用节流与缓存
+  call_interval_steps: 10
+  cache_ttl: 45.0
+  confidence_threshold: 0.55
+
+  # 概率引导（logit bias）
+  policy_guidance_enabled: true
+  policy_guidance_alpha_max: 0.12
+  policy_guidance_max_bias: 0.35
+  policy_guidance_confidence_threshold: 0.60
+  policy_guidance_ramp_steps: 10000
+  policy_guidance_combat_steps: 2
+  policy_guidance_screens: ["REWARD", "CARD_REWARD", "MAP", "SHOP", "CARD_SELECTION", "CHEST", "COMBAT"]
 
   top_k: 3
   temperature: 0.2
@@ -82,27 +93,32 @@ logging:
 # ── 奖励塑形权重 ───────────────────────────────────────────────────────────────
 reward:
   # ── 层权重 ────────────────────────────────────────────────────────────────
-  layer_a_weight: 0.8          # 降低即时奖励，腾出空间给构筑信号
-  layer_b_weight: 0.8          # 降低回合奖励，避免战斗爆表
-  layer_c_weight: 1.2          # 升高战斗通关奖励，鼓励完成战斗
-  layer_d_weight: 0.5          # 升高（从 0.3），构筑决策应该更可见 (+67%)
-  layer_e_weight: 0.3          # 大幅降低（从 1.0），避免被终局惩罚压制
-  llm_weight: 0.3              # 全局路线评估奖励权重（llm.enabled=true 时生效）
+  layer_a_weight: 1.2          # 默认层权重（phase_schedule 开启时会动态覆盖）
+  layer_b_weight: 1.0
+  layer_c_weight: 1.0
+  layer_d_weight: 0.6
+  layer_e_weight: 1.0
+  llm_weight: 0.15
 
   # ── Layer A（动作级即时）────────────────────────────────────────────────
-  action_damage_coef: 0.004    # 25伤 -> +0.10
-  action_block_coef: 0.002     # 25格挡 -> +0.05
+  action_damage_coef: 0.015    # 25伤 -> +0.375（增强有效输出信号）
+  action_block_coef: 0.008     # 25格挡 -> +0.20
+  action_kill_bonus: 0.3       # play_card 直接击杀即时奖励
   action_card_pick_bonus: 0.05 # 拿牌即时小奖励
   action_potion_bonus: 0.05    # 使用药水小奖励（避免囤药）
 
   # ── Layer B（回合级结算）────────────────────────────────────────────────
-  dmg_reward_cap: 1.5          # 本回合伤害效率奖励上限
+  dmg_reward_cap: 2.0          # 本回合伤害效率奖励上限
   kill_reward_per_enemy: 2.0   # 回合内每击杀一敌
   block_coverage_reward: 1.0   # 完美格挡覆盖奖励
   excess_block_penalty_cap: 0.2 # 超额格挡最大惩罚
-  energy_waste_penalty: 0.5    # 有牌可打却浪费能量的最大惩罚
+  energy_waste_penalty: 0.3    # 有牌可打却浪费能量的最大惩罚（降噪）
   hp_loss_penalty: 1.5         # 被敌人打掉HP的基础惩罚系数
   hp_loss_urgency_max_mul: 2.0 # 濒死时HP损失惩罚的最大倍数
+  action_player_buff_gain_bonus: 0.05 # Layer A: 我方正面buff增量即时奖励
+  action_enemy_debuff_gain_bonus: 0.08 # Layer A: 敌方debuff增量即时奖励
+  player_buff_gain_bonus: 0.15
+  enemy_debuff_gain_bonus: 0.1
 
   # ── Layer C（战斗级结算）────────────────────────────────────────────────
   normal_combat_bonus: 3.0     # 普通战斗通关基础奖励
@@ -112,6 +128,8 @@ reward:
   hp_efficiency_max: 4.0       # HP效率奖励上限（满血通关可得）
   elite_clean_bonus: 3.0       # 精英战HP损失<30%的额外奖励
   elite_clean_threshold: 0.3   # 精英低损判定阈值
+  high_hp_loss_threshold: 0.5  # 战斗扣血比例超过该阈值时追加惩罚
+  high_hp_loss_penalty_scale: 3.0
 
   # ── Layer D（局外阶段，已由 layer_d_weight 统一缩放）───────────────────
   rest_low_hp_bonus: 1.0       # HP<35% 时休息奖励
@@ -121,7 +139,10 @@ reward:
   rest_mid_threshold: 0.6
   rest_high_threshold: 0.8
   smith_bonus: 0.5             # 营地锻造奖励
+  smith_low_upgrade_ratio_threshold: 0.3
+  smith_low_upgrade_ratio_mul: 1.5
   remove_card_bonus: 0.4       # 删牌奖励
+  remove_curse_bonus: 0.6      # 删除诅咒/状态牌额外奖励
   choose_card_meta_bonus: 0.4  # 选牌奖励（升高，卡牌选择很重要）
   claim_gold_bonus: 0.12       # claim_reward: 金币
   claim_card_bonus: 0.18       # claim_reward: 卡牌（仅点击奖励项，不含后续选卡）
@@ -131,6 +152,18 @@ reward:
   claim_special_card_bonus: 0.2 # claim_reward: SpecialCard
   claim_linked_set_bonus: 0.18 # claim_reward: LinkedRewardSet
   claim_unknown_bonus: 0.1     # claim_reward: 未知类型兜底
+  event_option_bonus: 0.1      # 事件选项基础奖励
+  map_node_bonus: 0.0          # 地图节点基础奖励（可按实验再提高）
+  deck_optimal_min: 10
+  deck_optimal_max: 20
+  deck_optimal_bonus: 0.05
+  deck_large_threshold: 25
+  deck_large_penalty_per_card: 0.1
+  deck_too_small_threshold: 6
+  deck_too_small_penalty: 0.1
+  buy_card_common_bonus: 0.1
+  buy_card_uncommon_bonus: 0.25
+  buy_card_rare_bonus: 0.4
   buy_bonus: 0.2               # 商店购买奖励
 
   # ── 三阶段动态权重（按 train.total_steps 比例切分）──────────────────────
@@ -139,26 +172,26 @@ reward:
     early_end_ratio: 0.2       # 前期结束位置：total_steps * 0.2
     mid_end_ratio: 0.7         # 中期结束位置：total_steps * 0.7
     early_weights:
-      layer_a: 0.8
-      layer_b: 0.8
+      layer_a: 0.85
+      layer_b: 0.85
       layer_c: 1.2
       layer_d: 0.5
       layer_e: 0.3
     mid_start_weights:
-      layer_a: 0.8
-      layer_b: 0.8
+      layer_a: 0.9
+      layer_b: 0.95
       layer_c: 1.2
       layer_d: 0.5
       layer_e: 0.3
     mid_end_weights:
-      layer_a: 0.82
-      layer_b: 0.82
+      layer_a: 1.02
+      layer_b: 1.02
       layer_c: 1.15
       layer_d: 0.5
       layer_e: 0.7
     late_weights:
-      layer_a: 0.85
-      layer_b: 0.85
+      layer_a: 1.05
+      layer_b: 1.05
       layer_c: 1.1
       layer_d: 0.5
       layer_e: 0.8
@@ -170,15 +203,21 @@ reward:
   terminal_hp_quality_weight: 10.0  # 存活时HP质量加成
 
   # ── 奖励裁剪 ────────────────────────────────────────────────────────────
-  reward_clip: 50.0
+  reward_clip: 100.0
 
   # ── LLM match 奖励（llm.enabled=true 时生效）───────────────────────────
-  card_weight: 0.4
+  card_weight: 0.20
   card_match_bonus: 1.0
   card_mismatch_penalty: 0.5
-  relic_choice_weight: 0.25
-  map_route_weight: 0.25
-  combat_opening_weight: 0.2
+  relic_choice_weight: 0.12
+  map_route_weight: 0.10
+  remove_choice_weight: 0.14
+  remove_match_bonus: 0.8
+  remove_mismatch_penalty: 0.4
+  shop_choice_weight: 0.10
+  shop_match_bonus: 0.8
+  shop_mismatch_penalty: 0.4
+  combat_opening_weight: 0.08
 
 # ── 性能优化（可选）────────────────────────────────────────────────────────────
 perf:

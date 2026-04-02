@@ -1,4 +1,0 @@
-[21:39:39.883] update_at_steps=256 batch_size=64 buffer_size=256 pg_loss=-0.008000 vf_loss=122.288833 entropy=1.557296
-[21:39:39.918] latest_model_saved: checkpoints\latest_model.pt
-[22:17:29.976] update_at_steps=512 batch_size=64 buffer_size=256 pg_loss=-0.013168 vf_loss=70.415268 entropy=1.536658
-[22:17:30.003] latest_model_saved: checkpoints\latest_model.pt
