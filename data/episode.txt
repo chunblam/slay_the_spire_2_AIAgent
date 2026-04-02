@@ -1,0 +1,246 @@
+  Episode    1 | Reward:    28.60 | Floor:  6 | MaxFloor:  6 | HP:   0 | Steps: 68
+  Episode    2 | Reward:    53.26 | Floor:  8 | MaxFloor:  8 | HP:   0 | Steps: 173
+  Episode    3 | Reward:    34.07 | Floor:  6 | MaxFloor:  8 | HP:   0 | Steps: 258
+  Episode    4 | Reward:    26.62 | Floor:  4 | MaxFloor:  8 | HP:   0 | Steps: 328
+  Episode    5 | Reward:    17.45 | Floor:  4 | MaxFloor:  8 | HP:   0 | Steps: 383
+  Episode    6 | Reward:    51.51 | Floor:  8 | MaxFloor:  8 | HP:   0 | Steps: 486
+
+📊 step     512 | rollout_avg_ep_r: 35.252 | global_avg_ep_r: 35.252 | rollout_step_avg_r: 0.447 | episodes_in_rollout: 6 | episodes_total: 6 | pg_cur: -0.0055 | vf_cur: 26.9259 | ent_cur: 1.2002 | pg_avg: -0.0055 | vf_avg: 26.9259 | ent_avg: 1.2002
+
+  💾 最优模型: F:\港中深\项目\slay_the_spire\RL_slay the spire_sts2agent\checkpoints\best_model.pt (rollout_avg_ep_r=35.252)
+  Episode    7 | Reward:    78.85 | Floor:  8 | MaxFloor:  8 | HP:   0 | Steps: 616
+  Episode    8 | Reward:    43.02 | Floor:  8 | MaxFloor:  8 | HP:   0 | Steps: 717
+  Episode    9 | Reward:    33.45 | Floor:  4 | MaxFloor:  8 | HP:   0 | Steps: 813
+  Episode   10 | Reward:    14.04 | Floor:  3 | MaxFloor:  8 | HP:   0 | Steps: 868
+  Episode   11 | Reward:    24.23 | Floor:  5 | MaxFloor:  8 | HP:   0 | Steps: 935
+
+📊 step    1024 | rollout_avg_ep_r: 38.720 | global_avg_ep_r: 36.828 | rollout_step_avg_r: 0.445 | episodes_in_rollout: 5 | episodes_total: 11 | pg_cur: -0.0102 | vf_cur: 42.9198 | ent_cur: 1.1577 | pg_avg: -0.0078 | vf_avg: 34.9228 | ent_avg: 1.1789
+
+  💾 最优模型: F:\港中深\项目\slay_the_spire\RL_slay the spire_sts2agent\checkpoints\best_model.pt (rollout_avg_ep_r=38.720)
+  Episode   12 | Reward:    64.78 | Floor: 13 | MaxFloor: 13 | HP:   0 | Steps: 1068
+  Episode   13 | Reward:    56.61 | Floor:  5 | MaxFloor: 13 | HP:   0 | Steps: 1164
+  Episode   14 | Reward:    68.21 | Floor: 11 | MaxFloor: 13 | HP:   0 | Steps: 1342
+  Episode   15 | Reward:    44.63 | Floor:  6 | MaxFloor: 13 | HP:   0 | Steps: 1446
+
+📊 step    1536 | rollout_avg_ep_r: 58.555 | global_avg_ep_r: 42.622 | rollout_step_avg_r: 0.456 | episodes_in_rollout: 4 | episodes_total: 15 | pg_cur: -0.0075 | vf_cur: 39.5814 | ent_cur: 1.1428 | pg_avg: -0.0077 | vf_avg: 36.4757 | ent_avg: 1.1669
+
+  💾 最优模型: F:\港中深\项目\slay_the_spire\RL_slay the spire_sts2agent\checkpoints\best_model.pt (rollout_avg_ep_r=58.555)
+  Episode   16 | Reward:    63.52 | Floor:  5 | MaxFloor: 13 | HP:   0 | Steps: 1568
+  Episode   17 | Reward:    59.96 | Floor:  6 | MaxFloor: 13 | HP:   0 | Steps: 1686
+  Episode   18 | Reward:    48.09 | Floor:  7 | MaxFloor: 13 | HP:   0 | Steps: 1796
+  Episode   19 | Reward:    56.20 | Floor:  9 | MaxFloor: 13 | HP:   0 | Steps: 1893
+
+📊 step    2048 | rollout_avg_ep_r: 56.941 | global_avg_ep_r: 45.637 | rollout_step_avg_r: 0.514 | episodes_in_rollout: 4 | episodes_total: 19 | pg_cur: -0.0009 | vf_cur: 55.3047 | ent_cur: 1.0404 | pg_avg: -0.0060 | vf_avg: 41.1829 | ent_avg: 1.1353
+
+  Episode   20 | Reward:    98.38 | Floor: 14 | MaxFloor: 14 | HP:   0 | Steps: 2085
+  Episode   21 | Reward:   122.72 | Floor: 14 | MaxFloor: 14 | HP:   0 | Steps: 2312
+  Episode   22 | Reward:   102.50 | Floor: 15 | MaxFloor: 15 | HP:   0 | Steps: 2514
+
+📊 step    2560 | rollout_avg_ep_r: 112.608 | global_avg_ep_r: 54.123 | rollout_step_avg_r: 0.506 | episodes_in_rollout: 2 | episodes_total: 22 | pg_cur: -0.0025 | vf_cur: 49.0905 | ent_cur: 1.0789 | pg_avg: -0.0053 | vf_avg: 42.7644 | ent_avg: 1.1240
+
+  💾 最优模型: F:\港中深\项目\slay_the_spire\RL_slay the spire_sts2agent\checkpoints\best_model.pt (rollout_avg_ep_r=112.608)
+  Episode   23 | Reward:    47.14 | Floor:  5 | MaxFloor: 15 | HP:   0 | Steps: 2614
+  Episode   24 | Reward:    79.19 | Floor:  8 | MaxFloor: 15 | HP:   0 | Steps: 2756
+  Episode   25 | Reward:    45.79 | Floor:  8 | MaxFloor: 15 | HP:   0 | Steps: 2863
+  Episode   26 | Reward:    45.68 | Floor:  7 | MaxFloor: 15 | HP:   0 | Steps: 2986
+
+📊 step    3072 | rollout_avg_ep_r: 54.448 | global_avg_ep_r: 54.173 | rollout_step_avg_r: 0.466 | episodes_in_rollout: 4 | episodes_total: 26 | pg_cur: -0.0022 | vf_cur: 40.5861 | ent_cur: 1.0484 | pg_avg: -0.0048 | vf_avg: 42.4014 | ent_avg: 1.1114
+
+  Episode   27 | Reward:    48.62 | Floor:  7 | MaxFloor: 15 | HP:   0 | Steps: 3085
+  Episode   28 | Reward:    36.50 | Floor:  7 | MaxFloor: 15 | HP:   0 | Steps: 3184
+  Episode   29 | Reward:    46.14 | Floor:  6 | MaxFloor: 15 | HP:   0 | Steps: 3301
+  Episode   30 | Reward:    29.08 | Floor:  5 | MaxFloor: 15 | HP:   0 | Steps: 3372
+  Episode   31 | Reward:    71.99 | Floor: 12 | MaxFloor: 15 | HP:   0 | Steps: 3525
+
+📊 step    3584 | rollout_avg_ep_r: 46.465 | global_avg_ep_r: 52.930 | rollout_step_avg_r: 0.428 | episodes_in_rollout: 5 | episodes_total: 31 | pg_cur: -0.0003 | vf_cur: 33.9916 | ent_cur: 0.9871 | pg_avg: -0.0041 | vf_avg: 41.2000 | ent_avg: 1.0936
+
+  Episode   32 | Reward:    40.01 | Floor:  5 | MaxFloor: 15 | HP:   0 | Steps: 3610
+  Episode   33 | Reward:    58.66 | Floor:  6 | MaxFloor: 15 | HP:   0 | Steps: 3707
+  Episode   34 | Reward:    55.14 | Floor: 13 | MaxFloor: 15 | HP:   0 | Steps: 3815
+  Episode   35 | Reward:    27.00 | Floor:  4 | MaxFloor: 15 | HP:   0 | Steps: 3888
+  Episode   36 | Reward:    50.60 | Floor:  7 | MaxFloor: 15 | HP:   0 | Steps: 3989
+  Episode   37 | Reward:    31.32 | Floor:  7 | MaxFloor: 15 | HP:   0 | Steps: 4080
+
+📊 step    4096 | rollout_avg_ep_r: 43.788 | global_avg_ep_r: 51.447 | rollout_step_avg_r: 0.466 | episodes_in_rollout: 6 | episodes_total: 37 | pg_cur: 0.0000 | vf_cur: 40.3710 | ent_cur: 0.9974 | pg_avg: -0.0036 | vf_avg: 41.0964 | ent_avg: 1.0816
+
+  Episode   38 | Reward:   221.76 | Floor: 17 | MaxFloor: 17 | HP:   0 | Steps: 4409
+  Episode   39 | Reward:    65.00 | Floor:  6 | MaxFloor: 17 | HP:   0 | Steps: 4520
+
+📊 step    4608 | rollout_avg_ep_r: 143.381 | global_avg_ep_r: 56.162 | rollout_step_avg_r: 0.639 | episodes_in_rollout: 2 | episodes_total: 39 | pg_cur: 0.0035 | vf_cur: 78.1861 | ent_cur: 0.9981 | pg_avg: -0.0028 | vf_avg: 45.2174 | ent_avg: 1.0723
+
+  💾 最优模型: F:\港中深\项目\slay_the_spire\RL_slay the spire_sts2agent\checkpoints\best_model.pt (rollout_avg_ep_r=143.381)
+  Episode   40 | Reward:    73.41 | Floor: 14 | MaxFloor: 17 | HP:   0 | Steps: 4684
+  Episode   41 | Reward:   152.33 | Floor: 17 | MaxFloor: 17 | HP:   0 | Steps: 4970
+  Episode   42 | Reward:    70.24 | Floor:  6 | MaxFloor: 17 | HP:   0 | Steps: 5115
+
+📊 step    5120 | rollout_avg_ep_r: 98.659 | global_avg_ep_r: 59.197 | rollout_step_avg_r: 0.491 | episodes_in_rollout: 3 | episodes_total: 42 | pg_cur: -0.0004 | vf_cur: 47.4512 | ent_cur: 0.9887 | pg_avg: -0.0026 | vf_avg: 45.4408 | ent_avg: 1.0640
+
+  Episode   43 | Reward:    69.38 | Floor:  8 | MaxFloor: 17 | HP:   0 | Steps: 5248
+  Episode   44 | Reward:    62.56 | Floor:  7 | MaxFloor: 17 | HP:   0 | Steps: 5341
+  Episode   45 | Reward:    65.66 | Floor:  8 | MaxFloor: 17 | HP:   0 | Steps: 5448
+Episode   46 | Reward:    48.40 | Floor:  8 | MaxFloor: 17 | HP:   0 | Steps: 5593
+
+📊 step    5632 | rollout_avg_ep_r: 48.397 | global_avg_ep_r: 59.397 | rollout_step_avg_r: 0.514 | episodes_in_rollout: 1 | episodes_total: 46 | pg_cur: -0.0019 | vf_cur: 52.5071 | ent_cur: 0.9955 | pg_avg: -0.0025 | vf_avg: 46.0832 | ent_avg: 1.0577
+
+  Episode   47 | Reward:   196.98 | Floor: 27 | MaxFloor: 27 | HP:   0 | Steps: 5945
+  Episode   48 | Reward:    41.84 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 6036
+
+📊 step    6144 | rollout_avg_ep_r: 119.408 | global_avg_ep_r: 61.898 | rollout_step_avg_r: 0.463 | episodes_in_rollout: 2 | episodes_total: 48 | pg_cur: 0.0004 | vf_cur: 41.3457 | ent_cur: 0.9778 | pg_avg: -0.0023 | vf_avg: 45.6884 | ent_avg: 1.0511
+
+  Episode   49 | Reward:    26.17 | Floor:  17 | MaxFloor: 27 | HP:   0 | Steps: 6339
+  Episode   50 | Reward:    54.36 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 6430
+
+📊 step    6656 | rollout_avg_ep_r: 40.262 | global_avg_ep_r: 61.032 | rollout_step_avg_r: 0.374 | episodes_in_rollout: 2 | episodes_total: 50 | pg_cur: -0.0030 | vf_cur: 41.6202 | ent_cur: 1.0005 | pg_avg: -0.0023 | vf_avg: 45.3755 | ent_avg: 1.0472
+
+  Episode   51 | Reward:   137.89 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 6677
+  Episode   52 | Reward:    61.33 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 7008
+
+📊 step    7167 | rollout_avg_ep_r: 162.194 | global_avg_ep_r: 64.923 | rollout_step_avg_r: 0.559 | episodes_in_rollout: 2 | episodes_total: 52 | pg_cur: -0.0026 | vf_cur: 53.1066 | ent_cur: 1.0085 | pg_avg: -0.0024 | vf_avg: 45.9277 | ent_avg: 1.0444
+
+  💾 最优模型: F:\港中深\项目\slay_the_spire\RL_slay the spire_sts2agent\checkpoints\best_model.pt (rollout_avg_ep_r=162.194)
+  Episode   53 | Reward:   102.75 | Floor: 14 | MaxFloor: 27 | HP:   0 | Steps: 7198
+  Episode   54 | Reward:    70.46 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 7304
+  Episode   55 | Reward:    72.21 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 7434
+  Episode   56 | Reward:    81.38 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 7558
+  Episode   57 | Reward:    39.18 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 7638
+
+📊 step    7679 | rollout_avg_ep_r: 73.198 | global_avg_ep_r: 65.649 | rollout_step_avg_r: 0.581 | episodes_in_rollout: 5 | episodes_total: 57 | pg_cur: -0.0014 | vf_cur: 57.0167 | ent_cur: 0.9620 | pg_avg: -0.0023 | vf_avg: 46.6670 | ent_avg: 1.0389
+
+  Episode   58 | Reward:    80.13 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 7801
+  Episode   59 | Reward:    56.88 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 7935
+  Episode   60 | Reward:    49.57 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 8057
+  Episode   61 | Reward:    56.25 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 8151
+
+📊 step    8191 | rollout_avg_ep_r: 60.706 | global_avg_ep_r: 65.325 | rollout_step_avg_r: 0.485 | episodes_in_rollout: 4 | episodes_total: 61 | pg_cur: 0.0016 | vf_cur: 41.8875 | ent_cur: 0.9971 | pg_avg: -0.0021 | vf_avg: 46.3682 | ent_avg: 1.0363
+
+  Episode   62 | Reward:    37.50 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 8248
+  Episode   63 | Reward:    58.71 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 8373
+  Episode   64 | Reward:   141.51 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 8655
+
+📊 step    8703 | rollout_avg_ep_r: 79.242 | global_avg_ep_r: 65.977 | rollout_step_avg_r: 0.487 | episodes_in_rollout: 3 | episodes_total: 64 | pg_cur: 0.0004 | vf_cur: 39.3221 | ent_cur: 0.9449 | pg_avg: -0.0019 | vf_avg: 45.9538 | ent_avg: 1.0309
+
+  Episode   65 | Reward:    90.06 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 8821
+  Episode   66 | Reward:    90.17 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 8984
+  Episode   67 | Reward:   116.36 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 9196
+
+📊 step    9215 | rollout_avg_ep_r: 98.862 | global_avg_ep_r: 67.450 | rollout_step_avg_r: 0.540 | episodes_in_rollout: 3 | episodes_total: 67 | pg_cur: 0.0003 | vf_cur: 41.3787 | ent_cur: 0.9489 | pg_avg: -0.0018 | vf_avg: 45.6996 | ent_avg: 1.0264
+
+  Episode   68 | Reward:    89.04 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 9375
+  Episode   69 | Reward:    70.58 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 9488
+
+📊 step    9727 | rollout_avg_ep_r: 79.813 | global_avg_ep_r: 67.808 | rollout_step_avg_r: 0.533 | episodes_in_rollout: 2 | episodes_total: 69 | pg_cur: 0.0001 | vf_cur: 50.1454 | ent_cur: 0.9867 | pg_avg: -0.0017 | vf_avg: 45.9336 | ent_avg: 1.0243
+
+  Episode   70 | Reward:   162.80 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 9794
+  Episode   71 | Reward:    68.43 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 9903
+  Episode   72 | Reward:    64.64 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 10032
+  Episode   73 | Reward:    66.16 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 10145
+
+📊 step   10239 | rollout_avg_ep_r: 90.506 | global_avg_ep_r: 69.052 | rollout_step_avg_r: 0.581 | episodes_in_rollout: 4 | episodes_total: 73 | pg_cur: -0.0032 | vf_cur: 53.6433 | ent_cur: 0.9279 | pg_avg: -0.0018 | vf_avg: 46.3191 | ent_avg: 1.0195
+
+  Episode   74 | Reward:    88.29 | Floor: 11 | MaxFloor: 27 | HP:   0 | Steps: 10297
+  Episode   75 | Reward:    70.56 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 10405
+  Episode   76 | Reward:    67.97 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 10548
+  Episode   77 | Reward:   118.49 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 10731
+
+📊 step   10751 | rollout_avg_ep_r: 86.328 | global_avg_ep_r: 69.949 | rollout_step_avg_r: 0.578 | episodes_in_rollout: 4 | episodes_total: 77 | pg_cur: 0.0002 | vf_cur: 51.2841 | ent_cur: 0.9440 | pg_avg: -0.0017 | vf_avg: 46.5555 | ent_avg: 1.0159
+
+  Episode   78 | Reward:    94.04 | Floor: 12 | MaxFloor: 27 | HP:   0 | Steps: 10891
+  Episode   79 | Reward:    86.41 | Floor: 11 | MaxFloor: 27 | HP:   0 | Steps: 11056
+  Episode   80 | Reward:    97.28 | Floor: 12 | MaxFloor: 27 | HP:   0 | Steps: 11215
+
+📊 step   11263 | rollout_avg_ep_r: 92.575 | global_avg_ep_r: 70.798 | rollout_step_avg_r: 0.579 | episodes_in_rollout: 3 | episodes_total: 80 | pg_cur: -0.0005 | vf_cur: 51.2283 | ent_cur: 0.9335 | pg_avg: -0.0016 | vf_avg: 46.7679 | ent_avg: 1.0121
+
+  Episode   81 | Reward:   132.60 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 11458
+  Episode   82 | Reward:    85.51 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 11606
+  Episode   83 | Reward:    74.44 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 11758
+
+📊 step   11775 | rollout_avg_ep_r: 97.514 | global_avg_ep_r: 71.763 | rollout_step_avg_r: 0.521 | episodes_in_rollout: 3 | episodes_total: 83 | pg_cur: -0.0002 | vf_cur: 45.7138 | ent_cur: 0.9667 | pg_avg: -0.0016 | vf_avg: 46.7221 | ent_avg: 1.0102
+  Episode   84 | Reward:   116.79 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 11988
+  Episode   85 | Reward:    49.75 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 12097
+
+📊 step   12287 | rollout_avg_ep_r: 83.271 | global_avg_ep_r: 72.034 | rollout_step_avg_r: 0.509 | episodes_in_rollout: 2 | episodes_total: 85 | pg_cur: -0.0023 | vf_cur: 38.3693 | ent_cur: 0.9355 | pg_avg: -0.0016 | vf_avg: 46.3740 | ent_avg: 1.0070
+
+  Episode   86 | Reward:   122.86 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 12343
+  Episode   87 | Reward:    91.89 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 12512
+  Episode   88 | Reward:    76.61 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 12665
+
+📊 step   12799 | rollout_avg_ep_r: 97.120 | global_avg_ep_r: 72.889 | rollout_step_avg_r: 0.513 | episodes_in_rollout: 3 | episodes_total: 88 | pg_cur: -0.0004 | vf_cur: 39.1241 | ent_cur: 0.9770 | pg_avg: -0.0015 | vf_avg: 46.0840 | ent_avg: 1.0058
+
+  Episode   89 | Reward:    95.87 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 12849
+  Episode   90 | Reward:   128.27 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 13078
+  Episode   91 | Reward:   107.60 | Floor: 14 | MaxFloor: 27 | HP:   0 | Steps: 13274
+
+📊 step   13311 | rollout_avg_ep_r: 110.582 | global_avg_ep_r: 74.132 | rollout_step_avg_r: 0.545 | episodes_in_rollout: 3 | episodes_total: 91 | pg_cur: 0.0005 | vf_cur: 41.0749 | ent_cur: 0.8742 | pg_avg: -0.0015 | vf_avg: 45.8914 | ent_avg: 1.0008
+
+  Episode   92 | Reward:    63.63 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 13402
+  Episode   93 | Reward:   101.85 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 13596
+
+📊 step   13823 | rollout_avg_ep_r: 82.736 | global_avg_ep_r: 74.317 | rollout_step_avg_r: 0.548 | episodes_in_rollout: 2 | episodes_total: 93 | pg_cur: 0.0024 | vf_cur: 43.9900 | ent_cur: 0.9143 | pg_avg: -0.0013 | vf_avg: 45.8210 | ent_avg: 0.9976
+
+  Episode   94 | Reward:   235.99 | Floor: 25 | MaxFloor: 27 | HP:   0 | Steps: 13956
+  Episode   95 | Reward:    84.03 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 14121
+  Episode   96 | Reward:    53.21 | Floor:  5 | MaxFloor: 27 | HP:   0 | Steps: 14243
+
+📊 step   14335 | rollout_avg_ep_r: 124.410 | global_avg_ep_r: 75.882 | rollout_step_avg_r: 0.568 | episodes_in_rollout: 3 | episodes_total: 96 | pg_cur: -0.0016 | vf_cur: 49.0761 | ent_cur: 0.9462 | pg_avg: -0.0013 | vf_avg: 45.9372 | ent_avg: 0.9957
+
+  Episode   97 | Reward:    77.08 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 14384
+  Episode   98 | Reward:    71.29 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 14526
+  Episode   99 | Reward:    79.92 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 14669
+  Episode  100 | Reward:    55.88 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 14786
+
+📊 step   14847 | rollout_avg_ep_r: 71.043 | global_avg_ep_r: 75.689 | rollout_step_avg_r: 0.530 | episodes_in_rollout: 4 | episodes_total: 100 | pg_cur: -0.0029 | vf_cur: 52.9472 | ent_cur: 0.9615 | pg_avg: -0.0014 | vf_avg: 46.1789 | ent_avg: 0.9946
+
+  Episode  101 | Reward:   108.21 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 14945
+  Episode  102 | Reward:    70.34 | Floor: 12 | MaxFloor: 27 | HP:   0 | Steps: 15082
+  Episode  103 | Reward:    39.71 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 15161
+  Episode  104 | Reward:    67.91 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 15285
+
+📊 step   15359 | rollout_avg_ep_r: 71.542 | global_avg_ep_r: 75.529 | rollout_step_avg_r: 0.547 | episodes_in_rollout: 4 | episodes_total: 104 | pg_cur: -0.0028 | vf_cur: 57.5440 | ent_cur: 0.9417 | pg_avg: -0.0014 | vf_avg: 46.5578 | ent_avg: 0.9928
+
+  Episode  105 | Reward:   103.71 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 15470
+  Episode  106 | Reward:    53.35 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 15569
+  Episode  107 | Reward:    67.82 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 15713
+
+📊 step   15871 | rollout_avg_ep_r: 74.959 | global_avg_ep_r: 75.513 | rollout_step_avg_r: 0.509 | episodes_in_rollout: 3 | episodes_total: 107 | pg_cur: 0.0008 | vf_cur: 48.6847 | ent_cur: 0.9480 | pg_avg: -0.0014 | vf_avg: 46.6264 | ent_avg: 0.9914
+
+  Episode  108 | Reward:    69.15 | Floor: 12 | MaxFloor: 27 | HP:   0 | Steps: 15873
+  Episode  109 | Reward:   143.27 | Floor: 15 | MaxFloor: 27 | HP:   0 | Steps: 16097
+  Episode  110 | Reward:    80.12 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 16348
+
+📊 step   16383 | rollout_avg_ep_r: 80.117 | global_avg_ep_r: 76.113 | rollout_step_avg_r: 0.481 | episodes_in_rollout: 1 | episodes_total: 110 | pg_cur: -0.0013 | vf_cur: 38.6382 | ent_cur: 0.8801 | pg_avg: -0.0014 | vf_avg: 46.3768 | ent_avg: 0.9879
+
+  Episode  111 | Reward:    62.01 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 16464
+  Episode  112 | Reward:    55.66 | Floor:  7 | MaxFloor: 27 | HP:   0 | Steps: 16570
+  Episode  113 | Reward:    95.97 | Floor: 12 | MaxFloor: 27 | HP:   0 | Steps: 16728
+
+📊 step   16895 | rollout_avg_ep_r: 71.214 | global_avg_ep_r: 75.983 | rollout_step_avg_r: 0.553 | episodes_in_rollout: 3 | episodes_total: 113 | pg_cur: -0.0031 | vf_cur: 51.5109 | ent_cur: 0.9354 | pg_avg: -0.0014 | vf_avg: 46.5323 | ent_avg: 0.9863
+
+  Episode  114 | Reward:    98.21 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 16905
+  Episode  115 | Reward:   127.44 | Floor: 15 | MaxFloor: 27 | HP:   0 | Steps: 17127
+  Episode  116 | Reward:    96.58 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 17353
+
+📊 step   17407 | rollout_avg_ep_r: 107.407 | global_avg_ep_r: 76.796 | rollout_step_avg_r: 0.515 | episodes_in_rollout: 3 | episodes_total: 116 | pg_cur: -0.0025 | vf_cur: 40.1086 | ent_cur: 0.9172 | pg_avg: -0.0014 | vf_avg: 46.3434 | ent_avg: 0.9843
+
+  Episode  117 | Reward:    87.73 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 17483
+  Episode  118 | Reward:    64.86 | Floor:  5 | MaxFloor: 27 | HP:   0 | Steps: 17576
+  Episode  119 | Reward:    67.75 | Floor: 11 | MaxFloor: 27 | HP:   0 | Steps: 17725
+  Episode  120 | Reward:    91.39 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 17894
+
+📊 step   17919 | rollout_avg_ep_r: 77.930 | global_avg_ep_r: 76.834 | rollout_step_avg_r: 0.570 | episodes_in_rollout: 4 | episodes_total: 120 | pg_cur: 0.0037 | vf_cur: 55.5664 | ent_cur: 0.9372 | pg_avg: -0.0013 | vf_avg: 46.6069 | ent_avg: 0.9829
+
+  Episode  121 | Reward:    85.86 | Floor:  9 | MaxFloor: 27 | HP:   0 | Steps: 18050
+  Episode  122 | Reward:   118.90 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 18283
+
+📊 step   18431 | rollout_avg_ep_r: 102.380 | global_avg_ep_r: 77.253 | rollout_step_avg_r: 0.525 | episodes_in_rollout: 2 | episodes_total: 122 | pg_cur: -0.0013 | vf_cur: 41.8500 | ent_cur: 0.9246 | pg_avg: -0.0013 | vf_avg: 46.4748 | ent_avg: 0.9813
+
+  Episode  123 | Reward:   104.68 | Floor: 17 | MaxFloor: 27 | HP:   0 | Steps: 18508
+  Episode  124 | Reward:    44.27 | Floor:  5 | MaxFloor: 27 | HP:   0 | Steps: 18598
+  Episode  125 | Reward:    82.22 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 18776
+  Episode  126 | Reward:    76.21 | Floor:  6 | MaxFloor: 27 | HP:   0 | Steps: 18899
+
+📊 step   18943 | rollout_avg_ep_r: 76.848 | global_avg_ep_r: 77.240 | rollout_step_avg_r: 0.506 | episodes_in_rollout: 4 | episodes_total: 126 | pg_cur: 0.0005 | vf_cur: 44.1738 | ent_cur: 0.9488 | pg_avg: -0.0012 | vf_avg: 46.4126 | ent_avg: 0.9804
+
+  Episode  127 | Reward:    79.16 | Floor:  8 | MaxFloor: 27 | HP:   0 | Steps: 19030
+  Episode  128 | Reward:   119.36 | Floor: 13 | MaxFloor: 27 | HP:   0 | Steps: 19230
+
+📊 step   19455 | rollout_avg_ep_r: 99.263 | global_avg_ep_r: 77.584 | rollout_step_avg_r: 0.590 | episodes_in_rollout: 2 | episodes_total: 128 | pg_cur: -0.0013 | vf_cur: 35.1795 | ent_cur: 0.9593 | pg_avg: -0.0012 | vf_avg: 46.1170 | ent_avg: 0.9799 
