@@ -1,292 +1,342 @@
 # STS2 RL Agent (STS2AIAgent 适配版)
 
-杀戮尖塔 2 的 PPO 强化学习项目，支持两种训练模式：
+本项目用于在《杀戮尖塔2》上训练 PPO 策略，并在现有版本中支持两种模式：
 
-1. 单 RL：仅依赖环境奖励塑形（不调用 LLM）
-2. RL+LLM：在奖励塑形基础上，增加 LLM 建议的概率轻引导（logit bias）
+1. 单 RL：只使用环境状态与奖励塑形。
+2. RL+LLM：在单 RL 基础上叠加 LLM 双引导（奖励引导 + 策略轻引导）。
 
-本 README 已按当前代码对齐，适用于本仓库实际运行方式。
-
----
-
-## 1. 项目定位
-
-当前仓库聚焦以下目标：
-
-1. 用 PPO 在 STS2AIAgent HTTP 接口上稳定训练可持续提升的策略
-2. 用结构化奖励（Layer A~E）提供可解释学习信号
-3. 在不破坏已训练模型兼容性的前提下，渐进接入 LLM 引导
-4. 支持中断恢复、日志延续、自动保存 latest/best checkpoint
+当前 README 已按代码现状对齐，重点说明 RL+LLM 方案与架构。
 
 ---
 
-## 2. 当前架构
+## 1. 项目目标
 
-### 2.1 模块分层
-
-1. 环境层：`sts2_env.py`
-2. 动作层：`action_space.py`
-3. 编码层：`state_encoder.py`
-4. 策略层：`ppo_agent.py` + `train.py`
-5. 奖励层：`reward_shaper.py`
-6. 顾问层：`llm_advisor.py`
-7. 评估脚本：`evaluate.py`
-
-### 2.2 数据流
-
-1. `STS2Env` 拉取 session state + legal actions
-2. `StateEncoder` 将 JSON 编码为固定形状观测
-3. `PPO policy` 结合 action mask 采样动作
-4. `RewardShaper` 合成训练奖励
-5. 回放到 `RolloutBuffer`，周期性 PPO update
+1. 在 STS2AIAgent HTTP 接口上进行稳定可恢复训练。
+2. 通过分层奖励（Layer A~E）提升学习信号密度与可解释性。
+3. 在不破坏单RL训练链路的前提下，引入 LLM 决策信息。
+4. 支持断点续训、日志延续、latest/best 自动保存。
 
 ---
 
-## 3. 近期关键更新（已落地）
+## 2. 模式与隔离策略
 
-### 3.1 关键词特征接入（保持模型兼容）
+当前仓库已把单RL与RL+LLM分离为不同配置入口：
 
-1. 从 STS2AIAgent 手牌 payload 透传 `key_words`
-2. 在 `state_encoder.py` 中将关键词聚合为 `keyword_signal`
-3. 保持 `CARD_FEATURE_DIM=8` 不变，避免旧 checkpoint 失效
+| 模式 | 配置文件 | scheme | llm.enabled | checkpoint_dir |
+| --- | --- | --- | --- | --- |
+| 单RL | ppo_sts2agent_rl.yaml | rl | false | checkpoints_rl |
+| RL+LLM | ppo_sts2agent.yaml | rl_llm | true | checkpoints_rl_llm |
 
-### 3.2 丢药策略修正
+关键说明：
 
-1. 不再永久禁用 `discard_potion`
-2. 当药水槽已满时，训练循环会自动执行一次丢药动作
-3. 当仅剩 `discard_potion` 且槽未满时，进入等待态，避免无意义动作
-
-### 3.3 RL+LLM 双引导
-
-1. 奖励引导：保留 card/relic/map/remove/shop/opening 的匹配奖励
-2. 概率引导：在采样前对 LLM 推荐动作做 logit 轻偏置
-3. 安全约束：
-   - 仅在指定 screen 生效
-   - 仅在置信度超过阈值时生效
-   - 偏置随训练步数 ramp-up
-   - 永远服从 action mask
+1. train.py 会根据 scheme 分流，且在单RL模式下强制把所有 LLM 相关奖励权重置 0。
+2. 只要你用 ppo_sts2agent_rl.yaml 运行，RL+LLM 的改动不会进入单RL训练分支。
+3. checkpoints 按配置目录隔离；RL+LLM 与单RL不会写到同一个 checkpoint_dir。
+4. logs 默认按时间戳建新目录；若开启续训并允许续接日志，会复用上一次 run 目录（这是预期行为）。
 
 ---
 
-## 4. 环境与依赖
+## 3. RL+LLM 架构总览
 
-### 4.1 Python 依赖
+### 3.1 模块分层
+
+1. 环境层：sts2_env.py
+2. 动作层：action_space.py
+3. 编码层：state_encoder.py
+4. 策略层：ppo_agent.py + train.py
+5. 奖励层：reward_shaper.py
+6. LLM顾问层：llm_advisor.py
+7. 评估层：evaluate.py
+
+### 3.2 主数据流
+
+1. STS2Env 拉取 state + legal_actions。
+2. StateEncoder 将 JSON 状态编码为固定观测张量。
+3. PPO policy 在 action mask 约束下采样动作。
+4. env.step 执行动作并返回 next_state。
+5. RewardShaper 计算 shaped_reward（A~E + LLM相关项）。
+6. RolloutBuffer 收集样本，周期性 PPO update。
+
+---
+
+## 4. RL+LLM 的“双引导”机制
+
+RL+LLM并不是把动作完全交给 LLM，而是将 LLM 作为可控辅助信号：
+
+1. 奖励引导：LLM 参与奖励塑形，影响回报。
+2. 策略引导：对 LLM 推荐动作进行 logit 轻偏置，再由策略采样。
+
+### 4.1 奖励引导（RewardShaper）
+
+RewardShaper 内部有两类 LLM 信号：
+
+1. 全局路线信号：LLM_route（来自 get_reward_shaping_bonus）。
+2. 场景匹配信号：LLM_card / LLM_event / LLM_shop / LLM_relic / LLM_map / LLM_remove / LLM_opening。
+
+总奖励是 A~E 层与各 LLM 项按权重加和，再做 reward_clip。
+
+### 4.2 策略轻引导（Policy Guidance）
+
+在 train 采样阶段：
+
+1. 先由策略网络输出 masked logits。
+2. 若命中允许场景、置信度达阈值，则给候选动作加小幅 bias。
+3. bias 强度受 ramp_steps 渐进控制。
+4. 始终服从 action mask，不会越权执行非法动作。
+
+这使得 RL 仍是主控制器，LLM只做温和引导。
+
+---
+
+## 5. LLM 顾问当前覆盖场景
+
+llm_advisor.py 已覆盖以下决策场景：
+
+1. 选牌：evaluate_card_selection / evaluate_card_reward
+2. 事件：evaluate_event_choice
+3. 商店：evaluate_shop_purchase
+4. 战斗开局：evaluate_combat_opening
+5. 战斗回合：evaluate_combat_turn
+6. 地图路线：evaluate_map_route（是否使用由配置开关控制）
+7. 删牌：evaluate_card_remove
+
+其内部带有：
+
+1. 调用节流（call_interval_steps）
+2. 缓存TTL（cache_ttl）
+3. 置信度阈值（confidence_threshold）
+4. 异常 fallback（调用失败时返回降级建议，不中断训练）
+
+---
+
+## 6. 稳定性与故障恢复机制
+
+train.py 中已经实现多层保护，避免游戏流程异常时直接崩盘：
+
+1. no-progress 检测：相同状态签名下屏蔽无进展动作。
+2. deadlock 重试：等待阈值后尝试推进动作。
+3. manual intervention：UNKNOWN/无合法动作时进入人工介入等待流程。
+4. discard-only 等待态：处理仅剩丢药等非推进动作的短时状态。
+5. 断点恢复：自动保存 training_state + pending_buffer + latest。
+6. Windows 安全写入重试：降低 training_state.json 写入失败导致中断的概率。
+
+---
+
+## 7. 编码器兼容策略（与模型兼容相关）
+
+state_encoder.py 当前设计：
+
+1. 支持 variant：base / rl / rl_llm。
+2. RL+LLM 使用扩展 player 特征维度（16）。
+3. 手牌 CARD_FEATURE_DIM 保持 8，不破坏已有 checkpoint 的卡特征维度兼容。
+4. keyword_signal 已接入手牌特征。
+
+---
+
+## 8. 配置建议（RL+LLM）
+
+主配置：ppo_sts2agent.yaml
+
+关键参数组：
+
+1. 运行模式
+- scheme: rl_llm
+- llm.enabled: true
+
+2. LLM后端
+- llm.backend
+- llm.model
+- llm.base_url
+- api_key（建议走环境变量）
+
+3. LLM顾问开关
+- use_card_advisor
+- use_event_advisor
+- use_shop_advisor
+- use_combat_advisor
+- use_map_advisor
+- use_relic_advisor
+
+4. 双引导参数
+- reward.* 中各 LLM 权重
+- llm.policy_guidance_*（logit 轻偏置）
+
+5. 隔离目录
+- checkpoint_dir: checkpoints_rl_llm
+
+---
+
+## 9. 运行方式
+
+### 9.1 依赖安装
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4.2 游戏侧要求
-
-1. 安装并启用 STS2AIAgent Mod
-2. 默认端口：`127.0.0.1:18080`
-3. 训练前先在游戏内进入可交互状态
-
-### 4.3 连接测试
+### 9.2 连接测试
 
 ```bash
 python test_connection.py --host 127.0.0.1 --port 18080
 ```
 
-成功时会打印 phase/screen/can_act/legal_actions。
-
----
-
-## 5. 配置说明（ppo_sts2agent.yaml）
-
-主配置文件：`ppo_sts2agent.yaml`
-
-### 5.1 训练核心参数
-
-1. `train.total_steps`: 总训练步数
-2. `train.buffer_size`: rollout 缓冲区大小
-3. `train.n_epochs`: 每次 update 的 PPO epoch 数
-4. `train.entropy_coef`: 探索强度
-5. `train.resume_on_restart`: 自动断点续训
-6. `train.save_latest_per_update`: 每次 update 保存 latest
-
-### 5.2 LLM 参数（当前默认可启用）
-
-1. `llm.enabled`: 是否启用 LLM
-2. `llm.backend/model/base_url`: 后端与模型
-3. `llm.call_interval_steps`: 调用节流
-4. `llm.cache_ttl`: 缓存 TTL
-5. `llm.confidence_threshold`: 建议有效阈值
-
-### 5.3 概率引导参数
-
-1. `llm.policy_guidance_enabled`
-2. `llm.policy_guidance_alpha_max`
-3. `llm.policy_guidance_max_bias`
-4. `llm.policy_guidance_confidence_threshold`
-5. `llm.policy_guidance_ramp_steps`
-6. `llm.policy_guidance_screens`
-7. `llm.policy_guidance_combat_steps`
-
-### 5.4 奖励参数
-
-`reward` 段已实现 Layer A/B/C/D/E + LLM match。
-
-可按实验重点调整：
-
-1. `reward.llm_weight`
-2. `reward.card_weight / relic_choice_weight / map_route_weight`
-3. `reward.remove_choice_weight / shop_choice_weight / combat_opening_weight`
-4. `reward.phase_schedule.*`（分阶段权重调度）
-
----
-
-## 6. 运行方式
-
-### 6.1 单 RL 训练（建议先做基线）
-
-将配置改为：
-
-1. `llm.enabled: false`
-
-然后运行：
+### 9.3 启动 RL+LLM 训练
 
 ```bash
 python train.py --config ppo_sts2agent.yaml
 ```
 
-### 6.2 RL+LLM 训练
-
-将配置改为：
-
-1. `llm.enabled: true`
-2. 正确设置 `api_key`（推荐用环境变量）
-
-然后运行：
+### 9.4 启动单RL基线训练
 
 ```bash
-python train.py --config ppo_sts2agent.yaml
+python train.py --config ppo_sts2agent_rl.yaml
 ```
 
-### 6.3 从 checkpoint 继续
+### 9.5 常见环境变量（DeepSeek）
 
-`train.py` 已支持自动续训（默认读取 `checkpoints/training_state.json`）。
-
-可直接重启同一命令继续训练。
-
----
-
-## 7. Checkpoint 与日志
-
-### 7.1 关键文件
-
-1. `checkpoints/latest_model.pt`
-2. `checkpoints/best_model.pt`
-3. `checkpoints/training_state.json`
-4. `checkpoints/pending_buffer.pt`
-
-### 7.2 日志目录
-
-1. `logs/<run_id>/module_episode_summary.log`
-2. `logs/<run_id>/module_ppo_update.log`
-3. `logs/<run_id>/module_reward_shaping.log`
-4. `logs/<run_id>/module_error_recovery.log`
-
-训练中可重点观察：
-
-1. rollout 平均奖励变化
-2. max_floor 是否持续抬升
-3. entropy 是否过快塌陷
-4. no_progress / manual_intervention 是否异常增多
-
----
-
-## 8. 评估脚本
-
-使用确定性策略评估：
-
-```bash
-python evaluate.py --config ppo_sts2agent.yaml --model checkpoints/best_model.pt --episodes 3
-```
-
-可替换 `--model checkpoints/latest_model.pt` 做最近策略快检。
-
-输出包含：
-
-1. 每局 reward / floor / max_floor / hp / steps
-2. victory / defeat
-3. top_actions
-4. 汇总 JSON（均值奖励、均值层数、胜率）
-
----
-
-## 9. LLM 接口建议
-
-### 9.1 默认推荐
-
-1. 后端：OpenAI 兼容
-2. 模型：`deepseek-chat`
-3. base_url：`https://api.deepseek.com/v1`
-
-### 9.2 环境变量
-
-Windows PowerShell 示例：
+PowerShell 示例：
 
 ```powershell
 $env:DEEPSEEK_API_KEY="你的key"
 ```
 
-说明：`llm_advisor.py` 会优先读取配置项 `api_key`，否则回退环境变量。
+---
+
+## 10. 产物目录说明
+
+### 10.1 RL+LLM checkpoints（默认）
+
+目录：checkpoints_rl_llm
+
+典型文件：
+
+1. latest_model.pt
+2. best_model.pt
+3. checkpoint_*.pt
+4. training_state.json
+5. pending_buffer.pt
+
+### 10.2 单RL checkpoints（默认）
+
+目录：checkpoints_rl
+
+说明：与 RL+LLM 独立。
+
+### 10.3 日志目录
+
+目录：logs/<run_id>
+
+关键日志：
+
+1. module_agent_decision.log
+2. module_env_step_state.log
+3. module_reward_shaping.log
+4. module_ppo_update.log
+5. module_episode_summary.log
+6. module_error_recovery.log
+7. module_manual_intervention.log
+8. run_config_snapshot*.json
 
 ---
 
-## 10. 常见问题
+## 11. 如何确认 RL+LLM 真的生效
 
-### 10.1 连接失败
+建议按以下顺序检查：
 
-1. 确认游戏已启动且 Mod 已启用
-2. 确认端口与 `ppo_sts2agent.yaml` 一致
-3. 先跑 `python test_connection.py`
+1. run_config_snapshot 里确认 scheme=rl_llm 且 llm.enabled=true。
+2. reward_shaping 日志出现 llm_card_advice / llm_event_advice / llm_shop_advice / llm_combat_turn。
+3. 奖励分解行里观察 LLM、matchCard、matchEvent、matchShop 等字段。
+4. ppo_update 持续增长，说明不是只在“等待循环”。
+5. error_recovery 没有长期 no_progress 死锁式刷屏。
 
-### 10.2 训练卡在异常状态
+如果 LLM 后端短时失败：
 
-1. 查看 `module_error_recovery.log`
-2. 关注 UNKNOWN screen、no_progress、manual_intervention
-3. 必要时调大 `manual_intervention_max_wait`
-
-### 10.3 LLM 请求异常
-
-1. 检查 API key
-2. 检查 base_url 与模型名
-3. 临时切回 `llm.enabled: false` 验证 RL 主链路
+1. 训练应继续推进（fallback生效）。
+2. 但 match 命中会下降，策略引导也会减弱。
 
 ---
 
-## 11. 推荐实验顺序
+## 12. 评估
 
-1. 先跑单 RL 基线（5k~20k 步）
-2. 同 checkpoint 开 RL+LLM 小权重分支
-3. 先开奖励引导，再开概率引导
-4. 对比同窗口指标后再放大引导强度
+evaluate.py 是确定性评估入口。
 
----
-
-## 12. 相关文档
-
-1. RL+LLM 全链路说明：`docs/4.2/rl_llm_pipeline_and_guided_policy.md`
-2. API 调用文档：`docs/other/STS2AIAgent-API-中文调用文档.md`
-3. 奖励与调试文档：`docs/other/Reward-v2- 参数与调试速查.md`
-
----
-
-## 13. 快速命令清单
+示例（RL+LLM 模型）：
 
 ```bash
-# 1) 依赖
+python evaluate.py --config ppo_sts2agent.yaml --model checkpoints_rl_llm/best_model.pt --episodes 3
+```
+
+示例（单RL模型）：
+
+```bash
+python evaluate.py --config ppo_sts2agent_rl.yaml --model checkpoints_rl/best_model.pt --episodes 3
+```
+
+输出包含：
+
+1. 每局 reward/floor/max_floor/hp/steps
+2. manual_interventions 次数
+3. top_actions
+4. summary JSON（均值奖励、胜率等）
+
+---
+
+## 13. 常见问题
+
+### 13.1 RL+LLM 会污染单RL吗
+
+默认不会。前提是：
+
+1. 用 ppo_sts2agent.yaml 跑 RL+LLM。
+2. 用 ppo_sts2agent_rl.yaml 跑单RL。
+3. 不手动把两者 checkpoint_dir 改成同一目录。
+
+### 13.2 为什么 logs 没新建目录
+
+如果你开启了 resume_on_restart 且 continue_logs_on_resume，训练会续写到上一次 latest_run_dir，这是预期行为。
+
+### 13.3 LLM 超时会不会直接中断训练
+
+按当前实现不会直接中断，LLMAdvisor 会走 fallback；但建议尽快修复后端可用性，否则 RL+LLM 增益会明显下降。
+
+---
+
+## 14. 推荐实验流程
+
+1. 先跑单RL基线，确认环境链路稳定。
+2. 切到 RL+LLM，小权重开启（先奖励引导，再概率引导）。
+3. 观察 3 类指标：
+- 流程稳定性（无死锁）
+- 学习稳定性（ppo_update连续、损失正常）
+- LLM有效性（建议日志与match字段）
+4. 稳定后再提高 LLM 相关权重与引导强度。
+
+---
+
+## 15. 相关文档
+
+1. docs/4.3/rl_llm_run_checklist_2026-04-03.md
+2. docs/4.2/rl_llm_pipeline_and_guided_policy.md
+3. docs/other/STS2AIAgent-API-中文调用文档.md
+
+---
+
+## 16. 快速命令汇总
+
+```bash
+# 1) 安装依赖
 pip install -r requirements.txt
 
-# 2) 连接测试
+# 2) 测试连接
 python test_connection.py --host 127.0.0.1 --port 18080
 
-# 3) 训练
+# 3) RL+LLM训练
 python train.py --config ppo_sts2agent.yaml
 
-# 4) 评估
-python evaluate.py --config ppo_sts2agent.yaml --model checkpoints/best_model.pt --episodes 3
+# 4) 单RL训练
+python train.py --config ppo_sts2agent_rl.yaml
+
+# 5) RL+LLM评估
+python evaluate.py --config ppo_sts2agent.yaml --model checkpoints_rl_llm/best_model.pt --episodes 3
 ```
