@@ -1,0 +1,122 @@
+# 单RL基线配置
+device: "auto"
+scheme: "rl"
+
+env:
+  host: "127.0.0.1"
+  port: 18080
+  character_index: 0
+  startup_debug: false
+  action_poll_interval: 0.35
+  action_min_interval: 0.30
+  post_action_settle: 0.25
+  action_retry_count: 1
+  num_actions: 16
+
+model:
+  hidden_dim: 256
+  card_d_model: 64
+  monster_d_model: 32
+
+train:
+  total_steps: 20000
+  buffer_size: 512
+  n_epochs: 4
+  batch_size: 128
+  lr: 2.5e-4
+  clip_eps: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.008
+  gamma: 0.99
+  gae_lambda: 0.95
+  save_interval: 20000
+  resume_on_restart: true
+  save_latest_per_update: true
+  continue_logs_on_resume: true
+  manual_intervention_max_wait: 180.0
+  manual_intervention_poll: 0.5
+
+llm:
+  enabled: false
+
+logging:
+  level: "INFO"
+  tensorboard: true
+  checkpoint_verbose: false
+
+reward:
+  layer_a_weight: 1.2
+  layer_b_weight: 1.0
+  layer_c_weight: 1.0
+  layer_d_weight: 0.6
+  layer_e_weight: 1.0
+  llm_weight: 0.0
+  action_damage_coef: 0.015
+  action_block_coef: 0.008
+  action_kill_bonus: 0.3
+  action_card_pick_bonus: 0.05
+  action_potion_bonus: 0.05
+  dmg_reward_cap: 2.0
+  kill_reward_per_enemy: 2.0
+  block_coverage_reward: 1.0
+  excess_block_penalty_cap: 0.2
+  energy_waste_penalty: 0.3
+  hp_loss_penalty: 1.5
+  hp_loss_urgency_max_mul: 2.0
+  action_player_buff_gain_bonus: 0.05
+  action_enemy_debuff_gain_bonus: 0.08
+  player_buff_gain_bonus: 0.15
+  enemy_debuff_gain_bonus: 0.1
+  normal_combat_bonus: 3.0
+  elite_combat_bonus: 8.0
+  boss_combat_bonus: 25.0
+  boss_extra_bonus: 10.0
+  hp_efficiency_max: 4.0
+  elite_clean_bonus: 3.0
+  elite_clean_threshold: 0.3
+  high_hp_loss_threshold: 0.5
+  high_hp_loss_penalty_scale: 3.0
+  rest_low_hp_bonus: 1.0
+  rest_mid_hp_bonus: 0.3
+  rest_high_hp_penalty: 0.5
+  rest_low_threshold: 0.35
+  rest_mid_threshold: 0.6
+  rest_high_threshold: 0.8
+  smith_bonus: 0.5
+  smith_low_upgrade_ratio_threshold: 0.3
+  smith_low_upgrade_ratio_mul: 1.5
+  remove_card_bonus: 0.4
+  remove_curse_bonus: 0.6
+  choose_card_meta_bonus: 0.4
+  claim_gold_bonus: 0.12
+  claim_card_bonus: 0.18
+  claim_potion_bonus: 0.15
+  claim_relic_bonus: 0.25
+  claim_remove_card_bonus: 0.2
+  claim_special_card_bonus: 0.2
+  claim_linked_set_bonus: 0.18
+  claim_unknown_bonus: 0.1
+  event_option_bonus: 0.1
+  map_node_bonus: 0.0
+  deck_optimal_min: 10
+  deck_optimal_max: 20
+  deck_optimal_bonus: 0.05
+  deck_large_threshold: 25
+  deck_large_penalty_per_card: 0.1
+  deck_too_small_threshold: 6
+  deck_too_small_penalty: 0.1
+  buy_card_common_bonus: 0.1
+  buy_card_uncommon_bonus: 0.25
+  buy_card_rare_bonus: 0.4
+  buy_bonus: 0.2
+  reward_clip: 100.0
+  card_weight: 0.0
+  event_choice_weight: 0.0
+  relic_choice_weight: 0.0
+  map_route_weight: 0.0
+  remove_choice_weight: 0.0
+  shop_choice_weight: 0.0
+  combat_opening_weight: 0.0
+
+checkpoint_dir: "checkpoints_rl"
+render: false

@@ -3,6 +3,7 @@
 # 此配置专用于STS2-Agent Mod（端口18080），而非STS2MCP（端口15526）
 
 device: "auto"   # "cpu" | "cuda" | "auto"
+scheme: "rl_llm"
 
 # ── 环境 ──────────────────────────────────────────────────────────────────────
 env:
@@ -24,7 +25,7 @@ model:
 
 # ── 训练超参数 ─────────────────────────────────────────────────────────────────
 train:
-  total_steps: 300000
+  total_steps: 20000
   buffer_size: 512
   n_epochs: 4
   batch_size: 128
@@ -60,17 +61,19 @@ llm:
   # ── 综合评估开关 ──────────────────────────────────────────────────────────
   strategy: "balanced"      # aggressive | balanced | conservative
 
-  use_map_advisor: true
+  use_map_advisor: false
   use_combat_advisor: true
-  use_relic_advisor: true
+  use_relic_advisor: false
   use_card_advisor: true
   use_rest_advisor: false
-  use_event_advisor: false
+  use_event_advisor: true
+  use_shop_advisor: true
 
   # LLM 调用节流与缓存
   call_interval_steps: 10
   cache_ttl: 45.0
-  confidence_threshold: 0.55
+  confidence_threshold: 0.70
+  combat_max_turns: 3
 
   # 概率引导（logit bias）
   policy_guidance_enabled: true
@@ -79,7 +82,7 @@ llm:
   policy_guidance_confidence_threshold: 0.60
   policy_guidance_ramp_steps: 10000
   policy_guidance_combat_steps: 2
-  policy_guidance_screens: ["REWARD", "CARD_REWARD", "MAP", "SHOP", "CARD_SELECTION", "CHEST", "COMBAT"]
+  policy_guidance_screens: ["REWARD", "CARD_REWARD", "SHOP", "CARD_SELECTION", "EVENT", "COMBAT"]
 
   top_k: 3
   temperature: 0.2
@@ -98,7 +101,7 @@ reward:
   layer_c_weight: 1.0
   layer_d_weight: 0.6
   layer_e_weight: 1.0
-  llm_weight: 0.15
+  llm_weight: 0.0
 
   # ── Layer A（动作级即时）────────────────────────────────────────────────
   action_damage_coef: 0.015    # 25伤 -> +0.375（增强有效输出信号）
@@ -206,18 +209,23 @@ reward:
   reward_clip: 100.0
 
   # ── LLM match 奖励（llm.enabled=true 时生效）───────────────────────────
-  card_weight: 0.20
-  card_match_bonus: 1.0
+  card_weight: 0.50
+  event_choice_weight: 0.20
+  card_match_bonus: 2.0
   card_mismatch_penalty: 0.5
-  relic_choice_weight: 0.12
-  map_route_weight: 0.10
-  remove_choice_weight: 0.14
+  relic_choice_weight: 0.0
+  map_route_weight: 0.0
+  remove_choice_weight: 0.0
   remove_match_bonus: 0.8
   remove_mismatch_penalty: 0.4
-  shop_choice_weight: 0.10
+  shop_choice_weight: 0.15
   shop_match_bonus: 0.8
   shop_mismatch_penalty: 0.4
-  combat_opening_weight: 0.08
+  combat_opening_weight: 0.0
+  combo_order_bonus: 0.25
+  combo_order_penalty: 0.10
+  avoid_card_penalty: 0.12
+  turn_goal_bonus: 0.40
 
 # ── 性能优化（可选）────────────────────────────────────────────────────────────
 perf:
@@ -226,5 +234,5 @@ perf:
   prefetch_size: 2
 
 # ── 其他 ──────────────────────────────────────────────────────────────────────
-checkpoint_dir: "checkpoints"
+checkpoint_dir: "checkpoints_rl_llm"
 render: false

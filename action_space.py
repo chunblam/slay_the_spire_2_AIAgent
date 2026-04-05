@@ -11,6 +11,17 @@ def _can_act_now(state: Dict) -> bool:
     return bool(state.get("can_act", True))
 
 
+def _is_reward_card_choice_state(state: Dict) -> bool:
+    reward = state.get("reward") or {}
+    legal = _get_legal_actions(state)
+    card_options = reward.get("card_options") if isinstance(reward.get("card_options"), list) else []
+    return (
+        bool(reward.get("pending_card_choice", False))
+        and bool(card_options)
+        and "choose_reward_card" in legal
+    )
+
+
 def _first_alive_target_index(monsters: List[dict]) -> Optional[int]:
     """STS2AIAgent requires target_index as enemy array index (int)。
     API 字段: is_alive（不再推导），current_hp（不是 hp）。
@@ -78,6 +89,10 @@ class STS2ActionSpace:
         if not _can_act_now(state):
             # Env should gate posting when can_act=False; keep decode conservative.
             return self._fallback_from_legal_actions(state)
+
+        if _is_reward_card_choice_state(state):
+            candidate = self._decode_reward(action_id, state)
+            return self._ensure_legal(candidate, state)
 
         if screen == "COMBAT":
             candidate = self._decode_combat(action_id, state)
@@ -363,6 +378,8 @@ class STS2ActionSpace:
         return {"action": "choose_rest_option", "option_index": option_index}
 
     def _decode_card_select(self, action_id: int, state: Dict) -> Dict:
+        if _is_reward_card_choice_state(state):
+            return self._decode_reward(action_id, state)
         legal = _get_legal_actions(state)
         selection = state.get("selection") or {}
 

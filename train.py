@@ -14,6 +14,12 @@ from datetime import datetime
 import torch
 import yaml
 from torch.distributions import Categorical
+from dataclasses import dataclass
+
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except Exception:
+    SummaryWriter = None  # type: ignore
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _ROOT)
@@ -207,9 +213,16 @@ def _extract_progress_snapshot(
 
 # ── 组件构建 ──────────────────────────────────────────────────────────────────
 
-def build_agent(cfg: Dict, device: str) -> PPOAgent:
+def build_agent(cfg: Dict, device: str, env: STS2Env) -> PPOAgent:
+    obs_space = env.observation_space
+    player_dim = int(obs_space["player"].shape[0])
+    deck_dim = int(obs_space["deck_stats"].shape[0])
+    relic_dim = int(obs_space["relics"].shape[0])
     policy = STS2PolicyNet(
         num_actions=cfg["env"]["num_actions"],
+        player_dim=player_dim,
+        deck_dim=deck_dim,
+        relic_dim=relic_dim,
         hidden_dim=cfg["model"]["hidden_dim"],
         card_d_model=cfg["model"].get("card_d_model", 64),
         monster_d_model=cfg["model"].get("monster_d_model", 32),
@@ -346,7 +359,7 @@ def get_phase_adjusted_weights(total_steps: int, total_steps_limit: int, reward_
 
 # ── 工具函数 ──────────────────────────────────────────────────────────────────
 
-def _extract_agent_card_index(executed_action: Dict, screen: str) -> Optional[int]:
+def _extract_agent_card_index(executed_action: Dict, raw_state: Dict) -> Optional[int]:
     """
     从已执行动作里解析 agent 选的奖励卡索引。
     返回 None 表示不是选牌动作，不触发 match bonus。
@@ -357,15 +370,13 @@ def _extract_agent_card_index(executed_action: Dict, screen: str) -> Optional[in
     旧式封装（若日后在 env 里包一层）:
       - {"type": "choose_reward", "payload": {"skip": bool, "card_index": int}}
     """
-    upper_screen = str(screen or "").upper()
-    if upper_screen not in ("CARD_REWARD", "REWARD"):
-        return None
-
     raw = executed_action.get("action", "")
     if raw == "skip_reward_cards":
         return -1
     if raw == "choose_reward_card":
         return int(executed_action.get("option_index", 0))
+    if raw == "select_deck_card" and _is_card_selection_decision_state(raw_state):
+        return int(executed_action.get("option_index", executed_action.get("index", 0)) or 0)
 
     if executed_action.get("type") == "choose_reward":
         payload = executed_action.get("payload", {})
@@ -441,10 +452,177 @@ def _extract_combat_card_played(executed_action: Dict) -> Optional[int]:
     return None
 
 
-def _extract_agent_remove_index(executed_action: Dict, screen: str) -> Optional[int]:
-    if str(screen or "").upper() != "CARD_SELECTION":
+def _legal_actions_set(state: Dict) -> Set[str]:
+    return {str(a) for a in (state.get("legal_actions") or [])}
+
+
+def _is_reward_card_choice_state(state: Dict) -> bool:
+    reward = state.get("reward") or {}
+    card_options = reward.get("card_options") if isinstance(reward.get("card_options"), list) else []
+    legal = _legal_actions_set(state)
+    return (
+        bool(reward.get("pending_card_choice", False))
+        and bool(card_options)
+        and "choose_reward_card" in legal
+    )
+
+
+def _is_card_selection_decision_state(state: Dict) -> bool:
+    if _is_reward_card_choice_state(state):
+        return True
+    screen = str(state.get("screen", "") or "").upper()
+    legal = _legal_actions_set(state)
+    if screen == "CARD_SELECTION" and "select_deck_card" in legal:
+        selection = state.get("selection") or {}
+        cards = selection.get("cards") if isinstance(selection.get("cards"), list) else []
+        return bool(cards)
+    if screen in ("REWARD", "CARD_REWARD") and (
+        bool((state.get("reward") or {}).get("pending_card_choice", False))
+        or "choose_reward_card" in legal
+    ):
+        return True
+    return False
+
+
+def _has_meaningful_event_choice(state: Dict) -> bool:
+    if str(state.get("screen", "") or "").upper() != "EVENT":
+        return False
+    legal = _legal_actions_set(state)
+    if "choose_event_option" not in legal:
+        return False
+    event = state.get("event") or {}
+    options = event.get("options") if isinstance(event.get("options"), list) else []
+    valid = [opt for opt in options if isinstance(opt, dict) and not bool(opt.get("is_locked", False))]
+    if not valid:
+        return False
+    if len(valid) == 1 and bool(valid[0].get("is_proceed", False)):
+        return False
+    return True
+
+
+def _has_meaningful_shop_choice(state: Dict) -> bool:
+    if str(state.get("screen", "") or "").upper() != "SHOP":
+        return False
+    legal = _legal_actions_set(state)
+    return any(action in legal for action in ("buy_card", "buy_relic", "buy_potion", "remove_card_at_shop"))
+
+
+def _card_scene_signature(state: Dict) -> Tuple:
+    reward = state.get("reward") or {}
+    selection = state.get("selection") or {}
+    reward_cards = reward.get("card_options") if isinstance(reward.get("card_options"), list) else []
+    selection_cards = selection.get("cards") if isinstance(selection.get("cards"), list) else []
+    reward_sig = tuple(
+        (
+            int(card.get("index", idx) or idx),
+            str(card.get("card_id", card.get("name", "")) or ""),
+        )
+        for idx, card in enumerate(reward_cards)
+        if isinstance(card, dict)
+    )
+    selection_sig = tuple(
+        (
+            int(card.get("index", idx) or idx),
+            str(card.get("card_id", card.get("name", "")) or ""),
+        )
+        for idx, card in enumerate(selection_cards)
+        if isinstance(card, dict)
+    )
+    return (
+        str(state.get("screen", "") or "").upper(),
+        bool(reward.get("pending_card_choice", False)),
+        str(selection.get("kind", "") or ""),
+        str(selection.get("prompt", "") or ""),
+        reward_sig,
+        selection_sig,
+        tuple(sorted(_legal_actions_set(state))),
+    )
+
+
+def _event_scene_signature(state: Dict) -> Tuple:
+    event = state.get("event") or {}
+    options = event.get("options") if isinstance(event.get("options"), list) else []
+    option_sig = tuple(
+        (
+            int(opt.get("index", idx) or idx),
+            str(opt.get("text_key", opt.get("title", "")) or ""),
+            bool(opt.get("is_proceed", False)),
+            bool(opt.get("is_locked", False)),
+        )
+        for idx, opt in enumerate(options)
+        if isinstance(opt, dict)
+    )
+    return (
+        str(state.get("screen", "") or "").upper(),
+        str(event.get("event_id", "") or ""),
+        bool(event.get("is_finished", False)),
+        option_sig,
+        tuple(sorted(_legal_actions_set(state))),
+    )
+
+
+def _shop_scene_signature(state: Dict) -> Tuple:
+    shop = state.get("shop") or {}
+    def _items_sig(key: str) -> Tuple:
+        items = shop.get(key) if isinstance(shop.get(key), list) else []
+        return tuple(
+            (
+                int(item.get("index", idx) or idx),
+                str(item.get("name", "") or ""),
+                bool(item.get("affordable", item.get("enough_gold", False))),
+                bool(item.get("stocked", item.get("available", True))),
+            )
+            for idx, item in enumerate(items)
+            if isinstance(item, dict)
+        )
+    return (
+        bool(shop.get("is_open", False)),
+        int((state.get("run") or {}).get("gold", state.get("gold", 0)) or 0),
+        bool(shop.get("can_remove_card", False)),
+        int(shop.get("remove_cost", -1) or -1),
+        _items_sig("cards"),
+        _items_sig("relics"),
+        _items_sig("potions"),
+        tuple(sorted(_legal_actions_set(state))),
+    )
+
+
+def _extract_combat_card_name(raw_state: Dict, executed_action: Dict) -> Optional[str]:
+    if str(executed_action.get("action", "")) != "play_card":
+        return None
+    combat = raw_state.get("combat") or {}
+    hand = combat.get("hand") or []
+    try:
+        card_index = int(executed_action.get("card_index", -1) or -1)
+    except Exception:
+        return None
+    for card in hand:
+        if not isinstance(card, dict):
+            continue
+        idx = int(card.get("index", -9999) or -9999)
+        if idx == card_index:
+            name = str(card.get("name", "") or "").strip()
+            return name or None
+    if 0 <= card_index < len(hand) and isinstance(hand[card_index], dict):
+        name = str(hand[card_index].get("name", "") or "").strip()
+        return name or None
+    return None
+
+
+def _extract_agent_remove_index(executed_action: Dict, raw_state: Dict) -> Optional[int]:
+    if str(raw_state.get("screen", "") or "").upper() != "CARD_SELECTION":
+        return None
+    if _is_reward_card_choice_state(raw_state):
+        return None
+    if not _is_remove_selection_context(raw_state):
         return None
     if str(executed_action.get("action", "")) != "select_deck_card":
+        return None
+    return int(executed_action.get("option_index", executed_action.get("index", -1)) or -1)
+
+
+def _extract_agent_event_index(executed_action: Dict) -> Optional[int]:
+    if str(executed_action.get("action", "")) != "choose_event_option":
         return None
     return int(executed_action.get("option_index", executed_action.get("index", -1)) or -1)
 
@@ -591,50 +769,35 @@ def _resolve_llm_guided_action_id(
 
     upper_screen = str(screen or "").upper()
 
-    if upper_screen in ("REWARD", "CARD_REWARD"):
-        reward = raw_state.get("reward") or {}
-        pending_choice = bool(reward.get("pending_card_choice", False))
-        if pending_choice:
-            rec_idx, rec_conf = llm_advisor.get_last_card_recommendation()
-            if rec_idx == -1:
-                aid = _find_action_id_by_payload(action_mask_list, raw_state, action_handler, "skip_reward_cards")
-                return aid, float(rec_conf), "card_skip"
-            if rec_idx >= 0:
-                aid = _find_action_id_by_payload(
-                    action_mask_list,
-                    raw_state,
-                    action_handler,
-                    "choose_reward_card",
-                    option_index=int(rec_idx),
-                )
-                return aid, float(rec_conf), "card_pick"
-
-    if upper_screen == "MAP":
-        rec_idx, rec_conf, _ = llm_advisor.get_last_map_recommendation()
+    if _is_reward_card_choice_state(raw_state):
+        rec_idx, rec_conf = llm_advisor.get_last_card_recommendation()
+        if rec_idx == -1:
+            aid = _find_action_id_by_payload(action_mask_list, raw_state, action_handler, "skip_reward_cards")
+            return aid, float(rec_conf), "reward_card_skip"
         if rec_idx >= 0:
             aid = _find_action_id_by_payload(
                 action_mask_list,
                 raw_state,
                 action_handler,
-                "choose_map_node",
+                "choose_reward_card",
                 option_index=int(rec_idx),
             )
-            return aid, float(rec_conf), "map"
+            return aid, float(rec_conf), "reward_card_pick"
 
-    if upper_screen == "CHEST":
-        rec_idx, rec_conf = llm_advisor.get_last_relic_recommendation()
+    if _has_meaningful_event_choice(raw_state):
+        rec_idx, rec_conf = llm_advisor.get_last_event_recommendation()
         if rec_idx >= 0:
             aid = _find_action_id_by_payload(
                 action_mask_list,
                 raw_state,
                 action_handler,
-                "choose_treasure_relic",
+                "choose_event_option",
                 option_index=int(rec_idx),
             )
-            return aid, float(rec_conf), "chest_relic"
+            return aid, float(rec_conf), "event"
 
-    if upper_screen == "CARD_SELECTION" and _is_remove_selection_context(raw_state):
-        rec_idx, rec_conf = llm_advisor.get_last_remove_recommendation()
+    if upper_screen == "CARD_SELECTION" and not _is_reward_card_choice_state(raw_state):
+        rec_idx, rec_conf = llm_advisor.get_last_card_recommendation()
         if rec_idx >= 0:
             aid = _find_action_id_by_payload(
                 action_mask_list,
@@ -643,7 +806,7 @@ def _resolve_llm_guided_action_id(
                 "select_deck_card",
                 option_index=int(rec_idx),
             )
-            return aid, float(rec_conf), "remove"
+            return aid, float(rec_conf), "card_selection"
 
     if upper_screen == "SHOP":
         rec_action, rec_index, rec_conf = llm_advisor.get_last_shop_recommendation()
@@ -662,13 +825,26 @@ def _resolve_llm_guided_action_id(
 
     if upper_screen == "COMBAT" and combat_step_counter < combat_guidance_steps:
         opening = llm_advisor.get_last_combat_opening()
-        seq = opening.get("opening_card_sequence") if isinstance(opening, dict) else []
-        if isinstance(seq, list) and seq:
-            try:
-                card_idx = int(seq[0])
-            except Exception:
-                card_idx = -1
-            if card_idx >= 0:
+        play_order = opening.get("play_order") if isinstance(opening, dict) else []
+        if isinstance(play_order, list) and play_order:
+            hand = ((raw_state.get("combat") or {}).get("hand") or [])
+            by_name = {}
+            for card in hand:
+                if not isinstance(card, dict):
+                    continue
+                name = str(card.get("name", "") or "").strip()
+                if not name or not bool(card.get("playable", False)):
+                    continue
+                by_name[name] = int(card.get("index", -1) or -1)
+            ordered_cards = sorted(
+                [item for item in play_order if isinstance(item, dict)],
+                key=lambda x: int(x.get("priority", 99) or 99),
+            )
+            for item in ordered_cards:
+                card_name = str(item.get("card_name", "") or "").strip()
+                card_idx = by_name.get(card_name, -1)
+                if card_idx < 0:
+                    continue
                 aid = _find_action_id_by_payload(
                     action_mask_list,
                     raw_state,
@@ -676,8 +852,8 @@ def _resolve_llm_guided_action_id(
                     "play_card",
                     card_index=card_idx,
                 )
-                # 战斗开局建议未单独提供 confidence，给一个保守默认值。
-                return aid, 0.6, "combat_opening"
+                if aid is not None:
+                    return aid, float(opening.get("confidence", 0.0) or 0.0), "combat_turn"
 
     return None, 0.0, ""
 
@@ -959,6 +1135,14 @@ class RunLogger:
             f.write(f"[{stamp}] {msg}\n")
 
 
+@dataclass
+class TrainLoopState:
+    last_combat_turn: int = 0
+    last_card_scene_signature: Tuple = ()
+    last_event_scene_signature: Tuple = ()
+    last_shop_scene_signature: Tuple = ()
+
+
 # ── 主训练循环 ────────────────────────────────────────────────────────────────
 
 def train(cfg: Dict):
@@ -966,6 +1150,9 @@ def train(cfg: Dict):
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"🚀 开始训练 | 设备: {device}")
+    scheme = str(cfg.get("scheme", "rl") or "rl").strip().lower()
+    if scheme not in ("rl", "rl_llm"):
+        scheme = "rl"
 
     config_dir = str(cfg.get("__config_dir__", _ROOT) or _ROOT)
     checkpoint_dir_raw = cfg.get("checkpoint_dir", "checkpoints")
@@ -997,6 +1184,9 @@ def train(cfg: Dict):
         if candidate_run_dir and os.path.isdir(candidate_run_dir):
             resume_run_dir = candidate_run_dir
     run_logger = RunLogger(cfg, resume_run_dir=resume_run_dir or None)
+    writer = None
+    if bool((cfg.get("logging") or {}).get("tensorboard", False)) and SummaryWriter is not None:
+        writer = SummaryWriter(log_dir=os.path.join(run_logger.run_dir, "tensorboard"))
 
     env = STS2Env(
         host=cfg["env"].get("host", "localhost"),
@@ -1008,6 +1198,7 @@ def train(cfg: Dict):
         post_action_settle=cfg["env"].get("post_action_settle", 0.5),
         action_retry_count=cfg["env"].get("action_retry_count", 1),
         render_mode="human" if cfg.get("render") else None,
+        encoder_variant=("rl_llm" if scheme == "rl_llm" else "base"),
     )
 
     configured_actions = int(cfg["env"].get("num_actions", env.action_space.n))
@@ -1017,21 +1208,30 @@ def train(cfg: Dict):
             f"env.num_actions({configured_actions}) 与环境动作维度({actual_actions})不一致，请修正配置。"
         )
 
-    agent        = build_agent(cfg, device)
-    llm_advisor  = build_llm_advisor(cfg)
+    agent        = build_agent(cfg, device, env)
+    llm_advisor  = build_llm_advisor(cfg) if scheme == "rl_llm" else None
     _r = cfg.get("reward", {})
     _l = cfg.get("llm", {})
+    use_event_advisor = scheme == "rl_llm" and bool(_l.get("use_event_advisor", True))
+    use_card_advisor = scheme == "rl_llm" and bool(_l.get("use_card_advisor", True))
+    use_combat_advisor = scheme == "rl_llm" and bool(_l.get("use_combat_advisor", True))
+    use_shop_advisor = scheme == "rl_llm" and bool(_l.get("use_shop_advisor", True))
 
-    if not bool(_l.get("enabled", False)):
+    if scheme != "rl_llm" or not bool(_l.get("enabled", False)):
         _r = dict(_r)
         for k in (
             "llm_weight",
             "card_weight",
+            "event_choice_weight",
             "relic_choice_weight",
             "map_route_weight",
             "remove_choice_weight",
             "shop_choice_weight",
             "combat_opening_weight",
+            "combo_order_bonus",
+            "combo_order_penalty",
+            "avoid_card_penalty",
+            "turn_goal_bonus",
         ):
             _r[k] = 0.0
         print("ℹ️  单RL模式：已强制将所有LLM相关奖励系数置为0")
@@ -1116,6 +1316,7 @@ def train(cfg: Dict):
         # LLM match
         confidence_threshold=_l.get("confidence_threshold", 0.55),
         card_weight=_r.get("card_weight", 0.4),
+        event_choice_weight=_r.get("event_choice_weight", 0.15),
         card_match_bonus=_r.get("card_match_bonus", 1.0),
         card_mismatch_penalty=_r.get("card_mismatch_penalty", 0.5),
         relic_choice_weight=_r.get("relic_choice_weight", 0.25),
@@ -1127,11 +1328,15 @@ def train(cfg: Dict):
         shop_choice_weight=_r.get("shop_choice_weight", 0.15),
         shop_match_bonus=_r.get("shop_match_bonus", 0.8),
         shop_mismatch_penalty=_r.get("shop_mismatch_penalty", 0.4),
+        combo_order_bonus=_r.get("combo_order_bonus", 0.25),
+        combo_order_penalty=_r.get("combo_order_penalty", 0.10),
+        avoid_card_penalty=_r.get("avoid_card_penalty", 0.12),
+        turn_goal_bonus=_r.get("turn_goal_bonus", 0.40),
         combat_bias_steps=_l.get("combat_bias_steps", 3),
         reward_clip=_r.get("reward_clip", 50.0),
     )
 
-    llm_policy_guidance_enabled = bool(_l.get("policy_guidance_enabled", False)) and llm_advisor is not None
+    llm_policy_guidance_enabled = scheme == "rl_llm" and bool(_l.get("policy_guidance_enabled", False)) and llm_advisor is not None
     llm_policy_guidance_alpha_max = max(0.0, float(_l.get("policy_guidance_alpha_max", 0.0)))
     llm_policy_guidance_max_bias = max(0.0, float(_l.get("policy_guidance_max_bias", 0.4)))
     llm_policy_guidance_confidence_threshold = float(_l.get("policy_guidance_confidence_threshold", 0.6))
@@ -1269,7 +1474,19 @@ def train(cfg: Dict):
     run_logger.log("env_step_state", f"reset: screen={info.get('screen')} floor={info.get('floor')} hp={info.get('hp')}/{info.get('max_hp')}")
     prev_screen = ""
     combat_step_counter = 0
-    llm_card_triggered = False
+    train_loop_state = TrainLoopState()
+    llm_metric_sums = {
+        "combat_turn_calls": 0.0,
+        "combat_confidence_sum": 0.0,
+        "combo_order_bonus_sum": 0.0,
+        "turn_goal_hit_sum": 0.0,
+        "card_match_hit_sum": 0.0,
+        "card_match_total": 0.0,
+        "event_match_hit_sum": 0.0,
+        "event_match_total": 0.0,
+        "shop_match_hit_sum": 0.0,
+        "shop_match_total": 0.0,
+    }
     current_ep_reward = current_ep_reward_resume
     current_ep_reward_resume = 0.0
     episode_max_floor = max(int(info.get("floor", 0) or 0), episode_max_floor_resume)
@@ -1336,7 +1553,6 @@ def train(cfg: Dict):
                 obs, info = env.reset()
                 prev_screen = ""
                 combat_step_counter = 0
-                llm_card_triggered = False
                 continue
 
             if _is_discard_only_wait_state(raw_state):
@@ -1360,67 +1576,87 @@ def train(cfg: Dict):
                 continue
 
             # ── ① LLM战略触发节点（仅 llm.enabled=true 时生效）──────────────
-            pending_card_choice = bool((raw_state.get("reward") or {}).get("pending_card_choice", False))
-            reward_flow_active = screen in ("CARD_REWARD", "REWARD") and (
-                pending_card_choice or "choose_reward_card" in [str(a) for a in (raw_state.get("legal_actions") or [])]
-            )
+            card_decision_active = _is_card_selection_decision_state(raw_state)
+            event_decision_active = _has_meaningful_event_choice(raw_state)
+            shop_decision_active = _has_meaningful_shop_choice(raw_state)
 
-            if reward_flow_active and not llm_card_triggered and llm_advisor is not None:
-                reward_cards = _get_reward_cards_from_state(raw_state)
-                if reward_cards:
-                    rec_idx, rec_conf, rec_reason = llm_advisor.evaluate_card_reward(raw_state, reward_cards)
-                    run_logger.log(
-                        "reward_shaping",
-                        f"llm_card_advice screen={screen} rec_idx={rec_idx} conf={rec_conf:.3f} reason={str(rec_reason).replace(chr(10), ' ')[:120]}",
-                    )
-                llm_card_triggered = True
-            elif not reward_flow_active:
-                llm_card_triggered = False
+            if scheme == "rl_llm" and llm_advisor is not None:
+                if use_card_advisor and card_decision_active:
+                    card_sig = _card_scene_signature(raw_state)
+                    if card_sig != train_loop_state.last_card_scene_signature:
+                        scene_type, rec_idx, rec_conf, rec_reason = llm_advisor.evaluate_card_selection(raw_state)
+                        train_loop_state.last_card_scene_signature = card_sig
+                        run_logger.log(
+                            "reward_shaping",
+                            f"llm_card_advice screen={screen} scene_type={scene_type} rec_idx={rec_idx} "
+                            f"conf={rec_conf:.3f} legal={sorted(_legal_actions_set(raw_state))} "
+                            f"reason={str(rec_reason).replace(chr(10), ' ')[:160]}",
+                        )
+                else:
+                    train_loop_state.last_card_scene_signature = ()
+                    if llm_advisor is not None:
+                        llm_advisor.invalidate_card_recommendation()
 
-            if screen == "MAP" and prev_screen != "MAP" and llm_advisor is not None:
-                route_options = _get_map_options_from_state(raw_state)
-                if route_options:
-                    rec_idx, rec_conf, rec_reason, route_scores = llm_advisor.evaluate_map_route(raw_state, route_options)
-                    run_logger.log(
-                        "reward_shaping",
-                        f"llm_map_advice rec_idx={rec_idx} conf={rec_conf:.3f} scores={route_scores} reason={str(rec_reason).replace(chr(10), ' ')[:120]}",
-                    )
+                if use_event_advisor and event_decision_active:
+                    event_sig = _event_scene_signature(raw_state)
+                    if event_sig != train_loop_state.last_event_scene_signature:
+                        rec_idx, rec_conf, rec_reason = llm_advisor.evaluate_event_choice(raw_state, raw_state.get("event") or {})
+                        train_loop_state.last_event_scene_signature = event_sig
+                        run_logger.log(
+                            "reward_shaping",
+                            f"llm_event_advice screen={screen} rec_idx={rec_idx} conf={rec_conf:.3f} "
+                            f"legal={sorted(_legal_actions_set(raw_state))} "
+                            f"reason={str(rec_reason).replace(chr(10), ' ')[:160]}",
+                        )
+                else:
+                    train_loop_state.last_event_scene_signature = ()
+                    if llm_advisor is not None:
+                        llm_advisor.invalidate_event_recommendation()
 
-            if screen in ("CHEST", "REWARD") and prev_screen not in ("CHEST", "REWARD") and llm_advisor is not None:
-                relic_options = _get_relic_options_from_state(raw_state)
-                if relic_options:
-                    rec_idx, rec_conf, rec_reason = llm_advisor.evaluate_relic_choice(raw_state, relic_options)
-                    run_logger.log(
-                        "reward_shaping",
-                        f"llm_relic_advice screen={screen} rec_idx={rec_idx} conf={rec_conf:.3f} reason={str(rec_reason).replace(chr(10), ' ')[:120]}",
-                    )
-
-            if screen == "CARD_SELECTION" and prev_screen != "CARD_SELECTION" and llm_advisor is not None:
-                selection_cards = (raw_state.get("selection") or {}).get("cards") if isinstance((raw_state.get("selection") or {}).get("cards"), list) else []
-                if selection_cards and _is_remove_selection_context(raw_state):
-                    rec_idx, rec_conf, rec_reason = llm_advisor.evaluate_card_remove(raw_state, selection_cards)
-                    run_logger.log(
-                        "reward_shaping",
-                        f"llm_remove_advice rec_idx={rec_idx} conf={rec_conf:.3f} reason={str(rec_reason).replace(chr(10), ' ')[:120]}",
-                    )
-
-            if screen == "SHOP" and prev_screen != "SHOP" and llm_advisor is not None:
-                shop_items = raw_state.get("shop") or {}
-                if shop_items:
-                    rec_action, rec_index, rec_conf, rec_reason = llm_advisor.evaluate_shop_purchase(raw_state, shop_items)
-                    run_logger.log(
-                        "reward_shaping",
-                        f"llm_shop_advice action={rec_action} idx={rec_index} conf={rec_conf:.3f} reason={str(rec_reason).replace(chr(10), ' ')[:120]}",
-                    )
+                if use_shop_advisor and shop_decision_active:
+                    shop_sig = _shop_scene_signature(raw_state)
+                    if shop_sig != train_loop_state.last_shop_scene_signature:
+                        rec_action, rec_index, rec_conf, rec_reason = llm_advisor.evaluate_shop_purchase(raw_state, raw_state.get("shop") or {})
+                        train_loop_state.last_shop_scene_signature = shop_sig
+                        run_logger.log(
+                            "reward_shaping",
+                            f"llm_shop_advice action={rec_action} idx={rec_index} conf={rec_conf:.3f} "
+                            f"legal={sorted(_legal_actions_set(raw_state))} "
+                            f"reason={str(rec_reason).replace(chr(10), ' ')[:160]}",
+                        )
+                else:
+                    train_loop_state.last_shop_scene_signature = ()
+                    if llm_advisor is not None:
+                        llm_advisor.invalidate_shop_recommendation()
 
             if screen == "COMBAT" and prev_screen != "COMBAT":
                 combat_step_counter = 0
+                train_loop_state.last_combat_turn = 0
+            elif scheme == "rl_llm" and screen != "COMBAT" and prev_screen == "COMBAT":
+                train_loop_state.last_combat_turn = 0
                 if llm_advisor is not None:
-                    opening = llm_advisor.evaluate_combat_opening(raw_state)
-                    run_logger.log(
-                        "reward_shaping",
-                        f"llm_opening_advice threat={opening.get('threat_level')} priority={opening.get('priority_action')} seq={opening.get('opening_card_sequence')}",
-                    )
+                    llm_advisor.invalidate_combat_opening()
+
+            if scheme == "rl_llm" and use_combat_advisor and screen == "COMBAT":
+                current_turn = int(raw_state.get("turn", 0) or 0)
+                if current_turn > 0 and current_turn != train_loop_state.last_combat_turn:
+                    train_loop_state.last_combat_turn = current_turn
+                    combat_step_counter = 0
+                    reward_shaper.on_new_combat_turn(current_turn)
+                    if llm_advisor is not None:
+                        advice = llm_advisor.evaluate_combat_turn(
+                            raw_state,
+                            turn_number=current_turn,
+                            max_turns=int(_l.get("combat_max_turns", 3)),
+                        )
+                        llm_metric_sums["combat_turn_calls"] += 1.0
+                        llm_metric_sums["combat_confidence_sum"] += float(advice.get("confidence", 0.0) or 0.0)
+                        run_logger.log(
+                            "reward_shaping",
+                            f"llm_combat_turn turn={current_turn} goal={advice.get('goal')} "
+                            f"conf={float(advice.get('confidence', 0.0) or 0.0):.3f} "
+                            f"order={advice.get('play_order')} avoid={advice.get('avoid_cards')}",
+                        )
 
             # ── ② 构建 obs tensor ─────────────────────────────────────────
             obs_tensor = {
@@ -1614,6 +1850,9 @@ def train(cfg: Dict):
                     episode_rewards.append(current_ep_reward)
                     episode_reward_sum += current_ep_reward
                     episode_count_for_avg += 1
+                    if writer is not None:
+                        writer.add_scalar("train/episode_reward", episode_rewards[-1], episode)
+                        writer.add_scalar("train/avg_floor", global_max_floor, episode)
                     run_logger.log(
                         "episode_summary",
                         f"episode={episode} reward={episode_rewards[-1]:.4f} floor={info.get('floor', 0)} max_floor={global_max_floor} hp={info.get('hp', 0)} total_steps={total_steps}",
@@ -1623,7 +1862,7 @@ def train(cfg: Dict):
                     episode_max_floor = int(info.get("floor", 0) or 0)
                     prev_screen = ""
                     combat_step_counter = 0
-                    llm_card_triggered = False
+                    train_loop_state.last_combat_turn = 0
                     if resume_on_restart:
                         _save_resume_snapshot()
                 continue
@@ -1717,6 +1956,12 @@ def train(cfg: Dict):
                     continue
                 raise
             executed_action = next_info.get("action_executed", {})
+            if isinstance(executed_action, dict):
+                card_name = _extract_combat_card_name(raw_state, executed_action)
+                if card_name:
+                    executed_action = dict(executed_action)
+                    executed_action["card_name"] = card_name
+                    next_info["action_executed"] = executed_action
             run_logger.log(
                 "env_step_state",
                 f"post_step action={executed_action} next_screen={next_info.get('screen')} floor={next_info.get('floor')}",
@@ -1757,10 +2002,11 @@ def train(cfg: Dict):
             no_progress_retry_counts.pop(state_sig, None)
 
             # ── ⑥ 解析 agent 是否做了选牌动作 ────────────────────────────
-            agent_card_index = _extract_agent_card_index(executed_action, screen)
+            agent_card_index = _extract_agent_card_index(executed_action, raw_state)
             agent_relic_index = _extract_agent_relic_index(executed_action)
             agent_map_index = _extract_agent_map_index(executed_action)
-            agent_remove_index = _extract_agent_remove_index(executed_action, screen)
+            agent_remove_index = _extract_agent_remove_index(executed_action, raw_state)
+            agent_event_index = _extract_agent_event_index(executed_action)
             agent_shop_action, agent_shop_index = _extract_agent_shop_choice(executed_action)
             combat_card_played = _extract_combat_card_played(executed_action)
 
@@ -1775,6 +2021,7 @@ def train(cfg: Dict):
                 agent_relic_index=agent_relic_index,
                 agent_map_index=agent_map_index,
                 agent_remove_index=agent_remove_index,
+                agent_event_index=agent_event_index,
                 agent_shop_action=agent_shop_action,
                 agent_shop_index=agent_shop_index,
                 combat_step=combat_step_counter if screen == "COMBAT" else None,
@@ -1797,11 +2044,30 @@ def train(cfg: Dict):
                 f"matchCard={reward_shaper.last_breakdown.get('LLM_card', 0.0):.4f} "
                 f"matchRelic={reward_shaper.last_breakdown.get('LLM_relic', 0.0):.4f} "
                 f"matchMap={reward_shaper.last_breakdown.get('LLM_map', 0.0):.4f} "
+                f"matchEvent={reward_shaper.last_breakdown.get('LLM_event', 0.0):.4f} "
                 f"matchRemove={reward_shaper.last_breakdown.get('LLM_remove', 0.0):.4f} "
                 f"matchShop={reward_shaper.last_breakdown.get('LLM_shop', 0.0):.4f} "
                 f"matchOpen={reward_shaper.last_breakdown.get('LLM_opening', 0.0):.4f} "
                 f"total={shaped_reward:.4f} done={done} truncated={truncated}",
             )
+            llm_metric_sums["combo_order_bonus_sum"] += float(reward_shaper.last_breakdown.get("LLM_combo_order", 0.0))
+            llm_metric_sums["turn_goal_hit_sum"] += 1.0 if float(reward_shaper.last_breakdown.get("LLM_turn_goal", 0.0)) > 0 else 0.0
+            if agent_card_index is not None:
+                llm_metric_sums["card_match_total"] += 1.0
+                if float(reward_shaper.last_breakdown.get("LLM_card", 0.0)) > 0:
+                    llm_metric_sums["card_match_hit_sum"] += 1.0
+            if agent_event_index is not None:
+                llm_metric_sums["event_match_total"] += 1.0
+                if float(reward_shaper.last_breakdown.get("LLM_event", 0.0)) > 0:
+                    llm_metric_sums["event_match_hit_sum"] += 1.0
+            if agent_shop_action is not None:
+                llm_metric_sums["shop_match_total"] += 1.0
+                if float(reward_shaper.last_breakdown.get("LLM_shop", 0.0)) > 0:
+                    llm_metric_sums["shop_match_hit_sum"] += 1.0
+            if writer is not None:
+                writer.add_scalar("reward/step_total", shaped_reward, total_steps)
+                writer.add_scalar("llm/combo_order_bonus", float(reward_shaper.last_breakdown.get("LLM_combo_order", 0.0)), total_steps)
+                writer.add_scalar("llm/turn_goal_bonus", float(reward_shaper.last_breakdown.get("LLM_turn_goal", 0.0)), total_steps)
 
             # ── ⑧ 写入 buffer ─────────────────────────────────────────────
             buffer.add(
@@ -1834,6 +2100,9 @@ def train(cfg: Dict):
                 episode_rewards.append(current_ep_reward)
                 episode_reward_sum += current_ep_reward
                 episode_count_for_avg += 1
+                if writer is not None:
+                    writer.add_scalar("train/episode_reward", episode_rewards[-1], episode)
+                    writer.add_scalar("train/avg_floor", global_max_floor, episode)
                 run_logger.log(
                     "episode_summary",
                     f"episode={episode} reward={episode_rewards[-1]:.4f} floor={info.get('floor', 0)} max_floor={global_max_floor} hp={info.get('hp', 0)} total_steps={total_steps}",
@@ -1853,7 +2122,7 @@ def train(cfg: Dict):
                 episode_max_floor = int(info.get("floor", 0) or 0)
                 prev_screen = ""
                 combat_step_counter = 0
-                llm_card_triggered = False
+                train_loop_state.last_combat_turn = 0
                 if resume_on_restart:
                     _save_resume_snapshot()
 
@@ -1891,6 +2160,18 @@ def train(cfg: Dict):
             f"|| layer_weights: A={adjusted_weights['layer_a']:.2f} B={adjusted_weights['layer_b']:.2f} "
             f"C={adjusted_weights['layer_c']:.2f} D={adjusted_weights['layer_d']:.2f} E={adjusted_weights['layer_e']:.2f}"
         )
+        if writer is not None:
+            writer.add_scalar("ppo/pg_loss", metrics["pg_loss"], total_steps)
+            writer.add_scalar("ppo/vf_loss", metrics["vf_loss"], total_steps)
+            writer.add_scalar("ppo/entropy", metrics["entropy"], total_steps)
+            writer.add_scalar("llm/combat_turn_calls", llm_metric_sums["combat_turn_calls"], total_steps)
+            avg_conf = llm_metric_sums["combat_confidence_sum"] / max(llm_metric_sums["combat_turn_calls"], 1.0)
+            writer.add_scalar("llm/combat_confidence_avg", avg_conf, total_steps)
+            writer.add_scalar("llm/combo_order_bonus_avg", llm_metric_sums["combo_order_bonus_sum"] / max(total_steps, 1), total_steps)
+            writer.add_scalar("llm/turn_goal_hit_rate", llm_metric_sums["turn_goal_hit_sum"] / max(llm_metric_sums["combat_turn_calls"], 1.0), total_steps)
+            writer.add_scalar("llm/card_match_rate", llm_metric_sums["card_match_hit_sum"] / max(llm_metric_sums["card_match_total"], 1.0), total_steps)
+            writer.add_scalar("llm/event_match_rate", llm_metric_sums["event_match_hit_sum"] / max(llm_metric_sums["event_match_total"], 1.0), total_steps)
+            writer.add_scalar("llm/shop_match_rate", llm_metric_sums["shop_match_hit_sum"] / max(llm_metric_sums["shop_match_total"], 1.0), total_steps)
         update_count += 1
         pg_loss_sum += float(metrics["pg_loss"])
         vf_loss_sum += float(metrics["vf_loss"])
@@ -1943,6 +2224,8 @@ def train(cfg: Dict):
     print(f"\n🎉 训练完成! 总步数: {total_steps}")
     if resume_on_restart:
         _save_resume_snapshot()
+    if writer is not None:
+        writer.close()
     env.close()
 
 

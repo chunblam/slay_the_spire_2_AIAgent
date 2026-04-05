@@ -25,6 +25,7 @@ class STS2Env(gym.Env):
         post_action_settle: float = 0.5,
         action_retry_count: int = 1,
         game_mode: str = "singleplayer",
+        encoder_variant: str = "base",
     ):
         super().__init__()
         self.base_url = f"http://{host}:{port}"
@@ -43,7 +44,7 @@ class STS2Env(gym.Env):
         self._action_endpoint_path = "/api/v1/session/action"
         self._fallback_state_endpoint_path = "/state"
 
-        self.encoder = StateEncoder()
+        self.encoder = StateEncoder(variant=encoder_variant)
         self.action_handler = STS2ActionSpace(
             max_hand_size=max_hand_size,
             max_potions=max_potions,

@@ -12,14 +12,23 @@ except ImportError:
 
 def _sum_enemy_hp(state: Dict) -> float:
     combat = state.get("combat") or {}
-    enemies = combat.get("enemies") or []
-    return float(sum((e.get("current_hp", 0) or 0) for e in enemies if isinstance(e, dict)))
+    enemies = combat.get("enemies") or combat.get("monsters") or []
+    return float(sum(
+        (e.get("current_hp", e.get("hp", 0)) or 0)
+        for e in enemies
+        if isinstance(e, dict) and bool(e.get("is_alive", True))
+    ))
 
 
 def _alive_enemy_count(state: Dict) -> int:
     combat = state.get("combat") or {}
-    enemies = combat.get("enemies") or []
-    return len([e for e in enemies if isinstance(e, dict)])
+    enemies = combat.get("enemies") or combat.get("monsters") or []
+    return len([
+        e for e in enemies
+        if isinstance(e, dict)
+        and bool(e.get("is_alive", True))
+        and float(e.get("current_hp", e.get("hp", 0)) or 0) > 0
+    ])
 
 
 def _player(state: Dict) -> Dict:
@@ -287,8 +296,11 @@ class RewardShaper:
         terminal_hp_quality_weight: float = 10.0,
         confidence_threshold: float = 0.55,
         card_weight: float = 0.4,
+        event_choice_weight: float = 0.15,
         card_match_bonus: float = 1.0,
         card_mismatch_penalty: float = 0.5,
+        event_match_bonus: float = 0.8,
+        event_mismatch_penalty: float = 0.4,
         relic_choice_weight: float = 0.25,
         map_route_weight: float = 0.25,
         combat_opening_weight: float = 0.2,
@@ -298,6 +310,10 @@ class RewardShaper:
         shop_choice_weight: float = 0.15,
         shop_match_bonus: float = 0.8,
         shop_mismatch_penalty: float = 0.4,
+        combo_order_bonus: float = 0.25,
+        combo_order_penalty: float = 0.10,
+        avoid_card_penalty: float = 0.12,
+        turn_goal_bonus: float = 0.40,
         combat_bias_steps: int = 3,
         reward_clip: float = 50.0,
     ):
@@ -380,8 +396,11 @@ class RewardShaper:
 
         self.confidence_threshold = confidence_threshold
         self.card_weight = card_weight
+        self.event_choice_weight = event_choice_weight
         self.card_match_bonus = card_match_bonus
         self.card_mismatch_penalty = card_mismatch_penalty
+        self.event_match_bonus = event_match_bonus
+        self.event_mismatch_penalty = event_mismatch_penalty
         self.relic_choice_weight = relic_choice_weight
         self.map_route_weight = map_route_weight
         self.combat_opening_weight = combat_opening_weight
@@ -391,6 +410,10 @@ class RewardShaper:
         self.shop_choice_weight = shop_choice_weight
         self.shop_match_bonus = shop_match_bonus
         self.shop_mismatch_penalty = shop_mismatch_penalty
+        self.combo_order_bonus = combo_order_bonus
+        self.combo_order_penalty = combo_order_penalty
+        self.avoid_card_penalty = avoid_card_penalty
+        self.turn_goal_bonus = turn_goal_bonus
         self.combat_bias_steps = max(1, int(combat_bias_steps))
         self.reward_clip = abs(float(reward_clip))
 
@@ -401,6 +424,11 @@ class RewardShaper:
         self._b_overflow_block = 0.0
         self._b_hp_loss = 0.0
         self._b_trigger = 0.0
+        self._last_combo_order_bonus = 0.0
+        self._last_turn_goal_bonus = 0.0
+        self._current_combat_turn = 0
+        self._current_turn_step = 0
+        self._turn_play_log: List[Dict[str, object]] = []
         self.last_breakdown: Dict[str, float] = {}
 
     def update_layer_weights(self, layer_a: float, layer_b: float, layer_c: float, layer_d: float, layer_e: float):
@@ -420,6 +448,10 @@ class RewardShaper:
         self.layer_d_weight = float(max(0.0, layer_d))
         self.layer_e_weight = float(max(0.0, layer_e))
 
+    def on_new_combat_turn(self, turn_number: int):
+        self._current_combat_turn = max(0, int(turn_number or 0))
+        self._current_turn_step = 0
+
     def shape(
         self,
         base_reward: float,
@@ -431,6 +463,7 @@ class RewardShaper:
         agent_relic_index: Optional[int] = None,
         agent_map_index: Optional[int] = None,
         agent_remove_index: Optional[int] = None,
+        agent_event_index: Optional[int] = None,
         agent_shop_action: Optional[str] = None,
         agent_shop_index: Optional[int] = None,
         combat_step: Optional[int] = None,
@@ -449,16 +482,19 @@ class RewardShaper:
         if combat_start:
             self.combat_tracker.on_combat_start(new_state)
             self.turn_tracker.on_combat_start(new_state)
+            self.on_new_combat_turn(_state_turn(new_state))
 
         if self.turn_tracker.in_combat and new_in_combat:
             self.turn_tracker.accumulate_kills(prev_state, new_state)
 
-        a = self.layer_a_action_reward(prev_state, new_state, kind)
+        a = self.layer_a_action_reward(prev_state, new_state, kind, action)
 
         self._b_energy_waste = 0.0
         self._b_overflow_block = 0.0
         self._b_hp_loss = 0.0
         self._b_trigger = 0.0
+        self._last_combo_order_bonus = 0.0
+        self._last_turn_goal_bonus = 0.0
 
         b = 0.0
         if kind == "end_turn" and prev_in_combat:
@@ -473,6 +509,7 @@ class RewardShaper:
                 b += self._b_hp_loss
                 self.combat_tracker.combat_turns += 1
                 self.turn_tracker.on_turn_start(new_state)
+                self.on_new_combat_turn(new_round)
 
         resolved = self._resolve_pending_end_turn_penalty(new_state)
         self._b_energy_waste = resolved["energy"]
@@ -491,6 +528,13 @@ class RewardShaper:
             c = self.layer_c_combat_reward(new_state, is_victory)
             self.turn_tracker.in_combat = False
             self.combat_tracker.in_combat = False
+            self._current_combat_turn = 0
+            self._current_turn_step = 0
+        elif combat_end:
+            self.turn_tracker.in_combat = False
+            self.combat_tracker.in_combat = False
+            self._current_combat_turn = 0
+            self._current_turn_step = 0
 
         d = self.layer_d_meta_reward(prev_state, new_state, action)
         e = self.layer_e_terminal_reward(new_state, done)
@@ -511,13 +555,15 @@ class RewardShaper:
             total += self.llm_weight * llm_route
 
         llm_card = self._compute_card_match_bonus(agent_card_index) if agent_card_index is not None else 0.0
+        llm_event = self._compute_event_match_bonus(agent_event_index) if agent_event_index is not None else 0.0
         llm_relic = self._compute_relic_match_bonus(agent_relic_index) if agent_relic_index is not None else 0.0
         llm_map = self._compute_map_match_bonus(agent_map_index) if agent_map_index is not None else 0.0
         llm_remove = self._compute_remove_match_bonus(prev_state, new_state, action, agent_remove_index) if agent_remove_index is not None else 0.0
         llm_shop = self._compute_shop_match_bonus(agent_shop_action, agent_shop_index) if agent_shop_action is not None else 0.0
-        llm_open = self._compute_combat_opening_bonus(combat_step, agent_card_played)
+        llm_open = 0.0
 
         total += self.card_weight * llm_card
+        total += self.event_choice_weight * llm_event
         total += self.relic_choice_weight * llm_relic
         total += self.map_route_weight * llm_map
         total += self.remove_choice_weight * llm_remove
@@ -527,6 +573,8 @@ class RewardShaper:
         if self.llm_advisor is not None:
             if agent_card_index is not None:
                 self.llm_advisor.invalidate_card_recommendation()
+            if agent_event_index is not None and hasattr(self.llm_advisor, "invalidate_event_recommendation"):
+                self.llm_advisor.invalidate_event_recommendation()
             if agent_relic_index is not None:
                 self.llm_advisor.invalidate_relic_recommendation()
             if agent_map_index is not None:
@@ -551,16 +599,19 @@ class RewardShaper:
             "E_terminal": float(e),
             "LLM_route": float(llm_route),
             "LLM_card": float(llm_card),
+            "LLM_event": float(llm_event),
             "LLM_relic": float(llm_relic),
             "LLM_map": float(llm_map),
             "LLM_remove": float(llm_remove),
             "LLM_shop": float(llm_shop),
             "LLM_opening": float(llm_open),
+            "LLM_combo_order": float(self._last_combo_order_bonus),
+            "LLM_turn_goal": float(self._last_turn_goal_bonus),
             "total": float(total),
         }
         return total
 
-    def layer_a_action_reward(self, prev_state: Dict, new_state: Dict, action_kind: str) -> float:
+    def layer_a_action_reward(self, prev_state: Dict, new_state: Dict, action_kind: str, executed_action: Optional[Dict] = None) -> float:
         reward = 0.0
         if action_kind == "play_card":
             dmg = max(_sum_enemy_hp(prev_state) - _sum_enemy_hp(new_state), 0.0)
@@ -577,6 +628,19 @@ class RewardShaper:
             enemy_debuff_gain = max(_sum_enemy_debuff_amount(new_state) - _sum_enemy_debuff_amount(prev_state), 0.0)
             reward += player_buff_gain * self.action_player_buff_gain_bonus
             reward += enemy_debuff_gain * self.action_enemy_debuff_gain_bonus
+
+            card_name = ""
+            if isinstance(executed_action, dict):
+                card_name = str(executed_action.get("card_name", executed_action.get("name", "")) or "").strip()
+            if card_name:
+                self._turn_play_log.append({
+                    "card_name": card_name,
+                    "turn": self._current_combat_turn,
+                    "step_in_turn": self._current_turn_step,
+                })
+                self._last_combo_order_bonus = self._compute_combo_order_bonus(card_name, self._current_combat_turn)
+                reward += self._last_combo_order_bonus
+                self._current_turn_step += 1
         elif action_kind == "use_potion":
             reward += self.action_potion_bonus
         elif action_kind == "choose_reward_card":
@@ -617,6 +681,8 @@ class RewardShaper:
         new_enemy_debuff_amount = _sum_enemy_debuff_amount(end_state)
         reward += max(new_enemy_debuff_amount - prev_enemy_debuff_amount, 0.0) * self.enemy_debuff_gain_bonus
 
+        self._last_turn_goal_bonus = self._compute_turn_goal_bonus(self._current_combat_turn, snap, end_state)
+        reward += self._last_turn_goal_bonus
         return reward
 
     def _arm_pending_end_turn(self, state: Dict) -> None:
@@ -947,6 +1013,21 @@ class RewardShaper:
             return -self.card_mismatch_penalty
         return 0.0
 
+    def _compute_event_match_bonus(self, agent_event_index: Optional[int]) -> float:
+        if self.llm_advisor is None or agent_event_index is None:
+            return 0.0
+        getter = getattr(self.llm_advisor, "get_last_event_recommendation", None)
+        if getter is None:
+            return 0.0
+        rec_idx, conf = getter()
+        if rec_idx == -99 or conf < self.confidence_threshold:
+            return 0.0
+        if int(agent_event_index) == int(rec_idx):
+            return self.event_match_bonus
+        if conf >= self.confidence_threshold + 0.1:
+            return -self.event_mismatch_penalty
+        return 0.0
+
     def _compute_relic_match_bonus(self, agent_relic_index: Optional[int]) -> float:
         if self.llm_advisor is None or agent_relic_index is None:
             return 0.0
@@ -977,22 +1058,90 @@ class RewardShaper:
             return -0.4
         return 0.0
 
-    def _compute_combat_opening_bonus(self, combat_step: Optional[int], agent_card_played: Optional[int]) -> float:
-        if self.llm_advisor is None or combat_step is None or agent_card_played is None:
-            return 0.0
-        if combat_step >= self.combat_bias_steps:
+    def _compute_combo_order_bonus(self, card_name: str, current_turn: int) -> float:
+        if self.llm_advisor is None or not card_name:
             return 0.0
         advice = self.llm_advisor.get_last_combat_opening()
-        if not advice:
+        if not advice or int(advice.get("turn", -1) or -1) != int(current_turn):
             return 0.0
-        seq = advice.get("opening_card_sequence", [])
-        if not isinstance(seq, list) or combat_step >= len(seq):
+        conf = float(advice.get("confidence", 0.0) or 0.0)
+        if conf < self.confidence_threshold:
             return 0.0
-        try:
-            expected = int(seq[combat_step])
-        except Exception:
+        avoid_cards = advice.get("avoid_cards", [])
+        if isinstance(avoid_cards, list) and card_name in avoid_cards:
+            return -self.avoid_card_penalty
+
+        play_order = advice.get("play_order", [])
+        if not isinstance(play_order, list):
             return 0.0
-        return 0.5 if expected == agent_card_played else -0.2
+        planned = next((item for item in play_order if isinstance(item, dict) and str(item.get("card_name", "")) == card_name), None)
+        if planned is None:
+            return 0.0
+        my_priority = int(planned.get("priority", 99) or 99)
+        should_be_before = {
+            str(item.get("card_name", ""))
+            for item in play_order
+            if isinstance(item, dict) and int(item.get("priority", 99) or 99) < my_priority
+        }
+        already_played = {
+            str(entry.get("card_name", ""))
+            for entry in self._turn_play_log
+            if int(entry.get("turn", -1) or -1) == int(current_turn)
+            and str(entry.get("card_name", "")) != card_name
+        }
+        key_combo = advice.get("key_combo_sequence", [])
+        is_key_combo = isinstance(key_combo, list) and card_name in key_combo
+        if not should_be_before:
+            return self.combo_order_bonus * (1.5 if is_key_combo else 1.0)
+        hit_ratio = len(should_be_before & already_played) / max(len(should_be_before), 1)
+        if hit_ratio >= 1.0:
+            return self.combo_order_bonus * (1.5 if is_key_combo else 1.0)
+        if hit_ratio >= 0.5:
+            return self.combo_order_bonus * 0.5
+        return -self.combo_order_penalty
+
+    def _compute_turn_goal_bonus(self, turn: int, snap_state: Dict, end_state: Dict) -> float:
+        if self.llm_advisor is None or turn <= 0:
+            return 0.0
+        advice = self.llm_advisor.get_last_combat_opening()
+        if not advice or int(advice.get("turn", -1) or -1) != int(turn):
+            return 0.0
+        conf = float(advice.get("confidence", 0.0) or 0.0)
+        if conf < self.confidence_threshold:
+            return 0.0
+        goal = str(advice.get("goal", "") or "").strip().lower()
+        if not goal:
+            return 0.0
+
+        snap_combat = snap_state.get("combat") or {}
+        end_combat = end_state.get("combat") or {}
+        snap_enemies = snap_combat.get("enemies") or snap_combat.get("monsters") or []
+        end_enemies = end_combat.get("enemies") or end_combat.get("monsters") or []
+        snap_enemy_hp = sum(float(e.get("current_hp", e.get("hp", 0)) or 0) for e in snap_enemies if isinstance(e, dict) and bool(e.get("is_alive", True)))
+        end_enemy_hp = sum(float(e.get("current_hp", e.get("hp", 0)) or 0) for e in end_enemies if isinstance(e, dict) and bool(e.get("is_alive", True)))
+        damage_dealt = max(snap_enemy_hp - end_enemy_hp, 0.0)
+        end_player = end_combat.get("player") or {}
+        snap_player = snap_combat.get("player") or {}
+        player_block = float(end_player.get("block", 0) or 0)
+        enemy_intent_dmg = _sum_enemy_intent_damage(snap_state)
+
+        if goal == "aggressive":
+            return self.turn_goal_bonus if damage_dealt >= 15 else 0.0
+        if goal == "defensive":
+            threshold = max(enemy_intent_dmg * 0.8, 8.0)
+            return self.turn_goal_bonus if player_block >= threshold else 0.0
+        if goal == "buff":
+            return self.turn_goal_bonus if _sum_positive_player_buff_amount(end_state) > _sum_positive_player_buff_amount(snap_state) else 0.0
+        if goal == "debuff":
+            return self.turn_goal_bonus if _sum_enemy_debuff_amount(end_state) > _sum_enemy_debuff_amount(snap_state) else 0.0
+        if goal == "mixed":
+            dmg_ok = damage_dealt >= 8.0
+            block_ok = enemy_intent_dmg > 0 and player_block >= enemy_intent_dmg * 0.5
+            if dmg_ok and block_ok:
+                return self.turn_goal_bonus
+            if dmg_ok or block_ok:
+                return self.turn_goal_bonus * 0.5
+        return 0.0
 
     def _compute_remove_match_bonus(
         self,

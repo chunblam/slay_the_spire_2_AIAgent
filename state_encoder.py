@@ -20,6 +20,7 @@ MAX_ENERGY = 10        # 最大能量
 CARD_FEATURE_DIM = 8   # 每张卡的特征维度
 MONSTER_FEATURE_DIM = 8  # 每个敌人的特征维度
 PLAYER_FEATURE_DIM = 10  # 玩家状态特征维度
+PLAYER_FEATURE_DIM_RL_LLM = 16
 RELIC_FEATURE_DIM = 1  # 遗物用 one-hot 编码
 
 # 归一化常数
@@ -67,6 +68,21 @@ class StateEncoder:
         "虚空": -1.00,
     }
 
+    POWER_ALIASES = {
+        "strength": ("力量", "strength", "strengthpower"),
+        "dexterity": ("敏捷", "dexterity", "dexteritypower"),
+        "vulnerable": ("易伤", "vulnerable", "vulnerablepower"),
+        "weak": ("虚弱", "weak", "weakpower"),
+        "frail": ("易碎", "frail", "frailpower"),
+        "rage": ("愤怒", "rage"),
+    }
+
+    def __init__(self, variant: str = "base"):
+        self.variant = str(variant or "base").strip().lower()
+        if self.variant not in ("base", "rl", "rl_llm"):
+            self.variant = "base"
+        self.player_feature_dim = PLAYER_FEATURE_DIM_RL_LLM if self.variant == "rl_llm" else PLAYER_FEATURE_DIM
+
     @staticmethod
     def _norm_token(value: Optional[str]) -> str:
         if value is None:
@@ -99,6 +115,35 @@ class StateEncoder:
         # 经验归一化区间 [-1.8, 1.8] -> [0, 1]
         return float(np.clip((score + 1.8) / 3.6, 0.0, 1.0))
 
+    def _extract_powers(self, entity: Dict) -> List[Dict]:
+        powers = entity.get("powers")
+        if not isinstance(powers, list):
+            powers = entity.get("buffs", [])
+        if not isinstance(powers, list):
+            return []
+        return [p for p in powers if isinstance(p, dict)]
+
+    def _get_power_amount(self, entity: Dict, alias_key: str) -> float:
+        aliases = self.POWER_ALIASES.get(alias_key, ())
+        if not aliases:
+            return 0.0
+        alias_tokens = {
+            self._norm_token(alias)
+            for alias in aliases
+            if str(alias).strip()
+        }
+        for power in self._extract_powers(entity):
+            token = self._norm_token(power.get("power_id") or power.get("name"))
+            if token in alias_tokens:
+                return float(power.get("amount", 0) or 0)
+        return 0.0
+
+    @staticmethod
+    def _clip_norm(value: float, scale: float) -> float:
+        if scale <= 0:
+            return 0.0
+        return float(np.clip(value / scale, 0.0, 1.0))
+
     def get_observation_space(self) -> gym.spaces.Dict:
         """返回 Gymnasium 观测空间定义"""
         return gym.spaces.Dict({
@@ -106,7 +151,7 @@ class StateEncoder:
             #            floor_ratio, num_relics, num_cards_in_deck,
             #            is_in_combat, buffs_count, debuffs_count]
             "player": gym.spaces.Box(
-                low=0.0, high=1.0, shape=(PLAYER_FEATURE_DIM,), dtype=np.float32
+                low=0.0, high=1.0, shape=(self.player_feature_dim,), dtype=np.float32
             ),
             # 手牌矩阵: [MAX_HAND × CARD_FEATURE_DIM]
             # 每张卡: [cost_norm, damage_norm, block_norm, upgraded,
@@ -192,7 +237,7 @@ class StateEncoder:
             else:
                 pos_buffs.append(p)
 
-        return np.array([
+        base_features = [
             hp / max_hp,                          # HP 比例
             min(block / MAX_BLOCK, 1.0),          # 格挡比例
             energy / MAX_ENERGY,                  # 能量比例
@@ -203,7 +248,30 @@ class StateEncoder:
             float(bool(state.get("in_combat", False))),  # 是否在战斗中
             min(len(pos_buffs) / 10.0, 1.0),      # 正面 buff 数量
             min(len(debuffs) / 10.0, 1.0),        # 负面 debuff 数量
+        ]
+        if self.variant != "rl_llm":
+            return np.array(base_features, dtype=np.float32)
+
+        enemies = combat.get("enemies", combat.get("monsters", []))
+        player_strength = self._get_power_amount(player, "strength")
+        player_dexterity = self._get_power_amount(player, "dexterity")
+        player_vulnerable = self._get_power_amount(player, "vulnerable")
+        player_weak = self._get_power_amount(player, "weak")
+        player_frail = self._get_power_amount(player, "frail")
+        enemy_vulnerable = max(
+            (self._get_power_amount(enemy, "vulnerable") for enemy in enemies if isinstance(enemy, dict)),
+            default=0.0,
+        )
+
+        base_features.extend([
+            self._clip_norm(player_strength, 8.0),
+            self._clip_norm(player_dexterity, 8.0),
+            self._clip_norm(player_vulnerable, 6.0),
+            self._clip_norm(player_weak, 6.0),
+            self._clip_norm(player_frail, 6.0),
+            self._clip_norm(enemy_vulnerable, 6.0),
         ])
+        return np.array(base_features, dtype=np.float32)
 
     def _encode_hand(self, hand: List[Dict], player: Dict, combat: Optional[Dict] = None) -> tuple:
         """编码手牌矩阵及可出牌 mask。

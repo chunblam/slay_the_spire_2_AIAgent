@@ -354,9 +354,14 @@ class PPOAgent:
         torch.save({
             "policy_state_dict": self.policy.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
+            "policy_config": {
+                "num_actions": self.policy.num_actions,
+                "max_hand": self.policy.max_hand,
+            },
         }, path)
 
-    def load(self, path: str):
+    def load(self, path: str, strict: bool = True):
         ckpt = torch.load(path, map_location=self.device)
-        self.policy.load_state_dict(ckpt["policy_state_dict"])
-        self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        self.policy.load_state_dict(ckpt["policy_state_dict"], strict=strict)
+        if "optimizer_state_dict" in ckpt:
+            self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])

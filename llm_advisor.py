@@ -33,6 +33,9 @@ class LLMAdvice:
     # 新增：记录上次对选牌的具体推荐（供 RewardShaper 比对 agent 决策）
     card_recommendation: int = -99   # -99=未评估, -1=建议跳过, 0..n=推荐索引
     card_confidence: float = 0.0     # 推荐置信度 [0, 1]，低于阈值不加塑形
+    card_scene_type: str = ""
+    event_recommendation: int = -99
+    event_confidence: float = 0.0
     relic_recommendation: int = -99
     relic_confidence: float = 0.0
     map_recommendation: int = -99
@@ -237,6 +240,35 @@ reward_shaping 规则:
   "priority_target_index": 优先攻击敌人索引（0开始，可为null）,
   "key_warning": "本战最重要提示（50字以内）",
   "expected_rounds": "预计结束回合数: 1/2/3/4+"
+}"""
+
+    SYSTEM_PROMPT_COMBAT_TURN = """你是杀戮尖塔2的顶级策略专家。
+请根据【当前回合的真实手牌】、敌人意图、当前增益减益、完整牌库和遗物，规划本回合最优出牌顺序。
+
+分析重点：
+1. 先判断本回合更偏进攻、防守、叠buff还是挂debuff
+2. 强化/增益牌应尽量在伤害牌之前打出
+3. 抽牌牌尽量在仍有能量打新牌时使用
+4. X费牌通常应放在本回合末尾
+5. 只规划当前真实手牌中存在且本回合合理打出的牌
+
+必须只返回 JSON，不要有任何其他文字：
+{
+  "turn": 当前回合数,
+  "goal": "aggressive|defensive|buff|debuff|mixed",
+  "play_order": [
+    {
+      "card_name": "当前手牌中的中文牌名",
+      "priority": 1,
+      "role": "buff|debuff|damage|defense|draw|utility",
+      "reason": "20字以内"
+    }
+  ],
+  "key_combo_sequence": ["牌1", "牌2"],
+  "avoid_cards": ["本回合不建议打出的牌"],
+  "priority_target": 优先攻击的敌人索引或null,
+  "confidence": 0.0到1.0,
+  "reasoning": "本回合核心思路，50字以内"
 }"""
 
     SYSTEM_PROMPT_REMOVE_EVAL = """你是杀戮尖塔2的顶级策略专家。
@@ -561,6 +593,420 @@ reward_shaping 规则:
             self._last_advice.combat_opening = fallback
             return fallback
 
+    def _trim(self, text: str, limit: int = 80) -> str:
+        value = str(text or "").replace("\n", " ").strip()
+        if len(value) <= limit:
+            return value
+        return value[: max(0, limit - 1)] + "…"
+
+    def _format_enemies(self, enemies: List[Dict]) -> str:
+        lines: List[str] = []
+        for enemy in enemies:
+            if not isinstance(enemy, dict) or not bool(enemy.get("is_alive", True)):
+                continue
+            intents = enemy.get("intents")
+            if not isinstance(intents, list):
+                intents = []
+            intent_parts = []
+            for intent in intents[:3]:
+                if not isinstance(intent, dict):
+                    continue
+                intent_type = str(intent.get("intent_type", "?") or "?")
+                total_damage = intent.get("total_damage")
+                hits = intent.get("hits")
+                if total_damage is not None:
+                    piece = f"{intent_type}:{total_damage}"
+                    if hits and int(hits or 0) > 1:
+                        piece += f"x{int(hits)}"
+                else:
+                    piece = intent_type
+                intent_parts.append(piece)
+            powers = enemy.get("powers")
+            if not isinstance(powers, list):
+                powers = []
+            power_text = ", ".join(
+                f"{p.get('name', '?')}×{p.get('amount', '')}"
+                for p in powers[:3]
+                if isinstance(p, dict)
+            )
+            suffix = f" | Powers:{power_text}" if power_text else ""
+            lines.append(
+                f"[{enemy.get('index', 0)}] {enemy.get('name', '?')} "
+                f"HP:{enemy.get('current_hp', enemy.get('hp', '?'))}/{enemy.get('max_hp', '?')} "
+                f"格挡:{enemy.get('block', 0)} "
+                f"意图:{' + '.join(intent_parts) if intent_parts else '未知'}{suffix}"
+            )
+        return "\n".join(lines) if lines else "无存活敌人"
+
+    def _normalize_combat_turn_advice(
+        self,
+        data: Dict,
+        hand_names: List[str],
+        enemy_count: int,
+        turn_number: int,
+    ) -> Dict:
+        if not isinstance(data, dict):
+            data = {}
+        allowed_names = {str(name).strip() for name in hand_names if str(name).strip()}
+        play_order = data.get("play_order", [])
+        clean_play_order = []
+        if isinstance(play_order, list):
+            for item in play_order:
+                if not isinstance(item, dict):
+                    continue
+                card_name = str(item.get("card_name", "") or "").strip()
+                if not card_name or card_name not in allowed_names:
+                    continue
+                try:
+                    priority = int(item.get("priority", len(clean_play_order) + 1) or len(clean_play_order) + 1)
+                except Exception:
+                    priority = len(clean_play_order) + 1
+                clean_play_order.append({
+                    "card_name": card_name,
+                    "priority": max(1, priority),
+                    "role": str(item.get("role", "utility") or "utility"),
+                    "reason": self._trim(str(item.get("reason", "") or ""), 20),
+                })
+        clean_play_order.sort(key=lambda x: (x["priority"], x["card_name"]))
+        clean_play_order = clean_play_order[: self.combat_bias_steps + 3]
+
+        def _clean_name_list(key: str) -> List[str]:
+            value = data.get(key, [])
+            if not isinstance(value, list):
+                return []
+            out = []
+            seen = set()
+            for item in value:
+                name = str(item or "").strip()
+                if not name or name not in allowed_names or name in seen:
+                    continue
+                seen.add(name)
+                out.append(name)
+            return out
+
+        priority_target = data.get("priority_target")
+        try:
+            priority_target = int(priority_target) if priority_target is not None else None
+        except Exception:
+            priority_target = None
+        if priority_target is not None and (priority_target < 0 or priority_target >= enemy_count):
+            priority_target = None
+
+        try:
+            confidence = float(data.get("confidence", 0.0) or 0.0)
+        except Exception:
+            confidence = 0.0
+
+        goal = str(data.get("goal", "mixed") or "mixed").strip().lower()
+        if goal not in {"aggressive", "defensive", "buff", "debuff", "mixed"}:
+            goal = "mixed"
+
+        return {
+            "turn": int(turn_number),
+            "goal": goal,
+            "play_order": clean_play_order,
+            "key_combo_sequence": _clean_name_list("key_combo_sequence"),
+            "avoid_cards": _clean_name_list("avoid_cards"),
+            "priority_target": priority_target,
+            "confidence": max(0.0, min(confidence, 1.0)),
+            "reasoning": self._trim(str(data.get("reasoning", "") or ""), 50),
+        }
+
+    def evaluate_combat_turn(
+        self,
+        state: Dict,
+        turn_number: int,
+        max_turns: int = 3,
+    ) -> Dict:
+        fallback = {
+            "turn": int(turn_number),
+            "goal": "mixed",
+            "play_order": [],
+            "key_combo_sequence": [],
+            "avoid_cards": [],
+            "priority_target": None,
+            "confidence": 0.0,
+            "reasoning": "LLM 调用失败",
+        }
+        if int(turn_number or 0) <= 0 or int(turn_number) > int(max_turns):
+            return dict(fallback)
+
+        combat = state.get("combat") or {}
+        player = combat.get("player") or {}
+        hand = combat.get("hand") or []
+        enemies = combat.get("enemies") or combat.get("monsters") or []
+        run = state.get("run") or {}
+        run_deck = run.get("deck") if isinstance(run.get("deck"), list) else state.get("deck", [])
+        run_relics = run.get("relics") if isinstance(run.get("relics"), list) else state.get("relics", [])
+
+        hand_names = [str(card.get("name", "") or "").strip() for card in hand if isinstance(card, dict)]
+        hand_text = "\n".join(
+            f"[{card.get('index', idx)}] {card.get('name', '?')}"
+            f"{'+' if card.get('upgraded') else ''}"
+            f" | 费用:{card.get('energy_cost', '?')}"
+            f" | {'可出' if card.get('playable') else '不可出'}"
+            f" | {card.get('card_type', card.get('type', '?'))}"
+            for idx, card in enumerate(hand)
+            if isinstance(card, dict)
+        ) or "无手牌"
+        powers = player.get("powers") if isinstance(player.get("powers"), list) else []
+        powers_text = ", ".join(
+            f"{p.get('name', '?')}×{p.get('amount', '')}"
+            f"({'debuff' if p.get('is_debuff') else 'buff'})"
+            for p in powers[:6]
+            if isinstance(p, dict)
+        ) or "无"
+        deck_text = "\n".join(
+            f"{card.get('name', '?')}{'+' if card.get('upgraded') else ''}"
+            f" | {card.get('card_type', card.get('type', '?'))}"
+            f" | 费用:{card.get('energy_cost', '?')}"
+            for card in run_deck[:18]
+            if isinstance(card, dict)
+        ) or "无牌库信息"
+        relic_text = "\n".join(
+            f"{relic.get('name', '?')}: {self._trim(relic.get('description', ''), 50)}"
+            for relic in run_relics[:12]
+            if isinstance(relic, dict)
+        ) or "无遗物"
+        user_prompt = (
+            f"=== 战斗状态（第{turn_number}回合）===\n"
+            f"玩家HP:{player.get('current_hp', player.get('hp', '?'))}/{player.get('max_hp', '?')} "
+            f"格挡:{player.get('block', 0)} 能量:{player.get('energy', combat.get('energy', '?'))}\n"
+            f"玩家Powers:{powers_text}\n"
+            f"战斗类型:{combat.get('enemy_type', state.get('enemy_type', 'monster'))}\n\n"
+            f"=== 当前手牌 ===\n{hand_text}\n\n"
+            f"=== 敌人信息 ===\n{self._format_enemies(enemies)}\n\n"
+            f"=== 完整牌库 ===\n{deck_text}\n\n"
+            f"=== 当前遗物 ===\n{relic_text}\n\n"
+            f"请规划第{turn_number}回合的出牌顺序。"
+        )
+        try:
+            resp = self.llm.call(self.SYSTEM_PROMPT_COMBAT_TURN, user_prompt, max_tokens=280)
+            data = _parse_json_response(resp)
+            normalized = self._normalize_combat_turn_advice(
+                data=data,
+                hand_names=hand_names,
+                enemy_count=len([e for e in enemies if isinstance(e, dict) and bool(e.get("is_alive", True))]),
+                turn_number=int(turn_number),
+            )
+            if self._last_advice is None:
+                self._last_advice = LLMAdvice(
+                    deck_route="mixed",
+                    route_score=0.5,
+                    key_synergies=[],
+                    reward_shaping=0.0,
+                    reasoning="combat_turn_only",
+                )
+            self._last_advice.combat_opening = normalized
+            return normalized
+        except Exception as e:
+            print(f"[LLMAdvisor] evaluate_combat_turn 失败: {e}")
+            if self._last_advice is None:
+                self._last_advice = LLMAdvice(
+                    deck_route="mixed",
+                    route_score=0.5,
+                    key_synergies=[],
+                    reward_shaping=0.0,
+                    reasoning="combat_turn_failed",
+                )
+            self._last_advice.combat_opening = dict(fallback)
+            return dict(fallback)
+
+    def _ensure_advice(self) -> LLMAdvice:
+        if self._last_advice is None:
+            self._last_advice = LLMAdvice(
+                deck_route="mixed",
+                route_score=0.5,
+                key_synergies=[],
+                reward_shaping=0.0,
+                reasoning="scene_eval_only",
+            )
+        return self._last_advice
+
+    def _state_run_context(self, state: Dict) -> Tuple[List[Dict], List[Dict], int, int, int, int]:
+        run = state.get("run") or {}
+        deck = run.get("deck") if isinstance(run.get("deck"), list) else state.get("deck", [])
+        relics = run.get("relics") if isinstance(run.get("relics"), list) else state.get("relics", [])
+        floor = int(run.get("floor", state.get("floor", 0)) or 0)
+        gold = int(run.get("gold", state.get("gold", 0)) or 0)
+        current_hp = int(run.get("current_hp", ((state.get("combat") or {}).get("player") or {}).get("current_hp", 0)) or 0)
+        max_hp = int(run.get("max_hp", ((state.get("combat") or {}).get("player") or {}).get("max_hp", 0)) or 0)
+        return deck, relics, floor, gold, current_hp, max_hp
+
+    def _merge_card_candidates(self, reward_cards: List[Dict], selection_cards: List[Dict]) -> List[Dict]:
+        merged: List[Dict] = []
+        seen_keys = set()
+
+        def _card_key(card: Dict, default_idx: int) -> Tuple:
+            return (
+                int(card.get("index", default_idx) or default_idx),
+                str(card.get("card_id", "") or ""),
+                str(card.get("name", "") or ""),
+            )
+
+        selection_by_key = {}
+        for idx, card in enumerate(selection_cards):
+            if isinstance(card, dict):
+                selection_by_key[_card_key(card, idx)] = dict(card)
+
+        primary = reward_cards if reward_cards else selection_cards
+        for idx, card in enumerate(primary):
+            if not isinstance(card, dict):
+                continue
+            key = _card_key(card, idx)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            merged_card = dict(selection_by_key.get(key, {}))
+            merged_card.update(card)
+            if "index" not in merged_card:
+                merged_card["index"] = idx
+            merged.append(merged_card)
+
+        for idx, card in enumerate(selection_cards):
+            if not isinstance(card, dict):
+                continue
+            key = _card_key(card, idx)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            extra = dict(card)
+            if "index" not in extra:
+                extra["index"] = idx
+            merged.append(extra)
+        return merged
+
+    def evaluate_event_choice(
+        self,
+        state: Dict,
+        event_payload: Dict,
+    ) -> Tuple[int, float, str]:
+        event = event_payload or {}
+        options = event.get("options") if isinstance(event.get("options"), list) else []
+        valid = [opt for opt in options if isinstance(opt, dict) and not bool(opt.get("is_locked", False))]
+        if not valid:
+            return -99, 0.0, "无可选事件选项"
+        if len(valid) == 1 and bool(valid[0].get("is_proceed", False)):
+            return -99, 0.0, "仅剩推进选项"
+
+        deck, relics, floor, gold, current_hp, max_hp = self._state_run_context(state)
+        options_text = "\n".join(
+            f"[{opt.get('index', idx)}] title={opt.get('title', '?')} "
+            f"text_key={opt.get('text_key', '')} "
+            f"proceed={bool(opt.get('is_proceed', False))} "
+            f"will_kill={bool(opt.get('will_kill_player', False))} "
+            f"description={self._trim(str(opt.get('description', '') or ''), 80)}"
+            for idx, opt in enumerate(valid)
+        )
+        user_prompt = (
+            f"楼层:{floor} HP:{current_hp}/{max_hp} 金币:{gold}\n"
+            f"事件ID:{event.get('event_id', '')}\n"
+            f"标题:{event.get('title', '')}\n"
+            f"描述:{self._trim(str(event.get('description', '') or ''), 180)}\n\n"
+            f"当前牌组摘要:\n{self._summarize_deck(deck)}\n\n"
+            f"当前遗物:{[r.get('name', '?') for r in relics[:12] if isinstance(r, dict)]}\n\n"
+            f"事件选项:\n{options_text}\n\n"
+            "请只返回JSON: {\"recommended_index\": 选项索引, \"confidence\": 0到1, \"reasoning\": \"简短原因\"}"
+        )
+        system_prompt = (
+            "你是杀戮尖塔2战士专家。只根据当前事件信息、当前构筑和生存状态，"
+            "选择最优事件选项。若存在明显危险或会破坏构筑，要避免。只返回JSON。"
+        )
+        try:
+            resp = self.llm.call(system_prompt, user_prompt, max_tokens=220)
+            data = _parse_json_response(resp)
+            idx = int(data.get("recommended_index", valid[0].get("index", 0)) or valid[0].get("index", 0))
+            valid_indices = {int(opt.get("index", i) or i) for i, opt in enumerate(valid)}
+            if idx not in valid_indices:
+                idx = int(valid[0].get("index", 0) or 0)
+            conf = max(0.0, min(float(data.get("confidence", 0.0) or 0.0), 1.0))
+            reason = self._trim(str(data.get("reasoning", "") or ""), 80)
+            advice = self._ensure_advice()
+            advice.event_recommendation = idx
+            advice.event_confidence = conf
+            return idx, conf, reason
+        except Exception as e:
+            print(f"[LLMAdvisor] evaluate_event_choice 失败: {e}")
+            advice = self._ensure_advice()
+            advice.event_recommendation = -99
+            advice.event_confidence = 0.0
+            return -99, 0.0, f"LLM 调用失败: {e}"
+
+    def evaluate_card_selection(
+        self,
+        state: Dict,
+        payload: Optional[Dict] = None,
+    ) -> Tuple[str, int, float, str]:
+        reward = state.get("reward") or {}
+        selection = state.get("selection") or {}
+        reward_cards = reward.get("card_options") if isinstance(reward.get("card_options"), list) else []
+        selection_cards = selection.get("cards") if isinstance(selection.get("cards"), list) else []
+        candidates = self._merge_card_candidates(reward_cards, selection_cards)
+        if not candidates:
+            return "other", -99, 0.0, "无可选卡牌"
+
+        is_reward_card = bool(reward.get("pending_card_choice", False)) and bool(reward_cards) and "choose_reward_card" in [str(a) for a in (state.get("legal_actions") or [])]
+        scene_hint = "reward_card" if is_reward_card else "unknown"
+        deck, relics, floor, gold, current_hp, max_hp = self._state_run_context(state)
+        candidate_context = self._retrieve_card_context(candidates, deck)
+        synergy_context = self._retrieve_synergies(candidates, deck)
+        selection_prompt = self._trim(str(selection.get("prompt", "") or ""), 120)
+        cards_text = "\n".join(
+            f"[{c.get('index', idx)}] {c.get('name', '?')}"
+            f"{'+' if c.get('upgraded') else ''} | type={c.get('card_type', c.get('type', '?'))}"
+            f" | rarity={c.get('rarity', '?')} | cost={c.get('energy_cost', '?')}"
+            f" | text={self._trim(str(c.get('rules_text', '')), 80)}"
+            for idx, c in enumerate(candidates)
+            if isinstance(c, dict)
+        )
+        user_prompt = (
+            f"楼层:{floor} HP:{current_hp}/{max_hp} 金币:{gold}\n"
+            f"screen:{state.get('screen', '')}\n"
+            f"selection.kind:{selection.get('kind', '')}\n"
+            f"selection.prompt(可能不可靠):{selection_prompt}\n"
+            f"reward.pending_card_choice:{bool(reward.get('pending_card_choice', False))}\n"
+            f"legal_actions:{state.get('legal_actions', [])}\n\n"
+            f"当前牌组摘要:\n{self._summarize_deck(deck)}\n\n"
+            f"当前遗物:{[r.get('name', '?') for r in relics[:12] if isinstance(r, dict)]}\n\n"
+            f"候选卡牌:\n{cards_text}\n\n"
+            f"知识库卡牌信息:\n{candidate_context}\n\n"
+            f"知识库协同信息:\n{synergy_context}\n\n"
+            "请先判断当前属于哪类牌处理场景，再给出最优索引。"
+            "只返回JSON: {\"scene_type\":\"reward_card|remove|upgrade|transform|enchant|other\","
+            "\"recommended_index\":索引,\"confidence\":0到1,\"reasoning\":\"简短原因\"}"
+        )
+        system_prompt = (
+            "你是杀戮尖塔2战士构筑专家。你需要根据当前run构筑、候选牌和场景信息，"
+            "判断这是奖励卡、删牌、升级、变形、附魔还是其他牌处理场景，并给出当前最优选择。"
+            "如果 reward.pending_card_choice=true，则优先视为奖励卡场景。只返回JSON。"
+        )
+        try:
+            resp = self.llm.call(system_prompt, user_prompt, max_tokens=320)
+            data = _parse_json_response(resp)
+            scene_type = str(data.get("scene_type", scene_hint or "other") or "other").strip().lower()
+            if is_reward_card:
+                scene_type = "reward_card"
+            if scene_type not in {"reward_card", "remove", "upgrade", "transform", "enchant", "other"}:
+                scene_type = "other"
+            idx = int(data.get("recommended_index", candidates[0].get("index", 0)) or candidates[0].get("index", 0))
+            valid_indices = {int(card.get("index", i) or i) for i, card in enumerate(candidates) if isinstance(card, dict)}
+            if idx not in valid_indices:
+                idx = int(candidates[0].get("index", 0) or 0)
+            conf = max(0.0, min(float(data.get("confidence", 0.0) or 0.0), 1.0))
+            reason = self._trim(str(data.get("reasoning", "") or ""), 100)
+            advice = self._ensure_advice()
+            advice.card_recommendation = idx
+            advice.card_confidence = conf
+            advice.card_scene_type = scene_type
+            return scene_type, idx, conf, reason
+        except Exception as e:
+            print(f"[LLMAdvisor] evaluate_card_selection 失败: {e}")
+            advice = self._ensure_advice()
+            advice.card_recommendation = -99
+            advice.card_confidence = 0.0
+            advice.card_scene_type = "other"
+            return "other", -99, 0.0, f"LLM 调用失败: {e}"
+
     def evaluate_card_remove(
         self,
         state: Dict,
@@ -710,6 +1156,16 @@ reward_shaping 规则:
                 self._last_advice.shop_confidence = 0.0
             return fallback_action, fallback_index, 0.0, f"LLM 调用失败: {e}"
 
+    def get_last_event_recommendation(self) -> Tuple[int, float]:
+        if self._last_advice is None or self._last_advice.event_recommendation == -99:
+            return -99, 0.0
+        return self._last_advice.event_recommendation, self._last_advice.event_confidence
+
+    def invalidate_event_recommendation(self):
+        if self._last_advice is not None:
+            self._last_advice.event_recommendation = -99
+            self._last_advice.event_confidence = 0.0
+
     def get_reward_shaping_bonus(self, state: Dict) -> float:
         """全局路线质量的奖励塑形分 — 供 RewardShaper 在非 CARD_REWARD 时用"""
         advice = self.get_advice(state)
@@ -723,11 +1179,17 @@ reward_shaping 规则:
             return -99, 0.0
         return self._last_advice.card_recommendation, self._last_advice.card_confidence
 
+    def get_last_card_scene_type(self) -> str:
+        if self._last_advice is None:
+            return ""
+        return str(self._last_advice.card_scene_type or "")
+
     def invalidate_card_recommendation(self):
         """选牌动作执行后调用，重置缓存避免重复塑形"""
         if self._last_advice is not None:
             self._last_advice.card_recommendation = -99
             self._last_advice.card_confidence = 0.0
+            self._last_advice.card_scene_type = ""
 
     def get_last_relic_recommendation(self) -> Tuple[int, float]:
         if self._last_advice is None or self._last_advice.relic_recommendation == -99:
